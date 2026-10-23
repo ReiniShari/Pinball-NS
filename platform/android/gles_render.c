@@ -4,7 +4,10 @@
  * Shapes are rounded rectangles drawn with a signed distance (anti-aliased edges and
  * borders), text uses a texture made from the bitmap font, and the game image is
  * enlarged with a "sharp bilinear" filter: whole-pixel enlargement, then a one-pixel
- * smooth transition, so that pixels stay crisp at any screen size.
+ * smooth transition, so that pixels stay crisp at any screen size. Over the whole picture
+ * (the game and its controls alike), the screen filters and the colours of the menu (ui.h):
+ * dots, LCD; black and white, the greens of the Game Boy (the same arithmetic as
+ * tools/uisim.c).
  */
 #include "gles_render.h"
 #include "../../src/front/font5x7.h"
@@ -57,19 +60,67 @@ static const char *FS_TEXT =
     "uniform vec4 u_color;\n"
     "void main() { float a = texture2D(u_tex, v_uv).a * u_color.a; gl_FragColor = vec4(u_color.rgb * a, a); }\n";
 
+/* The game image. u_filter: 0 sharp pixels; over u_frect (texels: x0, y0, x1, y1), 1 dots: each
+ * pixel a round dot fading out from its centre, a little wider when bright, the dots of the
+ * neighbours lighting the gaps (the classic "dot" filter of the emulators); 2 LCD: the cells of a
+ * liquid crystal screen, their red, green and blue side by side (in colour), a darker grid between
+ * them. u_colors: 0 the game's, 1 black and white (the brightness of each colour), 2 the four greens
+ * of the Game Boy's screen, in shades between them. */
 static const char *FS_GAME =
     "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n"
     "varying vec2 v_uv;\n"          /* in texels */
     "uniform sampler2D u_tex;\n"
     "uniform vec2 u_texsize;\n"
     "uniform vec2 u_scale;\n"
+    "uniform float u_filter;\n"
+    "uniform float u_colors;\n"
+    "uniform vec4 u_frect;\n"
+    "vec3 tone(vec3 c) {\n"
+    "  if (u_colors < 0.5) return c;\n"
+    "  float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
+    "  if (u_colors < 1.5) return vec3(l);\n"
+    "  float t = l * 3.0;\n"                                   /* 0F380F 306230 8BAC0F 9BBC0F */
+    "  if (t < 1.0) return mix(vec3(0.0588, 0.2196, 0.0588), vec3(0.1882, 0.3843, 0.1882), t);\n"
+    "  if (t < 2.0) return mix(vec3(0.1882, 0.3843, 0.1882), vec3(0.5451, 0.6745, 0.0588), t - 1.0);\n"
+    "  return mix(vec3(0.5451, 0.6745, 0.0588), vec3(0.6078, 0.7373, 0.0588), t - 2.0);\n"
+    "}\n"
+    "vec3 texel(vec2 p) {\n"       /* frame pixels are 0x00RRGGBB; the neighbours taken inside the rectangle */
+    "  p = clamp(p, u_frect.xy, u_frect.zw - 1.0);\n"
+    "  return tone(texture2D(u_tex, (p + 0.5) / u_texsize).bgr);\n"
+    "}\n"
+    "vec3 dot_of(vec2 p, vec2 o, vec2 f) {\n"
+    "  vec3 c = texel(p + o);\n"
+    "  float spread = mix(1.05, 0.95, dot(c, vec3(0.30, 0.59, 0.11)));\n"
+    "  return c * exp(-2.4 * length(f - o) * spread);\n"
+    "}\n"
     "void main() {\n"
+    "  if (u_filter > 0.5 && v_uv.x >= u_frect.x && v_uv.x < u_frect.z && v_uv.y >= u_frect.y && v_uv.y < u_frect.w) {\n"
+    "    vec2 p = floor(v_uv);\n"
+    "    vec3 col;\n"
+    "    if (u_filter < 1.5) {\n"
+    "      vec2 f = fract(v_uv) - 0.5;\n"
+    "      vec3 mid = dot_of(p, vec2(0.0, 0.0), f);\n"
+    "      vec3 s = mid + dot_of(p, vec2(-1.0, -1.0), f) + dot_of(p, vec2(0.0, -1.0), f) + dot_of(p, vec2(1.0, -1.0), f)\n"
+    "             + dot_of(p, vec2(-1.0, 0.0), f) + dot_of(p, vec2(1.0, 0.0), f)\n"
+    "             + dot_of(p, vec2(-1.0, 1.0), f) + dot_of(p, vec2(0.0, 1.0), f) + dot_of(p, vec2(1.0, 1.0), f);\n"
+    "      col = mix(1.2 * mid, s, 0.65);\n"
+    "    } else {\n"
+    "      vec2 g = fract(v_uv);\n"
+    "      vec2 e = min(g, 1.0 - g);\n"                       /* to the border of the cell */
+    "      vec2 lw = max(1.5 / u_scale, vec2(0.1));\n"        /* the grid: a pixel and a half of the screen */
+    "      float grid = mix(0.5, 1.0, smoothstep(0.0, lw.x, e.x) * smoothstep(0.0, lw.y, e.y));\n"
+    "      vec3 sub = u_colors < 0.5 ? 0.75 + 0.25 * cos(6.2831853 * (g.x - vec3(0.16666667, 0.5, 0.83333333))) : vec3(0.75);\n"
+    "      col = texel(p) * sub * grid * 1.4;\n"
+    "    }\n"
+    "    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);\n"
+    "    return;\n"
+    "  }\n"
     "  vec2 t = floor(v_uv);\n"
     "  vec2 c = fract(v_uv) - 0.5;\n"
     "  vec2 range = 0.5 - 0.5 / u_scale;\n"
     "  vec2 f = (c - clamp(c, -range, range)) * u_scale + 0.5;\n"
     "  vec4 p = texture2D(u_tex, (t + f) / u_texsize);\n"
-    "  gl_FragColor = vec4(p.b, p.g, p.r, 1.0);\n"   /* frame pixels are 0x00RRGGBB */
+    "  gl_FragColor = vec4(tone(p.bgr), 1.0);\n"
     "}\n";
 
 #define ATLAS_COLS 16
@@ -136,6 +187,9 @@ bool gr_init(GlRenderer *r)
     r->u_game_tex = glGetUniformLocation(r->prog_game, "u_tex");
     r->u_game_texsize = glGetUniformLocation(r->prog_game, "u_texsize");
     r->u_game_scale = glGetUniformLocation(r->prog_game, "u_scale");
+    r->u_game_filter = glGetUniformLocation(r->prog_game, "u_filter");
+    r->u_game_frect = glGetUniformLocation(r->prog_game, "u_frect");
+    r->u_game_colors = glGetUniformLocation(r->prog_game, "u_colors");
 
     /* font atlas: glyph i in cell (i % 16, i / 16), 8 x 8 pixels per cell */
     font_init();
@@ -246,6 +300,9 @@ void gr_draw(GlRenderer *r, const UiList *l, int w, int h, int fw, int fh)
             glUniform1i(r->u_game_tex, 0);
             glUniform2f(r->u_game_texsize, (float)GAME_TEX_W, (float)GAME_TEX_H);
             glUniform2f(r->u_game_scale, it->w / fw, it->h / fh);
+            glUniform1f(r->u_game_filter, (float)it->filter);
+            glUniform4f(r->u_game_frect, it->fx0, it->fy0, it->fx1, it->fy1);
+            glUniform1f(r->u_game_colors, (float)it->colors);
             float x0 = it->x, y0 = it->y, x1 = it->x + it->w, y1 = it->y + it->h;
             float q[16] = { x0, y0, 0, 0,  x1, y0, (float)fw, 0,  x0, y1, 0, (float)fh,  x1, y1, (float)fw, (float)fh };
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, q);

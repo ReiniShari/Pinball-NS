@@ -11,7 +11,8 @@
 #include "../../src/front/deflicker.h"
 #include <stdatomic.h>
 
-#define APP_RING 16384              /* audio ring, stereo frames (power of two) */
+#define APP_RING 32768              /* audio ring, stereo frames (power of two; room for the peaks of a
+                                     * card that takes its samples late, Bluetooth: see pacing.h) */
 
 /* A file to write, handed to the writer thread of the platform (app_io_run): the storage can
  * take tens of milliseconds (fsync), which the game thread must never wait for. */
@@ -40,6 +41,7 @@ typedef struct {
     int16_t ring[APP_RING * 2];
     _Atomic uint32_t ring_w, ring_r;
     atomic_bool ring_flush;
+    _Atomic uint32_t ring_drop;     /* frames for the audio thread to skip (app_audio_drop) */
     bool rumble;                    /* rumble motor state, for the platform */
     bool quit;                      /* the player chose "QUIT" */
     bool sound_changed;             /* the platform must open/close its audio stream */
@@ -84,6 +86,7 @@ int  app_take_haptic(MobileApp *a);             /* feedback requested by the UI 
 void app_set_insets(MobileApp *a, int top, int bottom, int left, int right, int corner);
 uint32_t app_audio_queued(MobileApp *a);
 void app_audio_pad(MobileApp *a, uint32_t level);             /* silence up to `level` waiting frames */
+void app_audio_drop(MobileApp *a, uint32_t frames);           /* the oldest frames waiting skipped */
 void app_set_audio_rate(MobileApp *a, double rate);           /* see pb_set_audio_rate */
 void app_io_run(MobileApp *a);                                /* the writer thread: the files waiting */
 void app_io_wait(MobileApp *a);                               /* until they are written (before a save) */

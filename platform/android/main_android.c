@@ -3,9 +3,9 @@
  *
  * The app is a NativeActivity (no Java code at all): this file receives the activity
  * callbacks, runs the game on its own thread, draws with OpenGL ES 2 (the table with a
- * "sharp bilinear" filter, and the touch controls), plays the sound with AAudio and
- * uses JNI for the few Java services it needs (reading the ROM the player opens with
- * the app, vibration, full screen).
+ * "sharp bilinear" filter, and the touch controls), plays the sound with AAudio, reads
+ * the accelerometer (the option MOTION TILT) and uses JNI for the few Java services it
+ * needs (reading the ROM the player opens with the app, vibration, full screen).
  *
  * The game logic of the mobile version (ROM, saves, menu, touch interface) is in
  * platform/mobile/; this file is only the Android glue.
@@ -13,6 +13,7 @@
 #include <android/native_activity.h>
 #include <android/log.h>
 #include <android/looper.h>
+#include <android/sensor.h>
 #include <android/window.h>
 #include <aaudio/AAudio.h>
 #include <EGL/egl.h>
@@ -34,6 +35,7 @@
 #include <unistd.h>
 
 #include "../mobile/app.h"
+#include "../mobile/motion.h"
 #include "../../src/front/font5x7.h"
 #include "../../src/front/pacing.h"
 #include "gles_render.h"
@@ -46,7 +48,7 @@
 #define AUDIO_TARGET   2048            /* stereo frames kept ahead of the sound card */
 #define ROM_MAX        (8u << 20)
 
-enum { LOOPER_ID_MAIN = 1, LOOPER_ID_INPUT = 2 };
+enum { LOOPER_ID_MAIN = 1, LOOPER_ID_INPUT = 2, LOOPER_ID_SENSOR = 3 };
 enum {
     CMD_INPUT_CHANGED, CMD_INIT_WINDOW, CMD_TERM_WINDOW, CMD_GAINED_FOCUS, CMD_LOST_FOCUS,
     CMD_START, CMD_RESUME, CMD_PAUSE, CMD_STOP, CMD_DESTROY, CMD_CONFIG
@@ -66,6 +68,8 @@ static AAudioStream *g_stream;
 static _Atomic long g_pulled;           /* frames the sound card has asked for */
 static _Atomic int g_stream_gen;        /* streams opened */
 static volatile int g_audio_error;
+static int32_t g_burst, g_xruns;        /* the stream's burst; its own underruns seen so far */
+static double g_xrun_check;
 
 static jobject g_vibrator;                 /* global refs, created once */
 static jmethodID g_vib_vibrate, g_vib_cancel;
@@ -191,6 +195,14 @@ typedef struct Activity {
     bool insets_known;
     bool keys[256];
     uint8_t axis_buttons;
+    /* MOTION TILT: the accelerometer, on the looper of the game thread; the tilt a nudge pressed */
+    ASensorManager *sensor_mgr;
+    const ASensor *accel;
+    ASensorEventQueue *sensors;
+    bool accel_on;
+    Motion motion;
+    uint8_t tilt_buttons;
+    double tilt_until;
     UiList list;
 } Activity;
 
@@ -659,8 +671,11 @@ static void start_importer(Activity *a)
 
 /* ------------------------------------------------------------------ audio */
 
+static long g_pads, g_flushes;          /* silences added, flushes */
+static _Atomic long g_underruns;        /* the card found the ring short: a gap (the game running: not the
+                                         * silence of a pause, the menu) */
+static atomic_bool g_playing;
 #ifdef PNS_TEST
-static _Atomic long g_underruns;        /* the card found the ring empty (tests) */
 static double g_pull_since;
 static long g_pull_base;
 #endif
@@ -670,13 +685,10 @@ static aaudio_data_callback_result_t audio_cb(AAudioStream *s, void *user, void 
     (void)s; (void)user;
     int n = app_audio_pull(&g_app, (int16_t *)data, frames);
     atomic_fetch_add_explicit(&g_pulled, frames, memory_order_relaxed);
-#ifdef PNS_TEST
     static bool short_before;
-    if (n < frames && n > 0 && !short_before) atomic_fetch_add(&g_underruns, 1);
+    if (n < frames && n > 0 && !short_before && atomic_load_explicit(&g_playing, memory_order_relaxed))
+        atomic_fetch_add_explicit(&g_underruns, 1, memory_order_relaxed);
     short_before = n < frames;
-#else
-    (void)n;
-#endif
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
@@ -731,12 +743,46 @@ static void audio_open_locked(void)
         AAudioStream_close(s);
         return;
     }
+    /* The stream's own buffer, between the callback and the device: 3 bursts, 10 ms at least (up to
+     * 2.6: 3 bursts, 6 ms on a phone whose bursts are 2 ms: the callback thread woken a little late
+     * left the device short, a click the ring never saw), one burst more after each underrun of the
+     * stream (audio_tune), up to 50 ms. */
     int32_t burst = AAudioStream_getFramesPerBurst(s);
-    if (burst > 0) AAudioStream_setBufferSizeInFrames(s, burst * 3);
+    g_burst = burst > 0 ? burst : 192;
+    int32_t want = g_burst * 3;
+    while (want < AUDIO_RATE / 100) want += g_burst;
+    AAudioStream_setBufferSizeInFrames(s, want);
+    g_xruns = AAudioStream_getXRunCount(s);
+    LOGI("audio: burst %d, buffer %d of %d, performance mode %d, sharing mode %d", (int)burst,
+         (int)AAudioStream_getBufferSizeInFrames(s), (int)AAudioStream_getBufferCapacityInFrames(s),
+         (int)AAudioStream_getPerformanceMode(s), (int)AAudioStream_getSharingMode(s));
     g_audio_error = 0;
     if (AAudioStream_requestStart(s) != AAUDIO_OK) { AAudioStream_close(s); return; }
     g_stream = s;
     atomic_fetch_add(&g_stream_gen, 1);
+}
+
+/* the stream's underruns (its buffer short: the callback came late), checked twice a second: its
+ * buffer grows by a burst after each (as Oboe's LatencyTuner); game thread */
+static void audio_tune(double t)
+{
+    if (t < g_xrun_check) return;
+    g_xrun_check = t + 0.5;
+    pthread_mutex_lock(&g_audio_mutex);
+    if (g_stream) {
+        int32_t x = AAudioStream_getXRunCount(g_stream);
+        if (x > g_xruns) {
+            g_xruns = x;
+            int32_t size = AAudioStream_getBufferSizeInFrames(g_stream), cap = AAudioStream_getBufferCapacityInFrames(g_stream);
+            int32_t most = AUDIO_RATE / 20 > g_burst * 4 ? AUDIO_RATE / 20 : g_burst * 4;
+            if (cap > 0 && most > cap) most = cap;
+            if (size > 0 && size + g_burst <= most) {
+                AAudioStream_setBufferSizeInFrames(g_stream, size + g_burst);
+                LOGI("audio: %d underruns of the stream, its buffer %d", (int)x, (int)AAudioStream_getBufferSizeInFrames(g_stream));
+            }
+        }
+    }
+    pthread_mutex_unlock(&g_audio_mutex);
 }
 
 /* ------------------------------------------------------------------ EGL */
@@ -832,7 +878,7 @@ static uint8_t key_button(int32_t code)
 
 static void update_pad(Activity *a)
 {
-    uint8_t m = a->axis_buttons;
+    uint8_t m = a->axis_buttons | a->tilt_buttons;
     for (int k = 0; k < 256; k++) if (a->keys[k]) m |= key_button(k);
     app_set_pad(&g_app, m);
 }
@@ -911,6 +957,54 @@ static int handle_input(Activity *a, AInputEvent *ev)
     return 1;
 }
 
+/* ------------------------------------------------------------------ motion tilt */
+
+/* The option MOTION TILT (platform/mobile/motion.h): the accelerometer read 200 times a second while
+ * a table or a bonus stage is played, never in the background; a nudge of the phone presses its tilt
+ * as the pad does (left: DOWN, right: B, up: SELECT) for MOTION_HOLD seconds. Game thread. */
+static void sensors_init(Activity *a)
+{
+    ASensorManager *m = ASensorManager_getInstanceForPackage("fr.pinballtc.app");
+    if (!m) return;
+    a->accel = ASensorManager_getDefaultSensor(m, ASENSOR_TYPE_ACCELEROMETER);
+    if (a->accel) a->sensors = ASensorManager_createEventQueue(m, a->looper, LOOPER_ID_SENSOR, NULL, NULL);
+    a->sensor_mgr = m;
+    LOGI("accelerometer: %s", a->sensors ? "yes" : "none");
+}
+
+static void sensors_enable(Activity *a, bool on)
+{
+    if (!a->sensors || on == a->accel_on) return;
+    a->accel_on = on;
+    if (on) {
+        motion_reset(&a->motion);
+        ASensorEventQueue_enableSensor(a->sensors, a->accel);
+        int us = ASensor_getMinDelay(a->accel);
+        ASensorEventQueue_setEventRate(a->sensors, a->accel, us > 5000 ? us : 5000);
+    } else {
+        ASensorEventQueue_disableSensor(a->sensors, a->accel);
+    }
+}
+
+static void process_sensors(Activity *a)
+{
+    ASensorEvent ev[32];
+    ssize_t n;
+    bool shaking = now_s() - a->last_vibration < 0.12;      /* the motor: pulses of 60 ms, and their end */
+    while (a->sensors && (n = ASensorEventQueue_getEvents(a->sensors, ev, 32)) > 0)
+        for (ssize_t i = 0; i < n; i++) {
+            if (ev[i].type != ASENSOR_TYPE_ACCELEROMETER || !a->accel_on) continue;
+            int tilt = motion_sample(&a->motion, (double)ev[i].timestamp * 1e-9, ev[i].acceleration.x,
+                                     ev[i].acceleration.y, ev[i].acceleration.z, shaking);
+            if (!tilt) continue;
+            a->tilt_buttons = tilt == MOTION_LEFT ? GBC_DOWN : tilt == MOTION_RIGHT ? GBC_B : GBC_SELECT;
+            a->tilt_until = now_s() + MOTION_HOLD;
+            pthread_mutex_lock(&g_game);
+            update_pad(a);
+            pthread_mutex_unlock(&g_game);
+        }
+}
+
 static void process_input(Activity *a)
 {
     AInputEvent *ev = NULL;
@@ -977,6 +1071,8 @@ static void process_cmd(Activity *a)
         a->focused = false;
         memset(a->keys, 0, sizeof a->keys);
         a->axis_buttons = 0;
+        a->tilt_buttons = 0;
+        sensors_enable(a, false);
         pthread_mutex_lock(&g_game);
         app_set_pad(&g_app, 0);
         app_touch(&g_app, UI_CANCEL, 0, 0, 0);
@@ -1005,22 +1101,70 @@ static void process_cmd(Activity *a)
 /* ------------------------------------------------------------------ the game thread */
 
 /* before each frame of the game: the sound it makes keeps the card fed, AUDIO_TARGET frames ahead
- * (pacing.h; game thread) */
+ * (pacing.h; game thread); returns its action (SOUND_EXTRA: one frame more) */
 static SoundPacer g_sound;
 
-static void audio_pace(Activity *a, double t, int frames_left)
+/* What the menu shows at its bottom (ui.info), measured over 10 s of play: the screen's rate and the
+ * frames of the game it shows; the game's speed and its sound's (the pitch and the tempo the card
+ * plays it at, its rate as it is meant to be), against the Game Boy (100 %); the gaps in the sound
+ * since the start; the card's rate as it took its samples (its bursts make this a little uneven); the
+ * stream (its burst and buffer, low latency or not, its own underruns). Game thread. */
+static struct {
+    double t0, pulled0, rate_sum;
+    long frames, rate_n;
+    bool ok;
+} g_meter;
+
+static void meter(Activity *a, double t, bool running)
+{
+    if (!running || !g_stream || t - g_meter.t0 > 12) {            /* a pause: measured afresh */
+        g_meter.t0 = t;
+        g_meter.pulled0 = (double)atomic_load(&g_pulled);
+        g_meter.frames = 0;
+        g_meter.rate_sum = 0;
+        g_meter.rate_n = 0;
+        return;
+    }
+    if (t - g_meter.t0 < 10 || !g_meter.rate_n) return;
+    double secs = t - g_meter.t0, card = ((double)atomic_load(&g_pulled) - g_meter.pulled0) / secs;
+    double speed = g_meter.frames / secs * PACER_GAME_PERIOD * 100, sound = g_sound.rate / (g_meter.rate_sum / g_meter.rate_n) * 100;
+    char ratio[16];
+    if (a->pacer.locked) snprintf(ratio, sizeof ratio, "%d/%d", a->pacer.num, a->pacer.den);
+    else snprintf(ratio, sizeof ratio, "in time");
+    pthread_mutex_lock(&g_audio_mutex);
+    int32_t xr = g_stream ? AAudioStream_getXRunCount(g_stream) : 0, bsz = g_stream ? AAudioStream_getBufferSizeInFrames(g_stream) : 0;
+    bool ll = g_stream && AAudioStream_getPerformanceMode(g_stream) == AAUDIO_PERFORMANCE_MODE_LOW_LATENCY;
+    pthread_mutex_unlock(&g_audio_mutex);
+    snprintf(g_app.ui.info, sizeof g_app.ui.info, "Screen %.1f Hz, %s\nGame speed %.2f %%\nSound %.2f %%, %ld gaps\nCard %.2f kHz, %d/%d%s, %d xruns",
+             a->pacer.period > 0 ? 1.0 / a->pacer.period : 0.0, ratio, speed, sound, atomic_load(&g_underruns) + g_pads,
+             card / 1000, (int)g_burst, (int)bsz, ll ? " LL" : "", (int)xr);
+    g_meter.t0 = t;
+    g_meter.pulled0 = (double)atomic_load(&g_pulled);
+    g_meter.frames = 0;
+    g_meter.rate_sum = 0;
+    g_meter.rate_n = 0;
+}
+
+static int audio_pace(Activity *a, double t, int frames_left)
 {
     static int gen;
-    if (!g_stream) return;
+    if (!g_stream) return SOUND_KEEP;
     int g = atomic_load(&g_stream_gen);
     if (g != gen) { gen = g; sound_restart(&g_sound, t); }
     double rate, pad;
     uint32_t queued = app_audio_queued(&g_app);
+    bool resumed = g_sound.last_call <= 0 || t - g_sound.last_call > 0.25;    /* after a pause: its silence, not a gap */
     int act = sound_pace(&g_sound, &a->pacer, t, (double)atomic_load_explicit(&g_pulled, memory_order_relaxed),
                          (double)queued, frames_left, &rate, &pad);
+    if (act == SOUND_PAD && t - g_sound.started > 1 && !resumed) g_pads++;
+    if (act == SOUND_FLUSH) g_flushes++;
+    g_meter.rate_sum += rate;
+    g_meter.rate_n++;
     if (act == SOUND_PAD) app_audio_pad(&g_app, queued + (uint32_t)pad);
     else if (act == SOUND_FLUSH) atomic_store_explicit(&g_app.ring_flush, true, memory_order_release);
+    else if (act == SOUND_TRIM) app_audio_drop(&g_app, (uint32_t)pad);
     app_set_audio_rate(&g_app, rate);
+    return act;
 }
 
 /* a refresh of the display at `vsync` (seconds, CLOCK_MONOTONIC) */
@@ -1045,11 +1189,14 @@ static void frame_step(Activity *a, double vsync)
     if (front && app_running(&g_app)) {
         /* the screen sets the pace (a refresh has just passed: the swap waited for it); the sound
          * is made at the rate that keeps the card fed (src/front/pacing.h) */
-        int n = pacer_frames(&a->pacer, vsync, 4);
+        int n = pacer_frames(&a->pacer, vsync, 6);
+        bool extra = false;
         for (int k = 0; k < n; k++) {
-            audio_pace(a, t, n - k);
+            /* the sound may ask for one frame more (its target raised: pacing.h) */
+            if (audio_pace(a, t, n - k) == SOUND_EXTRA && !extra) { extra = true; n++; }
             app_run_frame(&g_app);
             ran = true;
+            g_meter.frames++;
         }
 #ifdef PNS_TEST
         if (a->st_last > 0 && vsync - a->st_last > a->st_maxdt) a->st_maxdt = vsync - a->st_last;
@@ -1067,6 +1214,13 @@ static void frame_step(Activity *a, double vsync)
 #endif
     }
     if (front) app_update(&g_app, t);
+    if (front && g_stream) audio_tune(t);
+    if (front) meter(a, t, app_running(&g_app));
+    atomic_store_explicit(&g_playing, front && app_running(&g_app), memory_order_relaxed);
+    /* MOTION TILT: the accelerometer read while a table or a bonus stage is played */
+    bool motion = front && g_app.ui.motion && g_app.ui.field && !g_app.ui.menu_open && app_running(&g_app);
+    if (motion != a->accel_on) sensors_enable(a, motion);
+    if (a->tilt_buttons && (t >= a->tilt_until || !motion)) { a->tilt_buttons = 0; update_pad(a); }
 #ifdef PNS_TEST
     /* test builds: commands written by tools/emu.sh into test.txt of the app's folder */
     static double next_test;
@@ -1083,6 +1237,7 @@ static void frame_step(Activity *a, double vsync)
                     memset(a->st_sum, 0, sizeof a->st_sum);
                     memset(a->st_max, 0, sizeof a->st_max);
                     atomic_store(&g_underruns, 0);
+                    g_pads = g_flushes = 0;
                     g_pull_base = atomic_load(&g_pulled);
                     g_pull_since = t;
                 } else {
@@ -1107,6 +1262,20 @@ static void frame_step(Activity *a, double vsync)
             fprintf(f, "antilag late %ld finished %ld calls %ld  stale sprites %ld  hints %d target %.2f ms  sound target %.0f\n",
                     g_app.pb->stats_late, g_app.pb->stats_late_done, g_app.pb->g.call_late, g_app.pb->stats_stale_oam,
                     g_hint.s != NULL, g_hint.target / 1e6, g_sound.target);
+            /* the stream: its underruns and buffer; the frames between the callback and the speaker
+             * (from its timestamp); the sound's corrections */
+            int64_t pos = 0, ns = 0;
+            double devq = -1;
+            pthread_mutex_lock(&g_audio_mutex);
+            int32_t xr = g_stream ? AAudioStream_getXRunCount(g_stream) : -1, bsz = g_stream ? AAudioStream_getBufferSizeInFrames(g_stream) : 0;
+            if (g_stream && AAudioStream_getTimestamp(g_stream, CLOCK_MONOTONIC, &pos, &ns) == AAUDIO_OK)
+                devq = atomic_load(&g_pulled) - (pos + (t - ns * 1e-9) * AUDIO_RATE);
+            pthread_mutex_unlock(&g_audio_mutex);
+            fprintf(f, "stream xruns %d buffer %d burst %d device %.0f  sound level %.0f corr %+.3f%% extra %ld pads %ld flushes %ld\n",
+                    (int)xr, (int)bsz, (int)g_burst, devq, g_sound.level, g_sound.corr * 100, g_sound.extra, g_pads, g_flushes);
+            fprintf(f, "buttons %02X  motion %d left %ld right %ld up %ld\n", ui_buttons(&g_app.ui), a->accel_on ? 1 : 0,
+                    a->motion.count[MOTION_LEFT], a->motion.count[MOTION_RIGHT], a->motion.count[MOTION_UP]);
+            fprintf(f, "info %s\n", g_app.ui.info);
             static const char *const phase[5] = { "late", "emu", "prep", "draw", "swap" };
             for (int i = 0; i < 5; i++)
                 fprintf(f, "%s avg %.2f max %.2f%s", phase[i], a->st_steps ? a->st_sum[i] / a->st_steps : 0.0,
@@ -1189,6 +1358,7 @@ static void *game_thread(void *arg)
     hint_init();
     a->looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
     ALooper_addFd(a->looper, a->msgread, LOOPER_ID_MAIN, ALOOPER_EVENT_INPUT, NULL, NULL);
+    sensors_init(a);
 
     pthread_mutex_lock(&g_game);
     if (!g_app_ready) {
@@ -1218,12 +1388,18 @@ static void *game_thread(void *arg)
         while ((ident = ALooper_pollOnce(timeout, NULL, &events, &data)) >= 0) {
             if (ident == LOOPER_ID_MAIN) process_cmd(a);
             else if (ident == LOOPER_ID_INPUT) process_input(a);
+            else if (ident == LOOPER_ID_SENSOR) process_sensors(a);
             if (a->destroy_requested) break;
             draw = active(a) && a->dpy != EGL_NO_DISPLAY;
             timeout = !draw ? -1 : (!a->choreo || a->vsync_due) ? 0 : 50;
         }
         if (a->destroy_requested) break;
-        if (!(active(a) && a->dpy != EGL_NO_DISPLAY)) { a->vsync_due = false; continue; }
+        if (!(active(a) && a->dpy != EGL_NO_DISPLAY)) {
+            a->vsync_due = false;
+            sensors_enable(a, false);
+            if (a->tilt_buttons) { a->tilt_buttons = 0; pthread_mutex_lock(&g_game); update_pad(a); pthread_mutex_unlock(&g_game); }
+            continue;
+        }
         if (!a->choreo) frame_step(a, now_s());
         else if (a->vsync_due) { a->vsync_due = false; frame_step(a, a->vsync_time); }
         else if (now_s() - a->last_step > 0.1) frame_step(a, now_s());   /* no vertical blank: draw anyway */
@@ -1231,6 +1407,9 @@ static void *game_thread(void *arg)
 
     leave_front(a);
     egl_term(a);
+    sensors_enable(a, false);
+    if (a->sensors) ASensorManager_destroyEventQueue(a->sensor_mgr, a->sensors);
+    a->sensors = NULL;
     pthread_mutex_lock(&a->mutex);
     if (a->queue) AInputQueue_detachLooper(a->queue);
     a->queue = NULL;

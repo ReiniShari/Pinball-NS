@@ -130,20 +130,95 @@ static void draw_text(const UiList *l, const UiItem *it)
     }
 }
 
+/* the screen filters and colours of the Android renderer (platform/android/gles_render.c: FS_GAME),
+ * the same arithmetic in floats: a pixel of the screen at u, v (in pixels of the game) */
+static void tone(int colors, float c[3])
+{
+    if (colors == UI_COLORS_ORIGINAL) return;
+    float l = c[0] * 0.299f + c[1] * 0.587f + c[2] * 0.114f;
+    if (colors == UI_COLORS_BW) { c[0] = c[1] = c[2] = l; return; }
+    static const float g[4][3] = { { 0.0588f, 0.2196f, 0.0588f }, { 0.1882f, 0.3843f, 0.1882f },
+                                   { 0.5451f, 0.6745f, 0.0588f }, { 0.6078f, 0.7373f, 0.0588f } };
+    float t = l * 3;
+    int i = t < 1 ? 0 : t < 2 ? 1 : 2;
+    float f = t - i;
+    for (int k = 0; k < 3; k++) c[k] = g[i][k] + (g[i + 1][k] - g[i][k]) * f;
+}
+
+static void texel_rgb(const UiItem *it, const uint32_t *px, int stride, float x, float y, float c[3])
+{
+    if (x < it->fx0) x = it->fx0;
+    if (x > it->fx1 - 1) x = it->fx1 - 1;
+    if (y < it->fy0) y = it->fy0;
+    if (y > it->fy1 - 1) y = it->fy1 - 1;
+    uint32_t p = px[(int)y * stride + (int)x];
+    c[0] = ((p >> 16) & 255) / 255.f;
+    c[1] = ((p >> 8) & 255) / 255.f;
+    c[2] = (p & 255) / 255.f;
+    tone(it->colors, c);
+}
+
+static uint32_t filtered(const UiItem *it, const uint32_t *px, int stride, float u, float v, float scale)
+{
+    float pxx = floorf(u), pyy = floorf(v), col[3];
+    if (it->filter == UI_FILTER_DOT) {
+        float fx = u - pxx - 0.5f, fy = v - pyy - 0.5f, s[3] = { 0, 0, 0 }, mid[3] = { 0, 0, 0 };
+        for (int oy = -1; oy <= 1; oy++)
+            for (int ox = -1; ox <= 1; ox++) {
+                float c[3];
+                texel_rgb(it, px, stride, pxx + ox, pyy + oy, c);
+                float lum = c[0] * 0.30f + c[1] * 0.59f + c[2] * 0.11f, spread = 1.05f + (0.95f - 1.05f) * lum;
+                float w = expf(-2.4f * sqrtf((fx - ox) * (fx - ox) + (fy - oy) * (fy - oy)) * spread);
+                for (int k = 0; k < 3; k++) {
+                    s[k] += c[k] * w;
+                    if (!ox && !oy) mid[k] = c[k] * w;
+                }
+            }
+        for (int k = 0; k < 3; k++) col[k] = 1.2f * mid[k] + (s[k] - 1.2f * mid[k]) * 0.65f;
+    } else {
+        float gx = u - pxx, gy = v - pyy, ex = fminf(gx, 1 - gx), ey = fminf(gy, 1 - gy);
+        float lw = fmaxf(1.5f / scale, 0.1f), c[3];
+        float sx = ex / lw, sy = ey / lw;
+        sx = sx > 1 ? 1 : sx; sy = sy > 1 ? 1 : sy;
+        sx = sx * sx * (3 - 2 * sx); sy = sy * sy * (3 - 2 * sy);         /* smoothstep */
+        float grid = 0.5f + 0.5f * sx * sy;
+        texel_rgb(it, px, stride, pxx, pyy, c);
+        static const float centre[3] = { 1 / 6.f, 0.5f, 5 / 6.f };
+        for (int k = 0; k < 3; k++)
+            col[k] = c[k] * (it->colors == UI_COLORS_ORIGINAL ? 0.75f + 0.25f * cosf(6.2831853f * (gx - centre[k])) : 0.75f) * grid * 1.4f;
+    }
+    uint32_t out = 0;
+    for (int k = 0; k < 3; k++) {
+        float q = col[k] < 0 ? 0 : col[k] > 1 ? 1 : col[k];
+        out = (out << 8) | (uint32_t)(q * 255.f + 0.5f);
+    }
+    return out;
+}
+
 static void draw_game(const UiItem *it)
 {
     int fw, fh, stride;
     const uint32_t *px = app_frame(&app, &fw, &fh, &stride);
     if (!px) return;
+    float scale = it->w / fw;
     for (int y = (int)it->y; y < (int)(it->y + it->h); y++) {
         if (y < 0 || y >= H) continue;
-        int sy = (int)((y + 0.5f - it->y) * fh / it->h);
+        float v = (y + 0.5f - it->y) * fh / it->h;
+        int sy = (int)v;
         if (sy < 0 || sy >= fh) continue;
         for (int x = (int)it->x; x < (int)(it->x + it->w); x++) {
             if (x < 0 || x >= W) continue;
-            int sx = (int)((x + 0.5f - it->x) * fw / it->w);
+            float u = (x + 0.5f - it->x) * fw / it->w;
+            int sx = (int)u;
             if (sx < 0 || sx >= fw) continue;
-            fb[y * W + x] = px[sy * stride + sx] & 0xFFFFFF;
+            if (it->filter && u >= it->fx0 && u < it->fx1 && v >= it->fy0 && v < it->fy1)
+                fb[y * W + x] = filtered(it, px, stride, u, v, scale);
+            else if (it->colors) {
+                float c[3];
+                texel_rgb(it, px, stride, (float)sx, (float)sy, c);
+                fb[y * W + x] = ((uint32_t)(c[0] * 255.f + 0.5f) << 16) | ((uint32_t)(c[1] * 255.f + 0.5f) << 8) | (uint32_t)(c[2] * 255.f + 0.5f);
+            } else
+                fb[y * W + x] = px[sy * stride + sx] & 0xFFFFFF;
         }
     }
 }
@@ -470,6 +545,30 @@ int main(int argc, char **argv)
             }
         }
         else if (!strcmp(a, "btn")) printf("buttons %02X field %d haptic %d\n", ui_buttons(&app.ui), app.ui.field, app.ui.haptic);
+        else if (!strcmp(a, "hitmap")) {
+            /* what a finger coming down presses, every 27 screen pixels over the bottom of the screen:
+             * L/A flippers (LEFT/A), < > ^ the tilts or directions, M MENU, S START, . nothing */
+            Ui *u = &app.ui;
+            int y0 = (int)((u->nd.play_h - 12) * u->nd.scale);
+            printf("hitmap from y %d (controls from %d), step 27\n", y0, (int)(u->nd.play_h * u->nd.scale));
+            for (int y = y0; y < u->H; y += 27) {
+                char line[128];
+                int k = 0;
+                for (int x = 13; x < u->W && k < 120; x += 27) {
+                    int key;
+                    uint8_t b = ui_hit_test(u, (float)x, (float)y, &key);
+                    char ch = '.';
+                    if (key == ND_MENU) ch = 'M';
+                    else if (key == ND_START) ch = 'S';
+                    else if (key == ND_LFLIP) ch = (b & GBC_LEFT) || (b & GBC_B) ? 'L' : 'l';
+                    else if (key == ND_RFLIP) ch = 'A';
+                    else if (key == ND_PAD) ch = (b & (GBC_DOWN | GBC_LEFT)) && !(b & GBC_SELECT) && u->field ? '<' : (b & GBC_B) && u->field ? '>' : (b & GBC_SELECT) ? '^' : 'p';
+                    line[k++] = ch;
+                }
+                line[k] = 0;
+                printf("%5d %s%s\n", y, line, y < u->nd.play_h * u->nd.scale ? "   (game)" : "");
+            }
+        }
         else if (!strncmp(a, "p:", 2)) {
             char nm[16]; n = 1;
             sscanf(a + 2, "%15[^:]:%d", nm, &n);

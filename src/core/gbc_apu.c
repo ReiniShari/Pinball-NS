@@ -69,7 +69,7 @@ void gbc_apu_init(GBC *g, uint32_t sample_rate)
     if (!dac_ready) { for (int i = 0; i < 16; i++) DAC[i] = dac(true, i); dac_ready = true; }
     a->sample_rate = sample_rate;
     a->cyc_per_sample = (double)GBC_CLOCK / sample_rate;
-    a->hp_factor = pow(0.998943, (double)GBC_CLOCK / sample_rate);
+    a->hp_factor = pow(0.998943, (double)GBC_CLOCK / sample_rate);    /* GBC_HIGHPASS_CGB */
     a->power = true;
     a->fs_timer = 8192;
     a->regs[0x14] = 0x77;   /* NR50 */
@@ -514,6 +514,13 @@ void gbc_set_audio_rate(GBC *g, double sample_rate)
     if (sample_rate < 8000 || sample_rate > 192000) return;
     a->cyc_per_sample = (double)GBC_CLOCK / sample_rate;
     if (a->sample_pos > a->cyc_per_sample) a->sample_pos = a->cyc_per_sample;   /* the sample ends now */
+}
+
+void gbc_set_audio_highpass(GBC *g, double hz)
+{
+    GBCApu *a = &g->s.apu;
+    if (hz <= 0 || !a->sample_rate) return;
+    a->hp_factor = exp(-2 * 3.14159265358979 * hz / a->sample_rate);   /* per sample */
 }
 
 int gbc_audio_available(GBC *g)

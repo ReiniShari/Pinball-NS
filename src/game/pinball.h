@@ -98,6 +98,7 @@ void pb_run_frame(Pinball *pb, uint8_t buttons);
 const uint32_t *pb_frame(Pinball *pb, int *w, int *h, int *stride);   /* 0x00RRGGBB */
 int  pb_audio(Pinball *pb, int16_t *out, int max_frames);            /* stereo s16 */
 void pb_set_audio_rate(Pinball *pb, double sample_rate);             /* see gbc_set_audio_rate */
+void pb_set_audio_highpass(Pinball *pb, double hz);                  /* see gbc_set_audio_highpass */
 bool pb_rumble(Pinball *pb);
 bool pb_unified(const Pinball *pb);
 /* Width of the table: the whole table (192 pixels, default), or the original width (160

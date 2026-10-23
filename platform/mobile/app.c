@@ -6,7 +6,8 @@
  *   pinball.sav    the cartridge save (high scores, Pokedex, saved game)
  *   suspend.state  the whole machine when the app went to the background
  *   quick.state    the quick save of the menu
- *   settings.txt   vibration / sound / the last table played (keys of its bonus stages)
+ *   settings.txt   vibration / sound / motion tilt / touch flippers / screen filter / colours / the
+ *                  last table played (keys of its bonus stages)
  */
 #define _POSIX_C_SOURCE 200809L
 #include "app.h"
@@ -106,6 +107,12 @@ static void settings_load(MobileApp *a)
     free(d);
     if (strstr(buf, "vibration=0")) a->ui.vibration = false;
     if (strstr(buf, "sound=0")) a->ui.sound = false;
+    if (strstr(buf, "motion=1")) a->ui.motion = true;
+    if (strstr(buf, "touch=0")) a->ui.touch_flippers = false;
+    const char *f = strstr(buf, "filter=");
+    if (f && f[7] >= '0' && f[7] < '0' + UI_FILTERS) a->ui.filter = f[7] - '0';
+    f = strstr(buf, "colors=");
+    if (f && f[7] >= '0' && f[7] < '0' + UI_COLORSETS) a->ui.colors = f[7] - '0';
     if (strstr(buf, "table=1")) a->ui.table = 1;
 }
 
@@ -113,8 +120,9 @@ static void settings_save(MobileApp *a)
 {
     char p[600], buf[160];
     path_of(a, "settings.txt", p, sizeof p);
-    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\ntable=%d\n", a->ui.vibration ? 1 : 0,
-                     a->ui.sound ? 1 : 0, a->ui.table);
+    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\nmotion=%d\ntouch=%d\nfilter=%d\ncolors=%d\ntable=%d\n",
+                     a->ui.vibration ? 1 : 0, a->ui.sound ? 1 : 0, a->ui.motion ? 1 : 0, a->ui.touch_flippers ? 1 : 0,
+                     a->ui.filter, a->ui.colors, a->ui.table);
     if (!write_later(a, 1, p, buf, (size_t)n)) {         /* the previous one still waits: after it */
         app_io_wait(a);
         write_later(a, 1, p, buf, (size_t)n);
@@ -207,6 +215,7 @@ static bool start_game(MobileApp *a, bool resume)
     pb_set_antilag(pb, true);                   /* no frame skipped by the game (see pinball.h) */
     pb_set_frame_palettes(pb, true);            /* no picture torn by a change of colours */
     pb_set_hold(pb, true);                      /* the screen off (loadings): the last picture stays */
+    pb_set_audio_highpass(pb, GBC_HIGHPASS_FRONT);      /* the bass of the music (gbc.h) */
     a->pic_seq = 0;
     a->bg_ok = false;
     a->shown = NULL;                            /* the old game's picture: not this one's size */
@@ -315,6 +324,7 @@ void app_set_insets(MobileApp *a, int top, int bottom, int left, int right, int 
 
 void app_back(MobileApp *a)
 {
+    if (a->ui.menu_open && a->ui.about_open) { a->ui.about_open = false; return; }     /* ABOUT: the menu again */
     ui_open_menu(&a->ui, !a->ui.menu_open);
     if (a->ui.menu_open) a->ui.menu_sel = 0;          /* keys: the first entry is selected */
 }
@@ -418,6 +428,11 @@ void app_audio_pad(MobileApp *a, uint32_t level)
     atomic_store_explicit(&a->ring_w, r + level, memory_order_release);
 }
 
+void app_audio_drop(MobileApp *a, uint32_t frames)
+{
+    atomic_store_explicit(&a->ring_drop, frames, memory_order_release);    /* done by the audio thread */
+}
+
 void app_set_audio_rate(MobileApp *a, double rate)
 {
     if (a->pb) pb_set_audio_rate(a->pb, rate);
@@ -433,6 +448,8 @@ int app_audio_pull(MobileApp *a, int16_t *out, int frames)
     uint32_t r = atomic_load_explicit(&a->ring_r, memory_order_relaxed);
     uint32_t w = atomic_load_explicit(&a->ring_w, memory_order_acquire);
     if (atomic_exchange_explicit(&a->ring_flush, false, memory_order_acq_rel)) r = w;
+    uint32_t drop = atomic_exchange_explicit(&a->ring_drop, 0, memory_order_acq_rel);
+    if (drop) r += drop < w - r ? drop : w - r;
     uint32_t avail = w - r;
     int n = (uint32_t)frames < avail ? frames : (int)avail;
     for (int i = 0; i < n; i++) {
@@ -488,6 +505,26 @@ void app_update(MobileApp *a, double now)
         a->ui.sound = !a->ui.sound;
         a->sound_changed = true;
         settings_save(a);
+        break;
+    case UI_ACT_TOGGLE_MOTION:
+        a->ui.motion = !a->ui.motion;
+        settings_save(a);
+        break;
+    case UI_ACT_NEXT_FILTER:
+        a->ui.filter = (a->ui.filter + 1) % UI_FILTERS;
+        settings_save(a);
+        break;
+    case UI_ACT_TOGGLE_TOUCH:
+        a->ui.touch_flippers = !a->ui.touch_flippers;
+        settings_save(a);
+        break;
+    case UI_ACT_NEXT_COLORS:
+        a->ui.colors = (a->ui.colors + 1) % UI_COLORSETS;
+        settings_save(a);
+        break;
+    case UI_ACT_ABOUT:
+        a->ui.about_open = true;
+        a->ui.menu_hot = -1;
         break;
     case UI_ACT_RESET:
         ui_open_menu(&a->ui, false);

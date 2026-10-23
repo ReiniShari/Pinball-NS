@@ -23,9 +23,9 @@ Ready-to-use builds are in the **Releases** of this repository (they do not cont
 
 Android 8.0 or later, 64-bit ARM. Install the APK (allow apps from unknown sources if asked), then give it the ROM once: open the `.gbc` file with **Pinball NS** ("Open with" or "Share" in your file manager).
 
-- Touch the left or right half of the game to use the flippers, or the flipper keys.
-- The TILT cross tilts the table; START is the console's button.
-- **MENU** (or Back): resume, quick save and load, vibration, sound, restart, quit.
+- Touch the left or right half of the game to use the flippers (option TOUCH FLIPPERS), or the flipper keys.
+- The TILT cross tilts the table; with the option MOTION TILT, shake the phone left, right, or up and down. START is the console's button.
+- **MENU** (or Back): resume, quick save and load, vibration, sound, motion tilt, touch flippers, screen filter (dot, LCD), colors (original, black and white, Game Boy green), restart, about, quit.
 
 Bluetooth or USB gamepads and keyboards also work. The game is saved and paused when the app goes to the background.
 

@@ -520,6 +520,8 @@ int main(int argc, char **argv)
             FILE *sf = fopen(a + 2, "wb"); fwrite(d, 1, sz, sf); fclose(sf);
         } else if (!strcmp(a, "-check")) {
             pb.g.trace_fn = check_trace;
+        } else if (!strcmp(a, "-highpass") && i + 1 < argc) {   /* the output's high-pass filter at HZ (front-ends: GBC_HIGHPASS_FRONT) */
+            pb_set_audio_highpass(&pb, atof(argv[++i]));
         } else if (!strcmp(a, "-audiodump") && i + 1 < argc) {   /* the sound, raw 16-bit stereo */
             hashing = true;
             audiodump = fopen(argv[++i], "wb");

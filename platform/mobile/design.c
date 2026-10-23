@@ -337,31 +337,62 @@ void nd_game_rect(const NdLayout *L, float *x, float *y, float *w, float *h)
     *h = L->gh * L->scale;
 }
 
+/* The shapes of the controls as they are drawn (draw_pill, draw_key, draw_pad), shadows included,
+ * at a pixel of the canvas: a pill (rounded box), a flipper key (octagon), the pad (the cross: the arm,
+ * ND_DIR_*; 0 its centre; -1 outside). */
+static bool in_pill(const NdRect *r, int px, int py)
+{
+    for (int s = 0; s <= 1; s++) {                                  /* the pill, its shadow a row lower */
+        int j = py - (r->y + s);
+        if (j < 0 || j >= r->h) continue;
+        int cut = corner_cut(3, j < r->h - 1 - j ? j : r->h - 1 - j);
+        if (px >= r->x + cut && px < r->x + r->w - cut) return true;
+    }
+    return false;
+}
+
+static bool in_key(const NdRect *r, int px, int py)
+{
+    int n = r->w, x = px - r->x, y = py - r->y;
+    if (x < 0 || y < 0 || x >= n || y >= n) return false;
+    int dx = x < n - 1 - x ? x : n - 1 - x, dy = y < n - 1 - y ? y : n - 1 - y;
+    return dx + dy >= n / 4;
+}
+
+static int in_pad(const NdRect *r, int px, int py)
+{
+    int n = r->w, a = n / 3 + ((n / 3) % 2 == 0 ? 1 : 0), half = n / 2, ha = a / 2;
+    int x = px - (r->x + half), y = py - (r->y + half);
+    if (y == half) y = half - 1;                                    /* its shadow */
+    if (x < -half || x >= half || y < -half || y >= half) return -1;
+    int X = x < 0 ? -x - 1 : x, Y = y < 0 ? -y - 1 : y;
+    if (!((X <= ha && Y < half) || (Y <= ha && X < half))) return -1;
+    if (Y <= ha && X > ha) return x < 0 ? ND_DIR_LEFT : ND_DIR_RIGHT;
+    if (X <= ha && Y > ha) return y < 0 ? ND_DIR_UP : ND_DIR_DOWN;
+    return 0;
+}
+
+/*
+ * The control under a point of the screen: below the play area only (the halves of the game, which
+ * play the flippers, end where the controls begin), on the pixels of its picture only: the octagon of
+ * a flipper key, the cross of the pad (its arm: one direction, a tilt never comes with another one),
+ * the rounded box of a pill. Up to 2.7 margins around them (2.6: the whole of each side of the
+ * controls for the flipper keys): a thumb near the pad or a pill pressed another control.
+ */
 int nd_hit(const NdLayout *L, float sx, float sy, uint8_t *dirs)
 {
     float x = sx / L->scale, y = sy / L->scale;
     *dirs = 0;
-    int best = -1;
-    float bestd = 1e9f;
-    for (int b = 0; b < ND_NBTN; b++) {
-        const NdRect *r = &L->btn[b];
-        if (r->w <= 0) continue;
-        /* generous margins: the keys are small in game pixels */
-        float m = (b == ND_MENU || b == ND_START) ? 5.0f : 6.0f;
-        if (x < r->x - m || x >= r->x + r->w + m || y < r->y - m || y >= r->y + r->h + m) continue;
-        float dx = x - (r->x + r->w / 2.0f), dy = y - (r->y + r->h / 2.0f), d = dx * dx + dy * dy;
-        if (d < bestd) { bestd = d; best = b; }
-    }
-    if (best == ND_PAD) {
-        const NdRect *r = &L->btn[ND_PAD];
-        float dx = x - (r->x + r->w / 2.0f), dy = y - (r->y + r->h / 2.0f);
-        float ax = fabsf(dx), ay = fabsf(dy), dead = r->w * 0.12f;
-        if (ax < dead && ay < dead) return best;          /* the centre */
-        /* one direction, the arm under the finger: a tilt never comes with another one */
-        if (ax >= ay) *dirs = dx < 0 ? ND_DIR_LEFT : ND_DIR_RIGHT;
-        else *dirs = dy < 0 ? ND_DIR_UP : ND_DIR_DOWN;
-    }
-    return best;
+    if (y < L->play_h) return -1;
+    int px = (int)floorf(x), py = (int)floorf(y);
+    if (L->btn[ND_MENU].w > 0 && in_pill(&L->btn[ND_MENU], px, py)) return ND_MENU;
+    if (L->btn[ND_START].w > 0 && in_pill(&L->btn[ND_START], px, py)) return ND_START;
+    if (L->btn[ND_LFLIP].w > 0 && in_key(&L->btn[ND_LFLIP], px, py)) return ND_LFLIP;
+    if (L->btn[ND_RFLIP].w > 0 && in_key(&L->btn[ND_RFLIP], px, py)) return ND_RFLIP;
+    int d = L->btn[ND_PAD].w > 0 ? in_pad(&L->btn[ND_PAD], px, py) : -1;
+    if (d < 0) return -1;
+    *dirs = (uint8_t)d;
+    return ND_PAD;
 }
 
 uint8_t nd_key_buttons(int key, uint8_t dirs, bool field)
@@ -893,15 +924,15 @@ static void draw_key(Canvas *c, const NdRect *r, const KeySet *k, bool mirror, f
 #define MENU_ROW 11
 #define MENU_HEAD 13
 
-/* cuts the next line of at most maxc letters off *s, at a space when possible */
+/* cuts the next line of at most maxc letters off *s, at a space when possible, at a new line always */
 static int next_line(const char **s, char *line, int size, int maxc)
 {
-    while (**s == ' ') (*s)++;
+    while (**s == ' ' || **s == '\n') (*s)++;
     const char *p = *s;
     int n = 0, cut = -1;
-    while (*p && n < maxc) { if (*p == ' ') cut = (int)(p - *s); utf8_next(&p); n++; }
+    while (*p && *p != '\n' && n < maxc) { if (*p == ' ') cut = (int)(p - *s); utf8_next(&p); n++; }
     int len = (int)(p - *s);
-    if (*p && *p != ' ' && cut > 0) len = cut;
+    if (*p && *p != ' ' && *p != '\n' && cut > 0) len = cut;
     if (len > size - 1) len = size - 1;
     memcpy(line, *s, (size_t)len);
     line[len] = 0;
@@ -935,6 +966,7 @@ static NdRect menu_box(const NdLayout *L, const NdState *st)
     if (st->menu_hint) h += text_lines(st->menu_hint, maxc) * FONT_CELL_H + 3;
     if (st->menu_credits) h += text_lines(st->menu_credits, maxc) * FONT_CELL_H + 3;
     if (st->menu_rights) h += text_lines(st->menu_rights, maxc) * FONT_CELL_H + 3;
+    if (st->menu_info) h += text_lines(st->menu_info, maxc) * FONT_CELL_H + 3;
     NdRect r = { L->gx + L->gw / 2 - w / 2, L->gy + L->gh / 2 - h / 2, w, h };
     if (r.y + h > L->vh - 3) r.y = L->vh - 3 - h;
     if (r.x < 2) r.x = 2;
@@ -975,13 +1007,14 @@ static void draw_menu(Canvas *c, const NdLayout *L, const NdState *st)
         }
         text_outlined(c, b.x + 15, ry + 1, st->menu_label[i], C_WHITE, C_BLACK);
     }
-    /* the hint, then the author (each under a line), the rights; cut at the spaces */
+    /* the hint, then the author (each under a line), the rights, what the platform measured (under a
+     * line); cut at the spaces */
     int hy = b.y + MENU_HEAD + 4 + st->menu_n * MENU_ROW + 2;
-    const char *parts[3] = { st->menu_hint, st->menu_credits, st->menu_rights };
-    for (int k = 0; k < 3; k++) {
+    const char *parts[4] = { st->menu_hint, st->menu_credits, st->menu_rights, st->menu_info };
+    for (int k = 0; k < 4; k++) {
         const char *s = parts[k];
         if (!s) continue;
-        if (k < 2) fill(c, b.x + 3, hy - 2, b.w - 6, 1, C_SHADE);
+        if (k != 2) fill(c, b.x + 3, hy - 2, b.w - 6, 1, C_SHADE);
         char line[96];
         while (*s && next_line(&s, line, sizeof line, (b.w - 6) / FONT_CELL_W)) {
             text(c, b.x + b.w / 2 - text_w(line) / 2, hy, line, C_HINT);
@@ -1106,7 +1139,7 @@ void nd_render_controls(const NdLayout *L, const NdState *st, const uint32_t *bg
 
     c.to_white = c.to_black = 0;
     if (st->toast && st->toast[0] && !st->menu_open) draw_toast(&c, L, st->toast);
-    if (st->menu_open && st->menu_n > 0) draw_menu(&c, L, st);
+    if (st->menu_open && (st->menu_n > 0 || st->menu_hint)) draw_menu(&c, L, st);     /* the entries, or the page ABOUT */
 }
 
 void nd_icon(uint32_t *out, int n)

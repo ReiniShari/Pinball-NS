@@ -3,7 +3,7 @@
 #   make windows    PinballNS.exe        (needs mingw-w64: x86_64-w64-mingw32-gcc, windres)
 #   make android    PinballNS.apk        (needs clang + lld, Android headers, aapt, zipalign,
 #                                         apksigner: see platform/android/build_apk.sh)
-#   make tools      test tools for Linux (pbrun, pbdebug, uisim, audiotest, androidmock, pacetest, ndicon,
+#   make tools      test tools for Linux (pbrun, pbdebug, uisim, audiotest, androidmock, pacetest, motiontest, ndicon,
 #                   testrom)
 #   make test ROM=path/to/rom.gbc        runs the automatic tests (the ROM is not included)
 #
@@ -31,7 +31,7 @@ HDRS   = $(wildcard src/core/*.h src/game/*.h src/front/*.h platform/mobile/*.h)
 
 all: tools windows
 
-tools: build/pbrun build/pbdebug build/uisim build/audiotest build/androidmock build/pacetest build/ndicon build/testrom
+tools: build/pbrun build/pbdebug build/uisim build/audiotest build/androidmock build/pacetest build/motiontest build/ndicon build/testrom
 
 build:
 	mkdir -p build
@@ -60,6 +60,9 @@ build/androidmock: tools/androidmock/androidmock.c platform/android/main_android
 build/pacetest: tools/pacetest.c src/front/pacing.h | build
 	$(CC) $(CFLAGS) -o $@ tools/pacetest.c -lm
 
+build/motiontest: tools/motiontest.c platform/mobile/motion.h | build
+	$(CC) $(CFLAGS) -o $@ tools/motiontest.c -lm
+
 build/ndicon: tools/ndicon.c platform/mobile/design.c $(GAME) $(CORE) $(HDRS) | build
 	$(CC) $(CFLAGS) -o $@ tools/ndicon.c platform/mobile/design.c $(GAME) $(CORE) -lm
 
@@ -80,9 +83,10 @@ build/PinballNS.exe: platform/windows/main_win32.c platform/windows/pinball.rc p
 android: build/ndicon
 	platform/android/build_apk.sh
 
-test: build/pbrun build/pbdebug build/uisim build/audiotest build/androidmock build/pacetest
+test: build/pbrun build/pbdebug build/uisim build/audiotest build/androidmock build/pacetest build/motiontest
 	@test -n "$(ROM)" || (echo "usage: make test ROM=path/to/pokemon_pinball_us.gbc" && false)
 	build/pacetest -seeds 50
+	build/motiontest
 	build/androidmock "$(ROM)"
 	build/pbrun "$(ROM)" -check w:200 p:a:4 w:120 p:a:4 w:120 p:a:4 w:120 p:a:4 w:300 B:30000:1
 	build/pbdebug "$(ROM)" -selftest

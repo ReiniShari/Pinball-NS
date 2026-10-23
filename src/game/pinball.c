@@ -940,6 +940,10 @@ static bool hk_cry(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
     if (g->stretch && pb->late_budget) *pb->late_budget = 0;  /* gbc_exec stops before the next step */
+#ifdef PB_LAGDEBUG
+    if (g->call_depth > 0 && getenv("PB_LATELOG"))
+        fprintf(stderr, "frame %ld: cry in a routine called by a hook (frozen %d stretch %d)\n", pb->st.frame, g->frozen, g->stretch);
+#endif
     return false;
 }
 
@@ -1543,6 +1547,7 @@ const uint32_t *pb_frame(Pinball *pb, int *w, int *h, int *stride)
 int pb_audio(Pinball *pb, int16_t *out, int max_frames) { return gbc_audio_read(&pb->g, out, max_frames); }
 
 void pb_set_audio_rate(Pinball *pb, double sample_rate) { gbc_set_audio_rate(&pb->g, sample_rate); }
+void pb_set_audio_highpass(Pinball *pb, double hz) { gbc_set_audio_highpass(&pb->g, hz); }
 
 bool pb_rumble(Pinball *pb) { return pb->g.s.rumble; }
 

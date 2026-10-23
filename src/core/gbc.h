@@ -295,6 +295,14 @@ int  gbc_audio_read(GBC *g, int16_t *out, int max_frames);   /* interleaved ster
 /* the rate of the sound output, changed while it runs (the front-ends keep the sound card fed
  * while the emulation follows the screen: a fraction of a percent) */
 void gbc_set_audio_rate(GBC *g, double sample_rate);
+/* The high-pass filter of the output (the capacitors between the DACs, the amplifier and the
+ * headphones or the speaker), its cut in Hz. gbc_apu_init: GBC_HIGHPASS_CGB, Pan Docs' figure for the
+ * CGB (a charge factor of 0.998943 a cycle): the bass of the music gone, its square waves turned into
+ * spikes. 2.7 used SameBoy's 28 Hz, the bass of a modded console ("bass mod": larger capacitors),
+ * found too deep; the front-ends: GBC_HIGHPASS_FRONT, between the two. */
+#define GBC_HIGHPASS_CGB      705.0
+#define GBC_HIGHPASS_FRONT    200.0
+void gbc_set_audio_highpass(GBC *g, double hz);
 int  gbc_audio_available(GBC *g);
 /* The colours of a whole picture taken at its first line: a palette written while the picture is
  * drawn (a fade, a flash, the palettes of another video page loaded out of time) takes effect

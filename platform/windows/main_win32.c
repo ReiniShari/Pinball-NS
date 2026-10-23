@@ -41,7 +41,7 @@
 #include "refresh_win.h"
 
 #define APP_TITLE   L"Pinball NS"
-#define APP_VERSION L"2.5"
+#define APP_VERSION L"2.7"
 #define AUDIO_RATE  48000
 #define NBUF        12
 #define BUF_FRAMES  512
@@ -387,7 +387,8 @@ static bool try_rom(const wchar_t *path, bool report)
     pb_set_antilag(pb, true);                   /* no frame skipped by the game (see pinball.h) */
     pb_set_frame_palettes(pb, true);            /* no picture torn by a change of colours */
     pb_set_hold(pb, true);                      /* the screen off (loadings): the last picture stays */
-    shown_px = NULL;                            /* the old game's picture: not this one's size */
+    pb_set_audio_highpass(pb, GBC_HIGHPASS_FRONT);      /* the bass of the music (gbc.h) */
+    shown_px = NULL;                          /* the old game's picture: not this one's size */
     rom_data = d;
     rom_size = n;
     wcsncpy(rom_path, path, MAX_PATH - 1);
@@ -467,6 +468,7 @@ static void audio_open(void)
     audio_pos_last = 0;
     stage_n = 0;
     sound_reset(&snd, AUDIO_RATE, AUDIO_TARGET);
+    snd.limit = NBUF * BUF_FRAMES + sizeof stage_buf / sizeof stage_buf[0] / 2;   /* the buffers and the stage */
     sound_restart(&snd, qpc_now());
 }
 
@@ -527,10 +529,10 @@ static void audio_position(void)
 }
 
 /* before each frame of the game: the sound it makes keeps the card fed, AUDIO_TARGET frames
- * ahead (pacing.h) */
-static void audio_pace(double t, int frames_left)
+ * ahead (pacing.h); returns its action (SOUND_EXTRA: one frame more) */
+static int audio_pace(double t, int frames_left)
 {
-    if (!audio_ok) return;
+    if (!audio_ok) return SOUND_KEEP;
     audio_position();
     double played = (double)(audio_played_bytes / 4);
     double waiting = (double)audio_written - played + stage_n;
@@ -552,8 +554,13 @@ static void audio_pace(double t, int frames_left)
         if (add > 0) { memset(stage_buf + stage_n * 2, 0, (size_t)add * 4); stage_n += add; }
     } else if (act == SOUND_FLUSH) {
         stage_n = 0;
+    } else if (act == SOUND_TRIM) {             /* the oldest of the stage (what the card has is out of reach) */
+        int drop = (int)pad < stage_n ? (int)pad : stage_n;
+        memmove(stage_buf, stage_buf + drop * 2, (size_t)(stage_n - drop) * 4);
+        stage_n -= drop;
     }
     pb_set_audio_rate(pb, rate);
+    return act;
 }
 
 /* ------------------------------------------------------------------ gamepad (XInput) */
@@ -1299,10 +1306,12 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
                 pacer_restart(&pacer);
                 if (audio_ok) sound_restart(&snd, t);       /* the card was paused: measured afresh */
             }
-            int n = pacer_frames(&pacer, t, 4);
+            int n = pacer_frames(&pacer, t, 6);
             if (selftest) kb_buttons = (frame_seq % 90) < 6 ? 0x01 : 0;       /* A, now and then */
+            bool extra = false;
             for (int k = 0; k < n; k++) {
-                audio_pace(t, n - k);
+                /* the sound may ask for one frame more (its target raised: pacing.h) */
+                if (audio_pace(t, n - k) == SOUND_EXTRA && !extra) { extra = true; n++; }
                 run_one_frame();
             }
             present();                                      /* every refresh: composed at the next */
@@ -1361,8 +1370,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
                     st.refreshes, st.refreshes / run, st.frames, st.frames / run, pacer.num, pacer.den, st.odd);
             fprintf(f, "longest between refreshes %.2f ms  work per refresh %.2f ms (longest %.2f)\n",
                     st.dt_max * 1000, st.work_sum / (st.refreshes ? st.refreshes : 1) * 1000, st.work_max * 1000);
-            fprintf(f, "sound: waiting %.0f..%.0f  starving %ld  silences added %ld  dropped %ld  card %.1f Hz (measured %.1f)\n",
-                    st.level_min, st.level_max, st.starving, st.pads, st.flushes, snd.rate, snd.measured);
+            fprintf(f, "sound: waiting %.0f..%.0f  starving %ld  silences added %ld  dropped %ld  frames added %ld  target %.0f  "
+                    "card %.1f Hz (measured %.1f)\n", st.level_min, st.level_max, st.starving, st.pads, st.flushes, snd.extra,
+                    snd.target, snd.rate, snd.measured);
             fprintf(f, "cartridge save: %ld writes handed over, longest call %.3f ms\n", st.sram_writes, st.flush_max * 1000);
             fclose(f);
         }

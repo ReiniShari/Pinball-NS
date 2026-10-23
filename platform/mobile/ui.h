@@ -24,6 +24,9 @@ typedef struct {
     float border_w;
     int text;              /* offset of the UTF-8 text in UiList.text (text) */
     float px;              /* size of one font pixel (text) */
+    int filter;            /* the game image: UI_FILTER_* over the part fx0,fy0..fx1,fy1 (its pixels) */
+    float fx0, fy0, fx1, fy1;
+    int colors;            /* the game image: UI_COLORS_* (all of it) */
 } UiItem;
 
 #define UI_MAX_ITEMS 320
@@ -38,10 +41,19 @@ typedef struct {
 
 enum {
     UI_ACT_NONE = 0, UI_ACT_RESUME, UI_ACT_QUICKSAVE, UI_ACT_QUICKLOAD, UI_ACT_TOGGLE_VIBRATION,
-    UI_ACT_TOGGLE_SOUND, UI_ACT_RESET, UI_ACT_QUIT, UI_ACT_OPEN_MENU
+    UI_ACT_TOGGLE_SOUND, UI_ACT_RESET, UI_ACT_QUIT, UI_ACT_OPEN_MENU, UI_ACT_TOGGLE_MOTION, UI_ACT_NEXT_FILTER,
+    UI_ACT_TOGGLE_TOUCH, UI_ACT_NEXT_COLORS, UI_ACT_ABOUT
 };
 
-#define UI_MENU_ITEMS 7
+#define UI_MENU_ITEMS 12
+
+/* the screen filters of the game (the classic ones of the emulators): none (sharp pixels), dots
+ * (each pixel a round dot, a little glow between them), LCD (the grid of a liquid crystal screen,
+ * the red, green and blue of each cell side by side) */
+enum { UI_FILTER_NONE = 0, UI_FILTER_DOT, UI_FILTER_LCD, UI_FILTERS };
+/* the colours of the screen: the game's own (a Game Boy Color), black and white, the four greens of
+ * the first Game Boy's screen (in shades between them) */
+enum { UI_COLORS_ORIGINAL = 0, UI_COLORS_BW, UI_COLORS_GREEN, UI_COLORSETS };
 
 /* haptic feedback requested by the interface (strongest of the frame) */
 enum { UI_HAPTIC_NONE = 0, UI_HAPTIC_TICK = 1, UI_HAPTIC_CLICK = 2, UI_HAPTIC_HEAVY = 3 };
@@ -63,7 +75,8 @@ typedef struct {
     int inset_t, inset_b, inset_l, inset_r;   /* screen covered by the system (cut-out) */
     int corner;                     /* radius of the rounded corners of the screen */
     /* input */
-    struct { int id; float x, y; bool active; uint8_t buttons; int key; } ptr[UI_MAX_POINTERS];
+    /* the fingers: `play` one that came down on the game (a half: a flipper, wherever it slides) */
+    struct { int id; float x, y; bool active, play; uint8_t buttons; int key; } ptr[UI_MAX_POINTERS];
     uint8_t touch_buttons, ext_buttons;
     bool in_game;                   /* the pinball screen: the halves of the game image are flippers */
     bool field;                     /* the table or a bonus stage is played: its keys, the TILT pad */
@@ -71,11 +84,18 @@ typedef struct {
     int haptic;                     /* feedback requested (UI_HAPTIC_*), strongest first */
     /* menu */
     bool menu_open;
+    bool about_open;                /* the menu shows its page ABOUT (the explanations, the author, the
+                                     * rights, what the platform measured): a tap goes back */
     int menu_hot;                   /* item under the finger, -1 none */
     int menu_sel;                   /* item chosen with a gamepad / keyboard, -1 none */
     int pending_action;
     /* settings shown in the menu */
     bool vibration, sound;
+    bool motion;                    /* tilt by moving the phone (the platform's accelerometer) */
+    bool touch_flippers;            /* the halves of the game play the flippers */
+    int filter;                     /* UI_FILTER_* */
+    int colors;                     /* UI_COLORS_* */
+    char info[128];                 /* what the platform measured, shown at the bottom of the menu */
     /* messages */
     char toast[160];
     double toast_until, now;
@@ -89,6 +109,8 @@ void ui_layout(Ui *ui, int width, int height);
 void ui_touch(Ui *ui, int action, int id, float x, float y);
 void ui_set_external_buttons(Ui *ui, uint8_t buttons);   /* gamepad / keyboard */
 uint8_t ui_buttons(const Ui *ui);
+/* tools: what a finger coming down at (x, y) would press (*key: the control, -1 none) */
+uint8_t ui_hit_test(Ui *ui, float x, float y, int *key);
 int  ui_take_action(Ui *ui);
 void ui_open_menu(Ui *ui, bool open);
 void ui_toast(Ui *ui, const char *msg, double seconds);

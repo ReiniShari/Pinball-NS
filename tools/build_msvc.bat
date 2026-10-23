@@ -4,7 +4,7 @@ rem for Windows machines without mingw-w64 / make.
 rem
 rem   tools\build_msvc.bat            the tools and PinballNS.exe  (into build\)
 rem   tools\build_msvc.bat pbrun      only one target (pbrun, pbdebug, uisim, audiotest, testrom, cpucheck,
-rem                                   pacetest, refreshtest, ndicon, exe; pbprof, gencpu: not in "all")
+rem                                   pacetest, motiontest, refreshtest, ndicon, exe; pbprof, gencpu: not in "all")
 setlocal
 cd /d "%~dp0\.."
 
@@ -81,6 +81,12 @@ if not "%T%"=="all" goto end
 rem the pace of the front-ends (src\front\pacing.h) on simulated screens and sound cards
 if not exist build\obj\pacetest mkdir build\obj\pacetest
 cl %CFLAGS% /Fobuild\obj\pacetest\ /Fe:build\pacetest.exe tools\pacetest.c || exit /b 1
+if not "%T%"=="all" goto end
+
+:motiontest
+rem the tilt by moving the phone (platform\mobile\motion.h) on made-up movements
+if not exist build\obj\motiontest mkdir build\obj\motiontest
+cl %CFLAGS% /Fobuild\obj\motiontest\ /Fe:build\motiontest.exe tools\motiontest.c || exit /b 1
 if not "%T%"=="all" goto end
 
 :refreshtest

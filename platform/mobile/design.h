@@ -80,6 +80,7 @@ typedef struct {
     const char *menu_hint;
     const char *menu_credits;          /* under the hint: the author */
     const char *menu_rights;           /* then the rights on the game */
+    const char *menu_info;             /* then what the platform measured (the pace of the game, its sound) */
     const char *toast;                 /* a short message over the bottom of the game */
 } NdState;
 
@@ -100,7 +101,8 @@ int  nd_scene(const Pinball *pb, int gh);
 void nd_render_game(const NdLayout *L, const Pinball *pb, const uint32_t *game, int game_stride, uint32_t *bg, int fade[2]);
 void nd_render_controls(const NdLayout *L, const NdState *st, const uint32_t *bg, const int fade[2], uint32_t *out);
 
-/* the control under a screen point (-1: none); for the pad, the directions (ND_DIR_*) */
+/* the control under a screen point, on what is drawn of it only (-1: none); for the pad, the arm under
+ * it (ND_DIR_*; 0: its centre) */
 int  nd_hit(const NdLayout *L, float sx, float sy, uint8_t *dirs);
 /* menu entry under a screen point (-1: none), and whether the point is inside the menu box */
 int  nd_menu_hit(const NdLayout *L, const NdState *st, float sx, float sy, bool *inside);

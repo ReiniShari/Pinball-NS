@@ -94,6 +94,7 @@ void ui_init(Ui *ui)
     font_init();
     ui->vibration = true;
     ui->sound = true;
+    ui->touch_flippers = true;
     ui->menu_hot = -1;
     for (int i = 0; i < UI_MAX_POINTERS; i++) { ui->ptr[i].id = -1; ui->ptr[i].key = -1; }
 }
@@ -138,16 +139,26 @@ static const char *menu_label(const Ui *ui, int i)
     case 2: return "LOAD QUICK SAVE";
     case 3: return ui->vibration ? "VIBRATION : ON" : "VIBRATION : OFF";
     case 4: return ui->sound ? "SOUND : ON" : "SOUND : OFF";
-    case 5: return "RESTART THE GAME";
+    case 5: return ui->motion ? "MOTION TILT : ON" : "MOTION TILT : OFF";
+    case 6: return ui->touch_flippers ? "TOUCH FLIPPERS : ON" : "TOUCH FLIPPERS : OFF";
+    case 7: return ui->filter == UI_FILTER_DOT ? "SCREEN FILTER : DOT" : ui->filter == UI_FILTER_LCD ? "SCREEN FILTER : LCD" : "SCREEN FILTER : NONE";
+    case 8: return ui->colors == UI_COLORS_BW ? "COLORS : BLACK & WHITE" : ui->colors == UI_COLORS_GREEN ? "COLORS : GAME BOY GREEN" : "COLORS : ORIGINAL";
+    case 9: return "RESTART THE GAME";
+    case 10: return "ABOUT";
     default: return "QUIT";
     }
 }
 
 static const int menu_action[NMENU] = {
-    UI_ACT_RESUME, UI_ACT_QUICKSAVE, UI_ACT_QUICKLOAD, UI_ACT_TOGGLE_VIBRATION, UI_ACT_TOGGLE_SOUND, UI_ACT_RESET, UI_ACT_QUIT
+    UI_ACT_RESUME, UI_ACT_QUICKSAVE, UI_ACT_QUICKLOAD, UI_ACT_TOGGLE_VIBRATION, UI_ACT_TOGGLE_SOUND, UI_ACT_TOGGLE_MOTION,
+    UI_ACT_TOGGLE_TOUCH, UI_ACT_NEXT_FILTER, UI_ACT_NEXT_COLORS, UI_ACT_RESET, UI_ACT_ABOUT, UI_ACT_QUIT
 };
 
-static const char *MENU_HINT = "Left or right half of the game: flippers";
+/* the page ABOUT (2.7: under the entries of the menu, which then went past the bottom of a phone's
+ * screen) */
+static const char *MENU_HINT =
+    "TOUCH FLIPPERS: the left or right half of the game plays a flipper. MOTION TILT: shake the phone left, "
+    "right, or up and down, to tilt the table. Tap to go back.";
 static const char *MENU_CREDITS = "Made by Reinhard Sharapov 2026";
 /* the copyright lines of the game's own copyright screen and the trademarks
  * ("Copyright" in words: the font of the menus has no room for a readable sign) */
@@ -180,6 +191,7 @@ UiRect ui_menu_item(const Ui *ui, int i)
 void ui_open_menu(Ui *ui, bool open)
 {
     ui->menu_open = open;
+    ui->about_open = false;
     ui->menu_hot = -1;
     ui->menu_sel = -1;
     for (int i = 0; i < UI_MAX_POINTERS; i++) { ui->ptr[i].id = -1; ui->ptr[i].active = false; ui->ptr[i].buttons = 0; ui->ptr[i].key = -1; }
@@ -196,24 +208,40 @@ void ui_toast(Ui *ui, const char *msg, double seconds)
 
 static void haptic(Ui *ui, int kind) { if (kind > ui->haptic) ui->haptic = kind; }
 
-/* The key under the finger and the Game Boy buttons it presses. On the table, the pad tilts
- * it (left: the left tilt, right: the right tilt, up: the upper tilt), as the game's default
- * keys (DOWN, B, SELECT); elsewhere it is the directional pad (its centre: SELECT), and the
- * flipper keys are B (left) and A (right). */
-static uint8_t control_at(Ui *ui, float x, float y, int *key)
+/* the point is on the game, where a finger plays the flippers (during a game, TOUCH FLIPPERS on) */
+static bool on_play(const Ui *ui, float x, float y)
+{
+    float gx, gy, gw, gh;
+    nd_play_rect(&ui->nd, &gx, &gy, &gw, &gh);
+    return ui->in_game && ui->touch_flippers && !ui->no_rom && x >= gx && x < gx + gw && y >= gy && y < gy + gh;
+}
+
+/* The key under the finger and the Game Boy buttons it presses. A finger that came down on the game
+ * (play) is a flipper, by the half it is over, wherever it slides (down onto the controls too);
+ * elsewhere the controls only (nd_hit). On the table, the pad tilts it (left: the left tilt, right:
+ * the right tilt, up: the upper tilt), as the game's default keys (DOWN, B, SELECT); elsewhere it is
+ * the directional pad (its centre: SELECT), and the flipper keys are B (left) and A (right). */
+static uint8_t control_at(Ui *ui, float x, float y, bool play, int *key)
 {
     *key = -1;
     if (ui->no_rom) return 0;
-    float gx, gy, gw, gh;
-    nd_play_rect(&ui->nd, &gx, &gy, &gw, &gh);
-    if (ui->in_game && x >= gx && x < gx + gw && y >= gy && y < gy + gh && nd_hit(&ui->nd, x, y, &(uint8_t){ 0 }) < 0) {
-        *key = x < gx + gw * 0.5f ? ND_LFLIP : ND_RFLIP;
-        return x < gx + gw * 0.5f ? GBC_LEFT : GBC_A;
+    if (play) {
+        float gx, gy, gw, gh;
+        nd_play_rect(&ui->nd, &gx, &gy, &gw, &gh);
+        bool left = x < gx + gw * 0.5f;
+        *key = left ? ND_LFLIP : ND_RFLIP;
+        return left ? GBC_LEFT : GBC_A;
     }
     uint8_t dirs;
     int k = nd_hit(&ui->nd, x, y, &dirs);
     *key = k;
     return nd_key_buttons(k, dirs, ui->field);
+}
+
+uint8_t ui_hit_test(Ui *ui, float x, float y, int *key)
+{
+    nd_update(ui, ui->nd_fw, ui->nd_fh);
+    return control_at(ui, x, y, on_play(ui, x, y), key);
 }
 
 static void recompute(Ui *ui)
@@ -240,6 +268,13 @@ void ui_touch(Ui *ui, int action, int id, float x, float y)
         return;
     }
     nd_update(ui, ui->nd_fw, ui->nd_fh);
+    if (ui->menu_open && ui->about_open) {
+        if (action == UI_UP) {                          /* back to the menu */
+            ui->about_open = false;
+            haptic(ui, UI_HAPTIC_TICK);
+        }
+        return;
+    }
     if (ui->menu_open) {
         bool in;
         if (action == UI_DOWN) {
@@ -274,6 +309,7 @@ void ui_touch(Ui *ui, int action, int id, float x, float y)
         ui->ptr[slot].id = id;
         ui->ptr[slot].buttons = 0;
         ui->ptr[slot].key = -1;
+        ui->ptr[slot].play = on_play(ui, x, y);
     }
     if (slot < 0) return;
     if (action == UI_UP) {
@@ -283,7 +319,20 @@ void ui_touch(Ui *ui, int action, int id, float x, float y)
         ui->ptr[slot].key = -1;
     } else {
         int key = -1;
-        uint8_t b = control_at(ui, x, y, &key);
+        uint8_t b = control_at(ui, x, y, ui->ptr[slot].play, &key);
+        int old = ui->ptr[slot].key;
+        if (action == UI_MOVE && !ui->ptr[slot].play) {
+            /* a finger on a flipper key keeps it while it slides (a thumb rolls, leaves the key a
+             * little), unless it reaches the other key (up to 2.5 the flipper fell back at once);
+             * MENU opens only where a finger comes down */
+            if ((old == ND_LFLIP || old == ND_RFLIP) && key != ND_LFLIP && key != ND_RFLIP) {
+                key = old;
+                b = ui->ptr[slot].buttons;
+            } else if (key == ND_MENU) {
+                key = -1;
+                b = 0;
+            }
+        }
         if (b & ~ui->ptr[slot].buttons) {
             /* a new press: a click, lighter for the tilts */
             bool tilt = ui->field && key == ND_PAD;
@@ -302,6 +351,10 @@ void ui_set_external_buttons(Ui *ui, uint8_t b)
     uint8_t pressed = (uint8_t)(b & ~ui->ext_buttons);
     ui->ext_buttons = b;
     if (!ui->menu_open || !pressed) return;
+    if (ui->about_open) {                               /* any of A, B, START: back to the menu */
+        if (pressed & (GBC_A | GBC_B | GBC_START)) ui->about_open = false;
+        return;
+    }
     /* the menu with a gamepad or a keyboard */
     if (pressed & GBC_UP) ui->menu_sel = ui->menu_sel <= 0 ? NMENU - 1 : ui->menu_sel - 1;
     if (pressed & GBC_DOWN) ui->menu_sel = ui->menu_sel < 0 || ui->menu_sel >= NMENU - 1 ? 0 : ui->menu_sel + 1;
@@ -332,13 +385,21 @@ void ui_nd_state(const Ui *ui, NdState *st)
     nd_targets((uint8_t)(ui->touch_buttons | ui->ext_buttons), ui->field, ui->menu_open, target, &st->pad_dirs);
     for (int i = 0; i < ND_NBTN; i++) st->press[i] = ui->press[i];
     st->menu_open = ui->menu_open;
-    st->menu_n = NMENU;
-    st->menu_hot = ui->menu_hot >= 0 ? ui->menu_hot : ui->menu_sel;
-    st->menu_title = "PINBALL NS";
-    for (int i = 0; i < NMENU && i < ND_MENU_MAX; i++) st->menu_label[i] = menu_label(ui, i);
-    st->menu_hint = MENU_HINT;
-    st->menu_credits = MENU_CREDITS;
-    st->menu_rights = MENU_RIGHTS;
+    if (ui->about_open) {
+        /* the page ABOUT: no entries, the texts */
+        st->menu_n = 0;
+        st->menu_hot = -1;
+        st->menu_title = "ABOUT";
+        st->menu_hint = MENU_HINT;
+        st->menu_credits = MENU_CREDITS;
+        st->menu_rights = MENU_RIGHTS;
+        st->menu_info = ui->info[0] ? ui->info : NULL;
+    } else {
+        st->menu_n = NMENU;
+        st->menu_hot = ui->menu_hot >= 0 ? ui->menu_hot : ui->menu_sel;
+        st->menu_title = "PINBALL NS";
+        for (int i = 0; i < NMENU && i < ND_MENU_MAX; i++) st->menu_label[i] = menu_label(ui, i);
+    }
     if (ui->toast[0] && ui->now < ui->toast_until) st->toast = ui->toast;
 }
 
@@ -429,4 +490,11 @@ void ui_build(Ui *ui, UiList *l, int fw, int fh)
     it->kind = UI_GAME;
     it->w = ui->nd.cw * ui->nd.scale;
     it->h = ui->nd.ch * ui->nd.scale;
+    /* the filter and the colours: the whole picture alike, the controls and the menu as the game */
+    it->filter = ui->filter;
+    it->colors = ui->colors;
+    it->fx0 = 0;
+    it->fy0 = 0;
+    it->fx1 = (float)ui->nd.cw;
+    it->fy1 = (float)ui->nd.ch;
 }

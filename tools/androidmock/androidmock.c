@@ -8,6 +8,7 @@
 #define _GNU_SOURCE
 #include <android/native_activity.h>
 #include <android/looper.h>
+#include <android/sensor.h>
 #include <android/log.h>
 #include <aaudio/AAudio.h>
 #include <EGL/egl.h>
@@ -264,7 +265,7 @@ void glViewport(GLint x, GLint y, GLsizei w, GLsizei h) { (void)x; (void)y; (voi
 /* ------------------------------------------------------------------ AAudio: a 48 kHz sound card */
 
 struct AAudioStreamBuilderStruct { AAudioStream_dataCallback cb; void *user; int rate, channels; };
-struct AAudioStreamStruct { AAudioStream_dataCallback cb; void *user; pthread_t th; volatile int run; };
+struct AAudioStreamStruct { AAudioStream_dataCallback cb; void *user; pthread_t th; volatile int run; int32_t size; };
 static int open_streams;
 
 aaudio_result_t AAudio_createStreamBuilder(AAudioStreamBuilder **b) { *b = (AAudioStreamBuilder *)calloc(1, sizeof **b); (*b)->rate = 48000; (*b)->channels = 2; return AAUDIO_OK; }
@@ -309,8 +310,26 @@ aaudio_result_t AAudioStream_close(AAudioStream *s) { AAudioStream_requestStop(s
 int32_t AAudioStream_getSampleRate(AAudioStream *s) { (void)s; return 48000; }
 int32_t AAudioStream_getChannelCount(AAudioStream *s) { (void)s; return 2; }
 int32_t AAudioStream_getFramesPerBurst(AAudioStream *s) { (void)s; return 192; }
-aaudio_result_t AAudioStream_setBufferSizeInFrames(AAudioStream *s, int32_t n) { (void)s; return n; }
+aaudio_result_t AAudioStream_setBufferSizeInFrames(AAudioStream *s, int32_t n) { s->size = n; return n; }
+int32_t AAudioStream_getBufferSizeInFrames(AAudioStream *s) { return s->size; }
+int32_t AAudioStream_getBufferCapacityInFrames(AAudioStream *s) { (void)s; return 3072; }
+int32_t AAudioStream_getXRunCount(AAudioStream *s) { (void)s; return 0; }
+aaudio_performance_mode_t AAudioStream_getPerformanceMode(AAudioStream *s) { (void)s; return AAUDIO_PERFORMANCE_MODE_LOW_LATENCY; }
+aaudio_sharing_mode_t AAudioStream_getSharingMode(AAudioStream *s) { (void)s; return AAUDIO_SHARING_MODE_SHARED; }
+aaudio_result_t AAudioStream_getTimestamp(AAudioStream *s, clockid_t c, int64_t *pos, int64_t *ns) { (void)s; (void)c; (void)pos; (void)ns; return -1; }
 aaudio_stream_state_t AAudioStream_getState(AAudioStream *s) { (void)s; return 4; }
+
+/* ------------------------------------------------------------------ sensors: none */
+
+ASensorManager *ASensorManager_getInstanceForPackage(const char *p) { (void)p; return NULL; }
+const ASensor *ASensorManager_getDefaultSensor(ASensorManager *m, int t) { (void)m; (void)t; return NULL; }
+ASensorEventQueue *ASensorManager_createEventQueue(ASensorManager *m, ALooper *l, int id, ALooper_callbackFunc cb, void *d) { (void)m; (void)l; (void)id; (void)cb; (void)d; return NULL; }
+int ASensorManager_destroyEventQueue(ASensorManager *m, ASensorEventQueue *q) { (void)m; (void)q; return 0; }
+int ASensorEventQueue_enableSensor(ASensorEventQueue *q, const ASensor *s) { (void)q; (void)s; return 0; }
+int ASensorEventQueue_disableSensor(ASensorEventQueue *q, const ASensor *s) { (void)q; (void)s; return 0; }
+int ASensorEventQueue_setEventRate(ASensorEventQueue *q, const ASensor *s, int32_t us) { (void)q; (void)s; (void)us; return 0; }
+ssize_t ASensorEventQueue_getEvents(ASensorEventQueue *q, ASensorEvent *e, size_t n) { (void)q; (void)e; (void)n; return 0; }
+int ASensor_getMinDelay(const ASensor *s) { (void)s; return 0; }
 
 /* ------------------------------------------------------------------ activity services */
 

@@ -15,7 +15,7 @@ typedef struct {
     GLuint prog_shape, prog_text, prog_game, tex_font, tex_game;
     GLint u_shape_screen, u_shape_rect, u_shape_radius, u_shape_color, u_shape_border, u_shape_bw;
     GLint u_text_screen, u_text_color, u_text_tex;
-    GLint u_game_screen, u_game_tex, u_game_texsize, u_game_scale;
+    GLint u_game_screen, u_game_tex, u_game_texsize, u_game_scale, u_game_filter, u_game_frect, u_game_colors;
     bool ok;
 } GlRenderer;
 

@@ -127,7 +127,7 @@ build_lib() {
     while read -r s; do
         case "$s" in
             AAudio*) lib=aaudio ;;
-            AInput*|AKeyEvent*|ALooper*|AMotionEvent*|ANativeActivity*|ANativeWindow*|AConfiguration*|AAsset*) lib=android ;;
+            AInput*|AKeyEvent*|ALooper*|AMotionEvent*|ANativeActivity*|ANativeWindow*|AConfiguration*|AAsset*|ASensor*) lib=android ;;
             __android_log*) lib=log ;;
             dlopen|dlsym|dlclose|dlerror) lib=dl ;;
             egl*) lib=EGL ;;
