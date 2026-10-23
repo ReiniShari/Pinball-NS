@@ -1,0 +1,604 @@
+/*
+ * app.c - logic of the mobile version (see app.h).
+ *
+ * Files kept in the private storage of the app:
+ *   rom.gbc        the ROM the player imported (checked: US Pokemon Pinball)
+ *   pinball.sav    the cartridge save (high scores, Pokedex, saved game)
+ *   suspend.state  the whole machine when the app went to the background
+ *   quick.state    the quick save of the menu
+ *   settings.txt   vibration / sound / the last table played (keys of its bonus stages)
+ */
+#define _POSIX_C_SOURCE 200809L
+#include "app.h"
+#include "../../src/game/pinball_us.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+
+/* ------------------------------------------------------------------ files */
+
+static void path_of(const MobileApp *a, const char *name, char *out, size_t n)
+{
+    snprintf(out, n, "%s/%s", a->dir, name);
+}
+
+static uint8_t *read_all(const char *path, size_t *size, size_t max)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
+    long n = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (n <= 0 || (size_t)n > max) { fclose(f); return NULL; }
+    uint8_t *d = (uint8_t *)malloc((size_t)n);
+    if (d && fread(d, 1, (size_t)n, f) != (size_t)n) { free(d); d = NULL; }
+    fclose(f);
+    if (d) *size = (size_t)n;
+    return d;
+}
+
+static bool write_all(const char *path, const void *data, size_t size)
+{
+    char tmp[600];
+    snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    FILE *f = fopen(tmp, "wb");
+    if (!f) return false;
+    bool ok = fwrite(data, 1, size, f) == size;
+    ok = (fflush(f) == 0) && ok;
+    ok = (fsync(fileno(f)) == 0) && ok;
+    ok = (fclose(f) == 0) && ok;
+    if (!ok) { remove(tmp); return false; }
+    return rename(tmp, path) == 0;
+}
+
+/* the file `path` with `data`, by the writer thread when the platform has one (a->io_async),
+ * else now. False if it cannot be taken now (the previous one of this slot is still waiting):
+ * the caller tries again later. */
+static bool write_later(MobileApp *a, int slot, const char *path, const void *data, size_t size)
+{
+    AppWrite *w = &a->io[slot];
+    if (!a->io_async) return write_all(path, data, size);
+    if (size > sizeof w->data || atomic_load_explicit(&w->state, memory_order_acquire)) return false;
+    snprintf(w->path, sizeof w->path, "%s", path);
+    memcpy(w->data, data, size);
+    w->size = size;
+    atomic_store_explicit(&w->state, 1, memory_order_release);
+    if (a->io_wake) a->io_wake();
+    return true;
+}
+
+void app_io_run(MobileApp *a)
+{
+    for (int i = 0; i < 2; i++) {
+        AppWrite *w = &a->io[i];
+        if (!atomic_load_explicit(&w->state, memory_order_acquire)) continue;
+        w->failed = !write_all(w->path, w->data, w->size);
+        atomic_store_explicit(&w->state, 0, memory_order_release);
+    }
+}
+
+void app_io_wait(MobileApp *a)
+{
+    for (int t = 0; t < 3000; t++) {                    /* 3 s at most */
+        if (!atomic_load_explicit(&a->io[0].state, memory_order_acquire) &&
+            !atomic_load_explicit(&a->io[1].state, memory_order_acquire)) return;
+        if (a->io_wake) a->io_wake();
+        struct timespec ms = { 0, 1000000 };
+        nanosleep(&ms, NULL);
+    }
+}
+
+/* ------------------------------------------------------------------ settings */
+
+static void settings_load(MobileApp *a)
+{
+    char p[600];
+    path_of(a, "settings.txt", p, sizeof p);
+    size_t n;
+    char *d = (char *)read_all(p, &n, 4096);
+    if (!d) return;
+    char buf[4097];
+    memcpy(buf, d, n);
+    buf[n] = 0;
+    free(d);
+    if (strstr(buf, "vibration=0")) a->ui.vibration = false;
+    if (strstr(buf, "sound=0")) a->ui.sound = false;
+    if (strstr(buf, "table=1")) a->ui.table = 1;
+}
+
+static void settings_save(MobileApp *a)
+{
+    char p[600], buf[160];
+    path_of(a, "settings.txt", p, sizeof p);
+    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\ntable=%d\n", a->ui.vibration ? 1 : 0,
+                     a->ui.sound ? 1 : 0, a->ui.table);
+    if (!write_later(a, 1, p, buf, (size_t)n)) {         /* the previous one still waits: after it */
+        app_io_wait(a);
+        write_later(a, 1, p, buf, (size_t)n);
+    }
+}
+
+/* ------------------------------------------------------------------ save data */
+
+static void sram_load(MobileApp *a)
+{
+    app_io_wait(a);                                     /* a save being written: the new one */
+    char p[600];
+    path_of(a, "pinball.sav", p, sizeof p);
+    size_t n;
+    uint8_t *d = read_all(p, &n, 0x8000);
+    if (d) { pb_load_sram(a->pb, d, n); free(d); }
+    const uint8_t *s = pb_sram(a->pb, &a->sav_last_size);
+    if (a->sav_last_size > sizeof a->sav_last) a->sav_last_size = sizeof a->sav_last;
+    memcpy(a->sav_last, s, a->sav_last_size);
+}
+
+static void sram_flush(MobileApp *a)
+{
+    if (!a->pb) return;
+    size_t n;
+    const uint8_t *s = pb_sram(a->pb, &n);
+    if (n == 0 || n > sizeof a->sav_last) return;
+    if (a->io[0].failed) { a->io[0].failed = false; a->sav_last_size = 0; }   /* written again */
+    if (n == a->sav_last_size && memcmp(s, a->sav_last, n) == 0) return;
+    char p[600];
+    path_of(a, "pinball.sav", p, sizeof p);
+    if (write_later(a, 0, p, s, n)) { memcpy(a->sav_last, s, n); a->sav_last_size = n; }
+}
+
+/* the cartridge save on the disk now, after the writes waiting (the game is about to be replaced
+ * or restarted: it reads the save again) */
+static void sram_flush_now(MobileApp *a)
+{
+    app_io_wait(a);
+    bool async = a->io_async;
+    a->io_async = false;
+    sram_flush(a);
+    a->io_async = async;
+}
+
+static bool state_save(MobileApp *a, const char *name)
+{
+    if (!a->pb) return false;
+    size_t n = pb_snapshot_size();
+    void *buf = malloc(n);
+    if (!buf) return false;
+    pb_snapshot_save(a->pb, buf);
+    char p[600];
+    path_of(a, name, p, sizeof p);
+    bool ok = write_all(p, buf, n);
+    free(buf);
+    return ok;
+}
+
+static bool state_load(MobileApp *a, const char *name)
+{
+    if (!a->pb) return false;
+    char p[600];
+    path_of(a, name, p, sizeof p);
+    size_t n;
+    uint8_t *d = read_all(p, &n, 64u << 20);
+    if (!d) return false;
+    bool ok = pb_snapshot_load(a->pb, d, n) == 0;
+    free(d);
+    return ok;
+}
+
+/* ------------------------------------------------------------------ the game */
+
+/* start the game with the ROM in a->rom (already checked) */
+static bool start_game(MobileApp *a, bool resume)
+{
+    if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
+    Pinball *pb = (Pinball *)calloc(1, sizeof(Pinball));
+    if (!pb) return false;
+    if (pb_init(pb, a->rom, a->rom_size, a->rate) != 0) {
+        snprintf(a->ui.no_rom_detail, sizeof a->ui.no_rom_detail,
+                 "The game could not be started (not enough memory, or a damaged ROM file).");
+        pb_free(pb);
+        free(pb);
+        return false;
+    }
+    a->pb = pb;
+    pb_set_narrow(pb, true);                    /* the table at its original width, always */
+    pb_set_antilag(pb, true);                   /* no frame skipped by the game (see pinball.h) */
+    pb_set_frame_palettes(pb, true);            /* no picture torn by a change of colours */
+    pb_set_hold(pb, true);                      /* the screen off (loadings): the last picture stays */
+    a->pic_seq = 0;
+    a->bg_ok = false;
+    a->shown = NULL;                            /* the old game's picture: not this one's size */
+    a->disp_table = a->ui.table;
+    sram_load(a);
+    if (resume) {
+        /* The suspended game is used once: if it made the app crash, the next start must not
+         * load it again (the cartridge save is kept). It is written again at the next suspend. */
+        state_load(a, "suspend.state");
+        char p[600];
+        path_of(a, "suspend.state", p, sizeof p);
+        remove(p);
+    }
+    a->ui.no_rom = false;
+    a->ui.no_rom_detail[0] = 0;
+    atomic_store_explicit(&a->ring_flush, true, memory_order_release);   /* old samples: dropped by the audio thread */
+    return true;
+}
+
+int app_init(MobileApp *a, const char *dir, uint32_t rate)
+{
+    memset(a, 0, sizeof *a);
+    snprintf(a->dir, sizeof a->dir, "%s", dir);
+    a->rate = rate ? rate : 48000;
+    a->canvas = (uint32_t *)calloc((size_t)ND_MAX_W * ND_MAX_H, sizeof(uint32_t));
+    a->bg = (uint32_t *)calloc((size_t)ND_MAX_W * ND_MAX_H, sizeof(uint32_t));
+    ui_init(&a->ui);
+    settings_load(a);
+    a->ui.no_rom = true;
+    char p[600];
+    path_of(a, "rom.gbc", p, sizeof p);
+    size_t n;
+    uint8_t *d = read_all(p, &n, 8u << 20);
+    if (d) {
+        a->rom = d;
+        a->rom_size = n;
+        if (!start_game(a, true)) { free(a->rom); a->rom = NULL; a->rom_size = 0; }
+    }
+    return 0;
+}
+
+void app_free(MobileApp *a)
+{
+    if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
+    free(a->rom);
+    a->rom = NULL;
+    free(a->canvas);
+    free(a->bg);
+    a->bg = NULL;
+    a->canvas = NULL;
+    deflicker_free(&a->defl);
+    a->shown = NULL;
+}
+
+bool app_import_rom(MobileApp *a, const uint8_t *data, size_t size)
+{
+    char sha[41];
+    pb_sha1_hex(data, size, sha);
+    if (a->rom && a->rom_size == size && memcmp(a->rom, data, size) == 0) {
+        ui_toast(&a->ui, "This ROM is already installed", 3);
+        return true;
+    }
+    Pinball *probe = (Pinball *)calloc(1, sizeof(Pinball));
+    if (!probe) return false;
+    int bad = pb_init(probe, data, size, a->rate);
+    if (bad) {
+        snprintf(a->ui.no_rom_detail, sizeof a->ui.no_rom_detail,
+                 "This file is not the right ROM (SHA-1 %.12s...). Pinball NS needs Pokémon Pinball, US "
+                 "version (USA, Australia).", sha);
+        if (a->pb) ui_toast(&a->ui, "This file is not the right ROM", 4);   /* else: explained on screen */
+    }
+    pb_free(probe);
+    free(probe);
+    if (bad) return false;
+
+    uint8_t *copy = (uint8_t *)malloc(size);
+    if (!copy) return false;
+    memcpy(copy, data, size);
+    char p[600];
+    path_of(a, "rom.gbc", p, sizeof p);
+    write_all(p, copy, size);
+    sram_flush_now(a);
+    if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
+    free(a->rom);
+    a->rom = copy;
+    a->rom_size = size;
+    if (!start_game(a, false)) return false;
+    ui_toast(&a->ui, "ROM installed. Have fun!", 4);
+    return true;
+}
+
+bool app_has_game(const MobileApp *a) { return a->pb != NULL; }
+
+bool app_running(const MobileApp *a) { return a->pb && !a->ui.menu_open; }
+
+void app_layout(MobileApp *a, int w, int h) { ui_layout(&a->ui, w, h); }
+
+void app_touch(MobileApp *a, int action, int id, float x, float y) { ui_touch(&a->ui, action, id, x, y); }
+
+void app_set_pad(MobileApp *a, uint8_t b) { ui_set_external_buttons(&a->ui, b); }
+
+void app_set_insets(MobileApp *a, int top, int bottom, int left, int right, int corner)
+{
+    ui_set_insets(&a->ui, top, bottom, left, right, corner);
+}
+
+void app_back(MobileApp *a)
+{
+    ui_open_menu(&a->ui, !a->ui.menu_open);
+    if (a->ui.menu_open) a->ui.menu_sel = 0;          /* keys: the first entry is selected */
+}
+
+int app_take_haptic(MobileApp *a)
+{
+    int h = a->ui.haptic;
+    a->ui.haptic = UI_HAPTIC_NONE;
+    return a->ui.vibration ? h : UI_HAPTIC_NONE;
+}
+
+/* what the game shows: the field controls, the table played */
+static void game_context(MobileApp *a)
+{
+    if (!a->pb) return;
+    a->ui.in_game = pb_in_game(a->pb);
+    a->ui.field = pb_playing(a->pb);
+    int t = pb_table(a->pb);
+    if (t >= 0 && t != a->ui.table) a->ui.table = t;     /* kept for its bonus stages */
+}
+
+/* ------------------------------------------------------------------ frames and audio */
+
+#ifdef PNS_TEST
+void app_test_command(MobileApp *a, const char *cmd)
+{
+    int n;
+    if (sscanf(cmd, "bonus %d", &n) == 1) a->test_bonus = n;
+}
+
+/* as tools/uisim's bonus:N, once the ball is in the bottom half of a table */
+static void test_step(MobileApp *a)
+{
+    GBC *g = &a->pb->g;
+    uint8_t st = gbc_read(g, W_CurrentStage);
+    if (gbc_read(g, W_CurrentScreen) == SCREEN_PINBALL_GAME && (st == 1 || st == 5) && !gbc_read(g, W_InSpecialMode) &&
+        gbc_read(g, W_PinballIsVisible) && !gbc_read(g, 0xD495)) {
+        gbc_write(g, 0xD495, 1);                              /* wGoingToBonusStage */
+        gbc_write(g, W_MoveToNextScreenState, 1);
+        gbc_write(g, 0xD497, (uint8_t)a->test_bonus);         /* wNextStage */
+        a->test_bonus = 0;
+    }
+}
+#endif
+
+static void new_picture(MobileApp *a);
+
+#ifdef APP_PROF
+/* tools (uisim perf): milliseconds spent in the game's frames, the filter of its flicker, the
+ * composition of its picture's background */
+double app_prof[3];
+static double prof_now(void)
+{
+    struct timespec t;
+    timespec_get(&t, TIME_UTC);
+    return t.tv_sec * 1000.0 + t.tv_nsec / 1e6;
+}
+#define PROF(i, stmt) do { double t0_ = prof_now(); stmt; app_prof[i] += prof_now() - t0_; } while (0)
+#else
+#define PROF(i, stmt) stmt
+#endif
+
+void app_run_frame(MobileApp *a)
+{
+    if (!app_running(a)) return;
+    game_context(a);
+#ifdef PNS_TEST
+    if (a->test_bonus) test_step(a);
+#endif
+    PROF(0, pb_run_frame(a->pb, ui_buttons(&a->ui)));
+    a->frame_seq++;
+    new_picture(a);
+    int16_t tmp[4096];
+    int n;
+    while ((n = pb_audio(a->pb, tmp, 2048)) > 0) {
+        if (!a->ui.sound) continue;
+        uint32_t w = atomic_load_explicit(&a->ring_w, memory_order_relaxed);
+        uint32_t r = atomic_load_explicit(&a->ring_r, memory_order_acquire);
+        uint32_t room = APP_RING - (w - r);
+        if ((uint32_t)n > room) n = (int)room;       /* far ahead of the sound card: drop */
+        for (int i = 0; i < n; i++) {
+            uint32_t k = (w + (uint32_t)i) & (APP_RING - 1);
+            a->ring[k * 2] = tmp[i * 2];
+            a->ring[k * 2 + 1] = tmp[i * 2 + 1];
+        }
+        atomic_store_explicit(&a->ring_w, w + (uint32_t)n, memory_order_release);
+    }
+    a->rumble = a->ui.vibration && pb_rumble(a->pb);
+}
+
+void app_audio_pad(MobileApp *a, uint32_t level)
+{
+    uint32_t w = atomic_load_explicit(&a->ring_w, memory_order_relaxed);
+    uint32_t r = atomic_load_explicit(&a->ring_r, memory_order_acquire);
+    if (level > APP_RING / 2) level = APP_RING / 2;
+    if (w - r >= level) return;
+    for (uint32_t i = w - r; i < level; i++) {
+        uint32_t k = (r + i) & (APP_RING - 1);
+        a->ring[k * 2] = a->ring[k * 2 + 1] = 0;
+    }
+    atomic_store_explicit(&a->ring_w, r + level, memory_order_release);
+}
+
+void app_set_audio_rate(MobileApp *a, double rate)
+{
+    if (a->pb) pb_set_audio_rate(a->pb, rate);
+}
+
+uint32_t app_audio_queued(MobileApp *a)
+{
+    return atomic_load_explicit(&a->ring_w, memory_order_acquire) - atomic_load_explicit(&a->ring_r, memory_order_acquire);
+}
+
+int app_audio_pull(MobileApp *a, int16_t *out, int frames)
+{
+    uint32_t r = atomic_load_explicit(&a->ring_r, memory_order_relaxed);
+    uint32_t w = atomic_load_explicit(&a->ring_w, memory_order_acquire);
+    if (atomic_exchange_explicit(&a->ring_flush, false, memory_order_acq_rel)) r = w;
+    uint32_t avail = w - r;
+    int n = (uint32_t)frames < avail ? frames : (int)avail;
+    for (int i = 0; i < n; i++) {
+        uint32_t k = (r + (uint32_t)i) & (APP_RING - 1);
+        out[i * 2] = a->ring[k * 2];
+        out[i * 2 + 1] = a->ring[k * 2 + 1];
+    }
+    if (n < frames) memset(out + n * 2, 0, (size_t)(frames - n) * 4);     /* underrun: silence */
+    atomic_store_explicit(&a->ring_r, r + (uint32_t)n, memory_order_release);
+    return n;
+}
+
+/* ------------------------------------------------------------------ the game's key configuration */
+
+/* The touch keys press the buttons of the game's default key configuration: another one, made in
+ * the game or kept by a cartridge save, is put back (pb_fix_key_config), and out of a game the
+ * game is restarted, so that it writes its own defaults in the cartridge save. */
+static void keys_guard(MobileApp *a)
+{
+    if (!a->pb) return;
+    int r = pb_fix_key_config(a->pb);
+    if (!r) return;
+    sram_flush_now(a);
+    if (r == 2) start_game(a, false);
+    ui_toast(&a->ui, "Game key config reset to the defaults", 4);
+}
+
+/* ------------------------------------------------------------------ menu, timers */
+
+void app_update(MobileApp *a, double now)
+{
+    a->now = now;
+    a->ui.now = now;
+    int act = ui_take_action(&a->ui);
+    switch (act) {
+    case UI_ACT_OPEN_MENU: ui_open_menu(&a->ui, true); break;
+    case UI_ACT_RESUME: ui_open_menu(&a->ui, false); break;
+    case UI_ACT_QUICKSAVE:
+        if (!a->pb) { ui_toast(&a->ui, "No game running", 3); break; }
+        ui_open_menu(&a->ui, false);
+        ui_toast(&a->ui, state_save(a, "quick.state") ? "Game saved" : "Saving failed", 3);
+        break;
+    case UI_ACT_QUICKLOAD:
+        if (!a->pb) { ui_toast(&a->ui, "No game running", 3); break; }
+        ui_open_menu(&a->ui, false);
+        ui_toast(&a->ui, state_load(a, "quick.state") ? "Quick save loaded" : "No quick save yet", 3);
+        break;
+    case UI_ACT_TOGGLE_VIBRATION:
+        a->ui.vibration = !a->ui.vibration;
+        settings_save(a);
+        break;
+    case UI_ACT_TOGGLE_SOUND:
+        a->ui.sound = !a->ui.sound;
+        a->sound_changed = true;
+        settings_save(a);
+        break;
+    case UI_ACT_RESET:
+        ui_open_menu(&a->ui, false);
+        if (a->rom) {
+            sram_flush_now(a);
+            char p[600];
+            path_of(a, "suspend.state", p, sizeof p);
+            remove(p);
+            start_game(a, false);
+            ui_toast(&a->ui, "Game restarted", 2);
+        }
+        break;
+    case UI_ACT_QUIT:
+        ui_open_menu(&a->ui, false);
+        a->quit = true;
+        break;
+    default:
+        break;
+    }
+    if (a->pb && now >= a->next_sav_check) {
+        a->next_sav_check = now + 1.0;
+        keys_guard(a);
+        sram_flush(a);
+    }
+}
+
+void app_suspend(MobileApp *a)
+{
+    if (!a->pb) return;
+    sram_flush_now(a);                                  /* everything now: the app may stop */
+    bool async = a->io_async;
+    a->io_async = false;
+    state_save(a, "suspend.state");
+    settings_save(a);
+    a->io_async = async;
+}
+
+void app_build(MobileApp *a, UiList *l)
+{
+    int w = 0, h = 0, stride;
+    if (a->pb) {
+        pb_frame(a->pb, &w, &h, &stride);
+        game_context(a);
+        a->ui.scene = nd_scene(a->pb, h);
+    }
+    ui_build(&a->ui, l, w, h);
+}
+
+/* the game's picture as shown: the held one (pb_set_hold), its 30 Hz flicker mixed */
+static const uint32_t *game_picture(MobileApp *a, int *w, int *h, int *stride)
+{
+    const uint32_t *px = pb_frame(a->pb, w, h, stride);
+    if (a->shown && !a->no_deflicker && *w == a->shown_w && *h == a->shown_h) { px = a->shown; *stride = *w; }
+    return px;
+}
+
+static bool same_layout(const NdLayout *x, const NdLayout *y)
+{
+    return x->sw == y->sw && x->sh == y->sh && x->cw == y->cw && x->ch == y->ch && x->gx == y->gx && x->gy == y->gy &&
+           x->gw == y->gw && x->gh == y->gh && x->scene == y->scene && x->corner == y->corner && x->bottom == y->bottom;
+}
+
+/* what comes with the picture: its layout, what continues it, the colours of its controls */
+static void compose_game(MobileApp *a)
+{
+    int w, h, stride;
+    const uint32_t *px = game_picture(a, &w, &h, &stride);
+    const PbView *v = pb_view(a->pb);
+    a->disp_in_game = v->in_game;
+    a->disp_field = v->playing;
+    if (v->table >= 0) a->disp_table = v->table;          /* kept for its bonus stages */
+    if (!a->canvas || !a->bg || a->ui.no_rom) return;
+    ui_nd_prepare(&a->ui, w, h, nd_scene(a->pb, h));
+    nd_render_game(&a->ui.nd, a->pb, px, stride, a->bg, a->bg_fade);
+    a->bg_layout = a->ui.nd;
+    a->bg_ok = true;
+}
+
+/* after each frame of the game: a new picture comes with what continues it, made now (the state
+ * of the game is the one of the picture: its video memory for the stages); the screen off, the
+ * last picture and its parts stay as they were */
+static void new_picture(MobileApp *a)
+{
+    uint32_t seq = pb_picture_seq(a->pb);
+    if (seq == a->pic_seq && a->shown) return;
+    a->pic_seq = seq;
+    int w, h, stride;
+    const uint32_t *px = pb_frame(a->pb, &w, &h, &stride);
+    PROF(1, a->shown = deflicker_frame(&a->defl, px, w, h, stride));
+    a->shown_w = w;
+    a->shown_h = h;
+    PROF(2, compose_game(a));
+}
+
+const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride)
+{
+    if (!a->pb) { *w = *h = 0; *stride = 0; return NULL; }
+    if (!a->shown) new_picture(a);
+    const uint32_t *px = game_picture(a, w, h, stride);
+    if (!a->canvas || !a->bg || a->ui.no_rom) return px;
+    /* the whole screen, one picture in the pixels of the game */
+    ui_nd_prepare(&a->ui, *w, *h, nd_scene(a->pb, *h));
+    if (!a->bg_ok || !same_layout(&a->bg_layout, &a->ui.nd)) compose_game(a);   /* new screen size */
+    NdState st;
+    ui_nd_state(&a->ui, &st);
+    /* the controls of the picture shown (a loading behind it: those of the next screen later) */
+    st.set = !a->disp_in_game ? ND_SET_GREY : a->disp_table == 1 ? ND_SET_BLUE : ND_SET_RED;
+    st.letters = !a->disp_field;
+    nd_render_controls(&a->ui.nd, &st, a->bg, a->bg_fade, a->canvas);
+    *w = a->ui.nd.cw;
+    *h = a->ui.nd.ch;
+    *stride = a->ui.nd.cw;
+    return a->canvas;
+}

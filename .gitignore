@@ -1,0 +1,21 @@
+# never commit the ROM nor generated files
+*.gbc
+*.gb
+*.sav
+*.state
+build/
+# the builds (published as releases), the signing key of the APK (kept by its owner: the same key
+# signs every update), the working notes and pictures of the project
+*.apk
+*.zip
+*.keystore
+*.bundle
+*.mp4
+*.jpg
+*.jpeg
+*.png
+*.bmp
+Buglist*.txt
+CLAUDE.md
+conversation.md
+docs/
