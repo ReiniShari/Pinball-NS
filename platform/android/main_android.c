@@ -1092,13 +1092,15 @@ static int dual_mode_now(const Activity *a, int fh)
     return fh == PB_FIELD_H ? DUAL_TABLE : DUAL_GAME;
 }
 
-/* the lines y0..y1 of the game's picture (fw x fh), as large as they fit in a screen of sw x sh, centred */
-static void dual_game_item(UiList *l, int sw, int sh, int fw, int fh, int y0, int y1)
+/* the lines y0..y1 of the game's picture (fw x fh), as large as they fit in a screen of sw x sh (at most
+ * smax screen pixels a game pixel, 0: no limit), centred; returns that size (0: nothing drawn) */
+static float dual_game_item(UiList *l, int sw, int sh, int fw, int fh, int y0, int y1, float smax)
 {
     l->n = 0;
     l->text_n = 0;
-    if (sw <= 0 || sh <= 0 || fw <= 0 || y1 <= y0) return;
+    if (sw <= 0 || sh <= 0 || fw <= 0 || y1 <= y0) return 0;
     float s = fminf((float)sw / fw, (float)sh / (y1 - y0));
+    if (smax > 0 && s > smax) s = smax;
     UiItem *it = &l->item[l->n++];
     memset(it, 0, sizeof *it);
     it->kind = UI_GAME;
@@ -1115,6 +1117,7 @@ static void dual_game_item(UiList *l, int sw, int sh, int fw, int fh, int y0, in
     it->sy0 = (float)y0;
     it->sy1 = (float)y1;
     (void)fh;
+    return s;
 }
 
 /* ------------------------------------------------------------------ EGL */
@@ -1689,10 +1692,11 @@ static void frame_step(Activity *a, double vsync)
     }
     a->dual_list.n = 0;
     if (a->dual_mode == DUAL_TABLE) {
-        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, PB_TOP_ROWS);
-        dual_game_item(&a->dual_list, dw, dh, fw, fh, PB_TOP_ROWS, fh);
+        /* the top half at the size of the bottom one: one table across the two screens */
+        float sb = dual_game_item(&a->dual_list, dw, dh, fw, fh, PB_TOP_ROWS, fh, 0);
+        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, PB_TOP_ROWS, sb);
     } else if (a->dual_mode == DUAL_GAME) {
-        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, fh);
+        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, fh, 0);
     }
     pthread_mutex_unlock(&g_game);
     (void)ran;
