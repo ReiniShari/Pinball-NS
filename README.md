@@ -1,6 +1,6 @@
 # Pinball NS
 
-A mod of **Pokémon Pinball** (Game Boy Color, US version) for **Android** and **Windows**, written in C with an emulation core in assembly.
+A project for **Pokémon Pinball** (Game Boy Color, US version) for **Android** and **Windows**, written in C with an emulation core in assembly.
 
 In the original game, each table is split into a top and a bottom stage: only one is loaded at a time, and the screen goes blank while the other is loaded. Pinball NS turns each table into **a single field**: both halves are loaded, updated and shown together on one tall screen, and the ball moves between them without any reloading. The original physics and collisions are kept, so the table plays like the original.
 
