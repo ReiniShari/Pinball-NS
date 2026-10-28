@@ -45,14 +45,14 @@ gbc_cpu_run PROC FRAME
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
 Lrd_slow:
     cmp esi, 65408
     jb Lrs1
     cmp esi, 65535
     je Lrs2
-    mov rdi, qword ptr [r15+572560]
+    mov rdi, qword ptr [r15+572576]
     ret
 Lrs1:
     cmp esi, 65348
@@ -63,18 +63,18 @@ Lrs1:
     jb Lrs2
     cmp esi, 65184
     jae Lrs2
-    mov rdi, qword ptr [r15+572552]
+    mov rdi, qword ptr [r15+572568]
     ret
 Lrs_ly:
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne Lrs2
-    lea rdi, [r15+572665]
+    lea rdi, [r15+572681]
     sub rdi, rsi
     ret
 Lrs_st:
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne Lrs2
-    lea rdi, [r15+572664]
+    lea rdi, [r15+572680]
     sub rdi, rsi
     ret
 Lrs2:
@@ -91,10 +91,10 @@ Lrs2:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L1
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L1:
@@ -107,7 +107,7 @@ L1:
     add rsp, 40
     pop r11
     pop r10
-    mov byte ptr [r15+572660], al
+    mov byte ptr [r15+572676], al
     movzx eax, byte ptr [r15+24]
     movzx r8d, byte ptr [r15+25]
     movzx ecx, word ptr [r15+26]
@@ -119,8 +119,8 @@ L1:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
-    lea rdi, [r15+572660]
+    mov r13, qword ptr [r15+572624]
+    lea rdi, [r15+572676]
     sub rdi, rsi
     ret
 Lwr_slow:
@@ -132,7 +132,7 @@ Lwr_slow:
     jb Lws1
     cmp esi, 65535
     je Lws9
-    mov rcx, qword ptr [r15+572560]
+    mov rcx, qword ptr [r15+572576]
     mov byte ptr [rcx+rsi], al
     jmp Lws8
 Lws1:
@@ -140,7 +140,7 @@ Lws1:
     jb Lws2
     cmp esi, 65184
     jae Lws9
-    mov rcx, qword ptr [r15+572552]
+    mov rcx, qword ptr [r15+572568]
     mov byte ptr [rcx+rsi], al
     jmp Lws8
 Lws2:
@@ -154,12 +154,12 @@ Lws2:
     jne Lws9
     mov ecx, esi
     shr ecx, 12
-    mov rcx, qword ptr [r15+rcx*8+572416]
+    mov rcx, qword ptr [r15+rcx*8+572432]
     test rcx, rcx
     jz Lws9
     mov edx, esi
     and edx, 8191
-    mov rdi, qword ptr [r15+572568]
+    mov rdi, qword ptr [r15+572584]
     cmp byte ptr [rdi+rdx], 0
     jne Lws9
     mov byte ptr [rcx+rsi], al
@@ -169,26 +169,26 @@ Lws8:
     pop rax
     ret
 Lws_v:
-    cmp byte ptr [r15+572662], 0
+    cmp byte ptr [r15+572678], 0
     je Lws9
-    mov rcx, qword ptr [r15+572616]
-    mov rdx, qword ptr [r15+572632]
+    mov rcx, qword ptr [r15+572632]
+    mov rdx, qword ptr [r15+572648]
     cmp esi, 39936
     jb Lws_v1
-    mov rcx, qword ptr [r15+572624]
-    mov rdx, qword ptr [r15+572640]
+    mov rcx, qword ptr [r15+572640]
+    mov rdx, qword ptr [r15+572656]
 Lws_v1:
     mov byte ptr [rcx+rsi], al
     test rdx, rdx
     jz Lws8
-    cmp esi, dword ptr [r15+572648]
+    cmp esi, dword ptr [r15+572664]
     jb Lws8
-    cmp esi, dword ptr [r15+572652]
+    cmp esi, dword ptr [r15+572668]
     jae Lws8
     mov byte ptr [rdx+rsi], al
     jmp Lws8
 Lws_m:
-    cmp byte ptr [r15+572663], 0
+    cmp byte ptr [r15+572679], 0
     je Lws9
     movzx ecx, word ptr [r15+48]
     cmp esi, 12288
@@ -208,10 +208,10 @@ Lws_m2:
     shl rcx, 14
     add rcx, qword ptr [r15+0]
     sub rcx, 16384
-    mov qword ptr [r15+572320], rcx
-    mov qword ptr [r15+572328], rcx
     mov qword ptr [r15+572336], rcx
     mov qword ptr [r15+572344], rcx
+    mov qword ptr [r15+572352], rcx
+    mov qword ptr [r15+572360], rcx
     jmp Lws8
 Lws9:
     pop rdx
@@ -230,10 +230,10 @@ Lws9:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L2
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L2:
@@ -258,7 +258,7 @@ L2:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     ret
 Ltick_slow4:
     sub r14, 4
@@ -275,10 +275,10 @@ Ltick_slow4:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L3
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L3:
@@ -302,7 +302,7 @@ L3:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     ret
 Ltick_slow8:
     sub r14, 8
@@ -319,10 +319,10 @@ Ltick_slow8:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L4
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L4:
@@ -346,7 +346,7 @@ L4:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     ret
 Lidle:
     test al, al
@@ -359,29 +359,29 @@ Lidle:
     ja Lid_ret
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz Lid_ret
     cmp dword ptr [rdi+rbp], 0FC28A77Eh
     jne Lid_ret
-    mov esi, dword ptr [r15+rbp+498556]
+    mov esi, dword ptr [r15+rbp+498572]
     and esi, 197379
     jnz Lid_ret
     mov esi, ebx
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jnz Lid_m
     cmp ebx, 65408
     jb Lid_ret
     cmp ebx, 65535
     je Lid_ret
-    mov rdi, qword ptr [r15+572560]
+    mov rdi, qword ptr [r15+572576]
 Lid_m:
     cmp byte ptr [rdi+rbx], 0
     jne Lid_ret
-    mov rax, qword ptr [r15+572584]
-    mov rsi, qword ptr [r15+572600]
+    mov rax, qword ptr [r15+572600]
+    mov rsi, qword ptr [r15+572616]
     cmp rsi, rax
     cmovb rax, rsi
     dec rax
@@ -417,20 +417,20 @@ Lcopy:
     ja Lcp_ret
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz Lcp_ret
     mov rsi, 0F820B0790B13122Ah
     cmp qword ptr [rdi+rbp], rsi
     jne Lcp_ret
-    mov rsi, qword ptr [r15+rbp+498556]
+    mov rsi, qword ptr [r15+rbp+498572]
     mov rdi, 0003030303030303h
     test rsi, rdi
     jnz Lcp_ret
     push rax
     push rdx
-    mov rax, qword ptr [r15+572584]
-    mov rsi, qword ptr [r15+572600]
+    mov rax, qword ptr [r15+572600]
+    mov rsi, qword ptr [r15+572616]
     cmp rsi, rax
     cmovb rax, rsi
     dec rax
@@ -457,13 +457,13 @@ Lcp_loop:
     jae Lcp_end
     mov esi, ebx
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz Lcp_end
     movzx eax, byte ptr [rdi+rbx]
     mov esi, edx
     shr esi, 8
-    mov rdi, qword ptr [r15+rsi*8+574232]
+    mov rdi, qword ptr [r15+rsi*8+574248]
     test rdi, rdi
     jz Lcp_end
     mov byte ptr [rdi+rdx], al
@@ -491,29 +491,29 @@ Lcp_none:
     pop rax
     ret
 Lslow_top:
-    cmp r14, qword ptr [r15+572600]
+    cmp r14, qword ptr [r15+572616]
     jae Lexit_done
-    cmp byte ptr [r15+572658], 0
+    cmp byte ptr [r15+572674], 0
     jne Lexit_more
-    test byte ptr [r15+rbp+498556], 1
+    test byte ptr [r15+rbp+498572], 1
     jnz Lexit_more
-    cmp ebp, dword ptr [r15+572672]
+    cmp ebp, dword ptr [r15+572688]
     jne Lst1
-    cmp r9d, dword ptr [r15+572676]
+    cmp r9d, dword ptr [r15+572692]
     je Lexit_done
 Lst1:
     dec r12
     js Lexit_budget
-    cmp r14, qword ptr [r15+572592]
+    cmp r14, qword ptr [r15+572608]
     jb Lfast_fetch
 Lcareful_fetch:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L5
 L6:
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L7
 L8:
@@ -533,7 +533,7 @@ L7:
 Lnext:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
@@ -541,7 +541,7 @@ Lfast_fetch:
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L9
 L10:
@@ -569,10 +569,10 @@ Lexit_budget:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L11
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L11:
@@ -592,10 +592,10 @@ Lexit_done:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L12
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L12:
@@ -615,10 +615,10 @@ Lexit_more:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
+    cmp byte ptr [r15+572675], 0
     jne L13
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
 L13:
@@ -641,14 +641,14 @@ Lepilogue:
 Lf_00:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L14
 L15:
@@ -668,7 +668,7 @@ Lf_01:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L16
 L17:
@@ -678,7 +678,7 @@ L17:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L18
 L19:
@@ -689,14 +689,14 @@ L19:
     mov ecx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L20
 L21:
@@ -722,21 +722,21 @@ Lf_02:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
     jz L22
     mov byte ptr [rdi+rsi], al
 L23:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L24
 L25:
@@ -760,14 +760,14 @@ Lf_03:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L26
 L27:
@@ -786,18 +786,18 @@ Lf_04:
     inc ch
     movzx edi, ch
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L28
 L29:
@@ -816,18 +816,18 @@ Lf_05:
     dec ch
     movzx edi, ch
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L30
 L31:
@@ -847,7 +847,7 @@ Lf_06:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L32
 L33:
@@ -855,14 +855,14 @@ L33:
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L34
 L35:
@@ -887,14 +887,14 @@ Lf_07:
     shl r8d, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L36
 L37:
@@ -914,7 +914,7 @@ Lf_08:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L38
 L39:
@@ -924,7 +924,7 @@ L39:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L40
 L41:
@@ -937,7 +937,7 @@ L41:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
     jz L42
     mov byte ptr [rdi+rsi], r10b
@@ -947,26 +947,26 @@ L43:
     mov r10d, r9d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L44
 L45:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
     jz L46
     mov byte ptr [rdi+rsi], r10b
 L47:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L48
 L49:
@@ -1015,14 +1015,14 @@ Lf_09:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L50
 L51:
@@ -1042,21 +1042,21 @@ Lf_0A:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L52
 L53:
     mov al, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L54
 L55:
@@ -1079,14 +1079,14 @@ Lf_0B:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L56
 L57:
@@ -1105,18 +1105,18 @@ Lf_0C:
     inc cl
     movzx edi, cl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L58
 L59:
@@ -1135,18 +1135,18 @@ Lf_0D:
     dec cl
     movzx edi, cl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L60
 L61:
@@ -1166,7 +1166,7 @@ Lf_0E:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L62
 L63:
@@ -1174,14 +1174,14 @@ L63:
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L64
 L65:
@@ -1206,14 +1206,14 @@ Lf_0F:
     shl r8d, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
     jz L66
 L67:
@@ -1233,25 +1233,62 @@ Lf_10:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
     jz L68
 L69:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
+    mov byte ptr [r15+24], al
+    mov byte ptr [r15+25], r8b
+    mov edi, ecx
+    rol di, 8
+    mov word ptr [r15+26], di
+    mov edi, edx
+    rol di, 8
+    mov word ptr [r15+28], di
+    mov edi, ebx
+    rol di, 8
+    mov word ptr [r15+30], di
+    mov word ptr [r15+32], r9w
+    mov word ptr [r15+34], bp
+    cmp byte ptr [r15+572675], 0
+    jne L70
+    mov qword ptr [r15+40], r14
+    movzx edi, word ptr [r15+572672]
+    add edi, r14d
+    mov word ptr [r15+65858], di
+L70:
+    sub rsp, 32
+    mov rcx, r15
+    mov edx, 16
+    call gbc_asm_op
+    add rsp, 32
+    movzx eax, byte ptr [r15+24]
+    movzx r8d, byte ptr [r15+25]
+    movzx ecx, word ptr [r15+26]
+    rol cx, 8
+    movzx edx, word ptr [r15+28]
+    rol dx, 8
+    movzx ebx, word ptr [r15+30]
+    rol bx, 8
+    movzx r9d, word ptr [r15+32]
+    movzx ebp, word ptr [r15+34]
+    mov r14, qword ptr [r15+40]
+    mov r13, qword ptr [r15+572624]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L70
-L71:
+    jz L71
+L72:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
@@ -1261,30 +1298,30 @@ L71:
 L68:
     call Lrd_slow
     jmp L69
-L70:
+L71:
     mov esi, ebp
     call Lrd_slow
-    jmp L71
+    jmp L72
     ALIGN 16
 Lf_11:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L72
-L73:
+    jz L73
+L74:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L74
-L75:
+    jz L75
+L76:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -1292,196 +1329,196 @@ L75:
     mov edx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L76
-L77:
+    jz L77
+L78:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L72:
+L73:
     call Lrd_slow
-    jmp L73
-L74:
+    jmp L74
+L75:
     call Lrd_slow
-    jmp L75
-L76:
+    jmp L76
+L77:
     mov esi, ebp
     call Lrd_slow
-    jmp L77
+    jmp L78
     ALIGN 16
 Lf_12:
     mov esi, edx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L78
+    jz L79
     mov byte ptr [rdi+rsi], al
-L79:
+L80:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L80
-L81:
+    jz L81
+L82:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L78:
+L79:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L79
-L80:
+    jmp L80
+L81:
     mov esi, ebp
     call Lrd_slow
-    jmp L81
+    jmp L82
     ALIGN 16
 Lf_13:
     inc dx
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L82
-L83:
+    jz L83
+L84:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L82:
+L83:
     mov esi, ebp
     call Lrd_slow
-    jmp L83
+    jmp L84
     ALIGN 16
 Lf_14:
     inc dh
     movzx edi, dh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L84
-L85:
+    jz L85
+L86:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L84:
+L85:
     mov esi, ebp
     call Lrd_slow
-    jmp L85
+    jmp L86
     ALIGN 16
 Lf_15:
     dec dh
     movzx edi, dh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L86
-L87:
+    jz L87
+L88:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L86:
+L87:
     mov esi, ebp
     call Lrd_slow
-    jmp L87
+    jmp L88
     ALIGN 16
 Lf_16:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L88
-L89:
+    jz L89
+L90:
     mov dh, byte ptr [rdi+rsi]
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L90
-L91:
+    jz L91
+L92:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L88:
+L89:
     call Lrd_slow
-    jmp L89
-L90:
+    jmp L90
+L91:
     mov esi, ebp
     call Lrd_slow
-    jmp L91
+    jmp L92
     ALIGN 16
 Lf_17:
     bt r8d, 4
@@ -1491,70 +1528,70 @@ Lf_17:
     shl r8d, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L92
-L93:
+    jz L93
+L94:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L92:
+L93:
     mov esi, ebp
     call Lrd_slow
-    jmp L93
+    jmp L94
     ALIGN 16
 Lf_18:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L94
-L95:
+    jz L95
+L96:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-L96:
+L97:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L97
-L98:
+    jz L98
+L99:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L94:
+L95:
     call Lrd_slow
-    jmp L95
-L97:
+    jmp L96
+L98:
     mov esi, ebp
     call Lrd_slow
-    jmp L98
+    jmp L99
     ALIGN 16
 Lf_19:
     mov edi, ebx
@@ -1573,189 +1610,189 @@ Lf_19:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L99
-L100:
+    jz L100
+L101:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L99:
+L100:
     mov esi, ebp
     call Lrd_slow
-    jmp L100
+    jmp L101
     ALIGN 16
 Lf_1A:
     mov esi, edx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L101
-L102:
+    jz L102
+L103:
     mov al, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L103
-L104:
+    jz L104
+L105:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L101:
+L102:
     call Lrd_slow
-    jmp L102
-L103:
+    jmp L103
+L104:
     mov esi, ebp
     call Lrd_slow
-    jmp L104
+    jmp L105
     ALIGN 16
 Lf_1B:
     dec dx
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L105
-L106:
+    jz L106
+L107:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L105:
+L106:
     mov esi, ebp
     call Lrd_slow
-    jmp L106
+    jmp L107
     ALIGN 16
 Lf_1C:
     inc dl
     movzx edi, dl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L107
-L108:
+    jz L108
+L109:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L107:
+L108:
     mov esi, ebp
     call Lrd_slow
-    jmp L108
+    jmp L109
     ALIGN 16
 Lf_1D:
     dec dl
     movzx edi, dl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L109
-L110:
+    jz L110
+L111:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L109:
+L110:
     mov esi, ebp
     call Lrd_slow
-    jmp L110
+    jmp L111
     ALIGN 16
 Lf_1E:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L111
-L112:
+    jz L112
+L113:
     mov dl, byte ptr [rdi+rsi]
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L113
-L114:
+    jz L114
+L115:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L111:
+L112:
     call Lrd_slow
-    jmp L112
-L113:
+    jmp L113
+L114:
     mov esi, ebp
     call Lrd_slow
-    jmp L114
+    jmp L115
     ALIGN 16
 Lf_1F:
     bt r8d, 4
@@ -1765,98 +1802,98 @@ Lf_1F:
     shl r8d, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L115
-L116:
+    jz L116
+L117:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L115:
+L116:
     mov esi, ebp
     call Lrd_slow
-    jmp L116
+    jmp L117
     ALIGN 16
 Lf_20:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L117
-L118:
+    jz L118
+L119:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 128
-    jnz L119
+    jnz L120
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
     cmp r10d, -8
-    je L120
-L121:
-L119:
+    je L121
+L122:
+L120:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L122
-L123:
+    jz L123
+L124:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L117:
+L118:
     call Lrd_slow
-    jmp L118
-L120:
+    jmp L119
+L121:
     call Lcopy
-    jmp L121
-L122:
+    jmp L122
+L123:
     mov esi, ebp
     call Lrd_slow
-    jmp L123
+    jmp L124
     ALIGN 16
 Lf_21:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L124
-L125:
+    jz L125
+L126:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L126
-L127:
+    jz L127
+L128:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -1864,312 +1901,312 @@ L127:
     mov ebx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L128
-L129:
+    jz L129
+L130:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L124:
+L125:
     call Lrd_slow
-    jmp L125
-L126:
+    jmp L126
+L127:
     call Lrd_slow
-    jmp L127
-L128:
+    jmp L128
+L129:
     mov esi, ebp
     call Lrd_slow
-    jmp L129
+    jmp L130
     ALIGN 16
 Lf_22:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L130
+    jz L131
     mov byte ptr [rdi+rsi], al
-L131:
+L132:
     lea ebx, [rsi+1]
     and ebx, 65535
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L132
-L133:
+    jz L133
+L134:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L130:
+L131:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L131
-L132:
+    jmp L132
+L133:
     mov esi, ebp
     call Lrd_slow
-    jmp L133
+    jmp L134
     ALIGN 16
 Lf_23:
     inc bx
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L134
-L135:
+    jz L135
+L136:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L134:
+L135:
     mov esi, ebp
     call Lrd_slow
-    jmp L135
+    jmp L136
     ALIGN 16
 Lf_24:
     inc bh
     movzx edi, bh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L136
-L137:
+    jz L137
+L138:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L136:
+L137:
     mov esi, ebp
     call Lrd_slow
-    jmp L137
+    jmp L138
     ALIGN 16
 Lf_25:
     dec bh
     movzx edi, bh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L138
-L139:
+    jz L139
+L140:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L138:
+L139:
     mov esi, ebp
     call Lrd_slow
-    jmp L139
+    jmp L140
     ALIGN 16
 Lf_26:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L140
-L141:
+    jz L141
+L142:
     mov bh, byte ptr [rdi+rsi]
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L142
-L143:
+    jz L143
+L144:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L140:
+L141:
     call Lrd_slow
-    jmp L141
-L142:
+    jmp L142
+L143:
     mov esi, ebp
     call Lrd_slow
-    jmp L143
+    jmp L144
     ALIGN 16
 Lf_27:
     movzx edi, al
     mov esi, r8d
     and esi, 16
     test r8b, 64
-    jz L144
-    test r8b, 32
     jz L145
+    test r8b, 32
+    jz L146
     sub edi, 6
+L146:
+    test esi, esi
+    jz L150
+    sub edi, 96
+    jmp L150
 L145:
     test esi, esi
-    jz L149
-    sub edi, 96
-    jmp L149
-L144:
-    test esi, esi
-    jnz L146
+    jnz L147
     cmp edi, 153
-    jbe L147
-L146:
+    jbe L148
+L147:
     add edi, 96
     mov esi, 16
-L147:
+L148:
     test r8b, 32
-    jnz L148
+    jnz L149
     mov r10d, edi
     and r10d, 15
     cmp r10d, 9
-    jbe L149
-L148:
-    add edi, 6
+    jbe L150
 L149:
+    add edi, 6
+L150:
     mov eax, edi
     and r8d, 64
     or r8d, esi
     test al, al
-    jnz L150
+    jnz L151
     or r8d, 128
-L150:
+L151:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L151
-L152:
+    jz L152
+L153:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L151:
+L152:
     mov esi, ebp
     call Lrd_slow
-    jmp L152
+    jmp L153
     ALIGN 16
 Lf_28:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L153
-L154:
+    jz L154
+L155:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 128
-    jz L155
+    jz L156
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
     cmp r10d, -4
-    je L156
-L157:
-L155:
+    je L157
+L158:
+L156:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L158
-L159:
+    jz L159
+L160:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L153:
+L154:
     call Lrd_slow
-    jmp L154
-L156:
+    jmp L155
+L157:
     call Lidle
-    jmp L157
-L158:
+    jmp L158
+L159:
     mov esi, ebp
     call Lrd_slow
-    jmp L159
+    jmp L160
     ALIGN 16
 Lf_29:
     mov edi, ebx
@@ -2188,283 +2225,283 @@ Lf_29:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L160
-L161:
+    jz L161
+L162:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L160:
+L161:
     mov esi, ebp
     call Lrd_slow
-    jmp L161
+    jmp L162
     ALIGN 16
 Lf_2A:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L162
-L163:
+    jz L163
+L164:
     mov al, byte ptr [rdi+rsi]
     lea ebx, [rsi+1]
     and ebx, 65535
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L164
-L165:
+    jz L165
+L166:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L162:
+L163:
     call Lrd_slow
-    jmp L163
-L164:
+    jmp L164
+L165:
     mov esi, ebp
     call Lrd_slow
-    jmp L165
+    jmp L166
     ALIGN 16
 Lf_2B:
     dec bx
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L166
-L167:
+    jz L167
+L168:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L166:
+L167:
     mov esi, ebp
     call Lrd_slow
-    jmp L167
+    jmp L168
     ALIGN 16
 Lf_2C:
     inc bl
     movzx edi, bl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L168
-L169:
+    jz L169
+L170:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L168:
+L169:
     mov esi, ebp
     call Lrd_slow
-    jmp L169
+    jmp L170
     ALIGN 16
 Lf_2D:
     dec bl
     movzx edi, bl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L170
-L171:
+    jz L171
+L172:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L170:
+L171:
     mov esi, ebp
     call Lrd_slow
-    jmp L171
+    jmp L172
     ALIGN 16
 Lf_2E:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L172
-L173:
+    jz L173
+L174:
     mov bl, byte ptr [rdi+rsi]
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L174
-L175:
+    jz L175
+L176:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L172:
+L173:
     call Lrd_slow
-    jmp L173
-L174:
+    jmp L174
+L175:
     mov esi, ebp
     call Lrd_slow
-    jmp L175
+    jmp L176
     ALIGN 16
 Lf_2F:
     not al
     or r8d, 96
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L176
-L177:
+    jz L177
+L178:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L176:
+L177:
     mov esi, ebp
     call Lrd_slow
-    jmp L177
+    jmp L178
     ALIGN 16
 Lf_30:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L178
-L179:
+    jz L179
+L180:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 16
-    jnz L180
+    jnz L181
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-L180:
+L181:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L181
-L182:
+    jz L182
+L183:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L178:
+L179:
     call Lrd_slow
-    jmp L179
-L181:
+    jmp L180
+L182:
     mov esi, ebp
     call Lrd_slow
-    jmp L182
+    jmp L183
     ALIGN 16
 Lf_31:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L183
-L184:
+    jz L184
+L185:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L185
-L186:
+    jz L186
+L187:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -2472,331 +2509,331 @@ L186:
     mov r9d, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L187
-L188:
+    jz L188
+L189:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L183:
+L184:
     call Lrd_slow
-    jmp L184
-L185:
+    jmp L185
+L186:
     call Lrd_slow
-    jmp L186
-L187:
+    jmp L187
+L188:
     mov esi, ebp
     call Lrd_slow
-    jmp L188
+    jmp L189
     ALIGN 16
 Lf_32:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L189
+    jz L190
     mov byte ptr [rdi+rsi], al
-L190:
+L191:
     lea ebx, [rsi-1]
     and ebx, 65535
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L191
-L192:
+    jz L192
+L193:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L189:
+L190:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L190
-L191:
+    jmp L191
+L192:
     mov esi, ebp
     call Lrd_slow
-    jmp L192
+    jmp L193
     ALIGN 16
 Lf_33:
     inc r9w
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L193
-L194:
+    jz L194
+L195:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L193:
+L194:
     mov esi, ebp
     call Lrd_slow
-    jmp L194
+    jmp L195
     ALIGN 16
 Lf_34:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L195
-L196:
+    jz L196
+L197:
     movzx r10d, byte ptr [rdi+rsi]
     inc r10b
     movzx edi, r10b
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L197
+    jz L198
     mov byte ptr [rdi+rsi], r10b
-L198:
+L199:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L199
-L200:
+    jz L200
+L201:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L195:
+L196:
     call Lrd_slow
-    jmp L196
-L197:
+    jmp L197
+L198:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L198
-L199:
+    jmp L199
+L200:
     mov esi, ebp
     call Lrd_slow
-    jmp L200
+    jmp L201
     ALIGN 16
 Lf_35:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L201
-L202:
+    jz L202
+L203:
     movzx r10d, byte ptr [rdi+rsi]
     dec r10b
     movzx edi, r10b
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L203
+    jz L204
     mov byte ptr [rdi+rsi], r10b
-L204:
+L205:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L205
-L206:
+    jz L206
+L207:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L201:
+L202:
     call Lrd_slow
-    jmp L202
-L203:
+    jmp L203
+L204:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L204
-L205:
+    jmp L205
+L206:
     mov esi, ebp
     call Lrd_slow
-    jmp L206
+    jmp L207
     ALIGN 16
 Lf_36:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L207
-L208:
+    jz L208
+L209:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L209
+    jz L210
     mov byte ptr [rdi+rsi], r10b
-L210:
+L211:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L211
-L212:
+    jz L212
+L213:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L207:
+L208:
     call Lrd_slow
-    jmp L208
-L209:
+    jmp L209
+L210:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L210
-L211:
+    jmp L211
+L212:
     mov esi, ebp
     call Lrd_slow
-    jmp L212
+    jmp L213
     ALIGN 16
 Lf_37:
     and r8d, 128
     or r8d, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L213
-L214:
+    jz L214
+L215:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L213:
+L214:
     mov esi, ebp
     call Lrd_slow
-    jmp L214
+    jmp L215
     ALIGN 16
 Lf_38:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L215
-L216:
+    jz L216
+L217:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 16
-    jz L217
+    jz L218
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-L217:
+L218:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L218
-L219:
+    jz L219
+L220:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L215:
+L216:
     call Lrd_slow
-    jmp L216
-L218:
+    jmp L217
+L219:
     mov esi, ebp
     call Lrd_slow
-    jmp L219
+    jmp L220
     ALIGN 16
 Lf_39:
     mov edi, ebx
@@ -2815,1754 +2852,1754 @@ Lf_39:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L220
-L221:
+    jz L221
+L222:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L220:
+L221:
     mov esi, ebp
     call Lrd_slow
-    jmp L221
+    jmp L222
     ALIGN 16
 Lf_3A:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L222
-L223:
+    jz L223
+L224:
     mov al, byte ptr [rdi+rsi]
     lea ebx, [rsi-1]
     and ebx, 65535
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L224
-L225:
+    jz L225
+L226:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L222:
+L223:
     call Lrd_slow
-    jmp L223
-L224:
+    jmp L224
+L225:
     mov esi, ebp
     call Lrd_slow
-    jmp L225
+    jmp L226
     ALIGN 16
 Lf_3B:
     dec r9w
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L226
-L227:
+    jz L227
+L228:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L226:
+L227:
     mov esi, ebp
     call Lrd_slow
-    jmp L227
+    jmp L228
     ALIGN 16
 Lf_3C:
     inc al
     movzx edi, al
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L228
-L229:
+    jz L229
+L230:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L228:
+L229:
     mov esi, ebp
     call Lrd_slow
-    jmp L229
+    jmp L230
     ALIGN 16
 Lf_3D:
     dec al
     movzx edi, al
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L230
-L231:
+    jz L231
+L232:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L230:
+L231:
     mov esi, ebp
     call Lrd_slow
-    jmp L231
+    jmp L232
     ALIGN 16
 Lf_3E:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L232
-L233:
+    jz L233
+L234:
     mov al, byte ptr [rdi+rsi]
     inc bp
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L234
-L235:
+    jz L235
+L236:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L232:
+L233:
     call Lrd_slow
-    jmp L233
-L234:
+    jmp L234
+L235:
     mov esi, ebp
     call Lrd_slow
-    jmp L235
+    jmp L236
     ALIGN 16
 Lf_3F:
     and r8d, 144
     xor r8d, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L236
-L237:
+    jz L237
+L238:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L236:
+L237:
     mov esi, ebp
     call Lrd_slow
-    jmp L237
+    jmp L238
     ALIGN 16
 Lf_40:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L238
-L239:
+    jz L239
+L240:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L238:
+L239:
     mov esi, ebp
     call Lrd_slow
-    jmp L239
+    jmp L240
     ALIGN 16
 Lf_41:
     mov ch, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L240
-L241:
+    jz L241
+L242:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L240:
+L241:
     mov esi, ebp
     call Lrd_slow
-    jmp L241
+    jmp L242
     ALIGN 16
 Lf_42:
     mov ch, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L242
-L243:
+    jz L243
+L244:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L242:
+L243:
     mov esi, ebp
     call Lrd_slow
-    jmp L243
+    jmp L244
     ALIGN 16
 Lf_43:
     mov ch, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L244
-L245:
+    jz L245
+L246:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L244:
+L245:
     mov esi, ebp
     call Lrd_slow
-    jmp L245
+    jmp L246
     ALIGN 16
 Lf_44:
     mov ch, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L246
-L247:
+    jz L247
+L248:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L246:
+L247:
     mov esi, ebp
     call Lrd_slow
-    jmp L247
+    jmp L248
     ALIGN 16
 Lf_45:
     mov ch, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L248
-L249:
+    jz L249
+L250:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L248:
+L249:
     mov esi, ebp
     call Lrd_slow
-    jmp L249
+    jmp L250
     ALIGN 16
 Lf_46:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L250
-L251:
+    jz L251
+L252:
     mov ch, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L252
-L253:
+    jz L253
+L254:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L250:
+L251:
     call Lrd_slow
-    jmp L251
-L252:
+    jmp L252
+L253:
     mov esi, ebp
     call Lrd_slow
-    jmp L253
+    jmp L254
     ALIGN 16
 Lf_47:
     mov ch, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L254
-L255:
+    jz L255
+L256:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L254:
+L255:
     mov esi, ebp
     call Lrd_slow
-    jmp L255
+    jmp L256
     ALIGN 16
 Lf_48:
     mov cl, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L256
-L257:
+    jz L257
+L258:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L256:
+L257:
     mov esi, ebp
     call Lrd_slow
-    jmp L257
+    jmp L258
     ALIGN 16
 Lf_49:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L258
-L259:
+    jz L259
+L260:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L258:
+L259:
     mov esi, ebp
     call Lrd_slow
-    jmp L259
+    jmp L260
     ALIGN 16
 Lf_4A:
     mov cl, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L260
-L261:
+    jz L261
+L262:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L260:
+L261:
     mov esi, ebp
     call Lrd_slow
-    jmp L261
+    jmp L262
     ALIGN 16
 Lf_4B:
     mov cl, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L262
-L263:
+    jz L263
+L264:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L262:
+L263:
     mov esi, ebp
     call Lrd_slow
-    jmp L263
+    jmp L264
     ALIGN 16
 Lf_4C:
     mov cl, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L264
-L265:
+    jz L265
+L266:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L264:
+L265:
     mov esi, ebp
     call Lrd_slow
-    jmp L265
+    jmp L266
     ALIGN 16
 Lf_4D:
     mov cl, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L266
-L267:
+    jz L267
+L268:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L266:
+L267:
     mov esi, ebp
     call Lrd_slow
-    jmp L267
+    jmp L268
     ALIGN 16
 Lf_4E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L268
-L269:
+    jz L269
+L270:
     mov cl, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L270
-L271:
+    jz L271
+L272:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L268:
+L269:
     call Lrd_slow
-    jmp L269
-L270:
+    jmp L270
+L271:
     mov esi, ebp
     call Lrd_slow
-    jmp L271
+    jmp L272
     ALIGN 16
 Lf_4F:
     mov cl, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L272
-L273:
+    jz L273
+L274:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L272:
+L273:
     mov esi, ebp
     call Lrd_slow
-    jmp L273
+    jmp L274
     ALIGN 16
 Lf_50:
     mov dh, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L274
-L275:
+    jz L275
+L276:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L274:
+L275:
     mov esi, ebp
     call Lrd_slow
-    jmp L275
+    jmp L276
     ALIGN 16
 Lf_51:
     mov dh, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L276
-L277:
+    jz L277
+L278:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L276:
+L277:
     mov esi, ebp
     call Lrd_slow
-    jmp L277
+    jmp L278
     ALIGN 16
 Lf_52:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L278
-L279:
+    jz L279
+L280:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L278:
+L279:
     mov esi, ebp
     call Lrd_slow
-    jmp L279
+    jmp L280
     ALIGN 16
 Lf_53:
     mov dh, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L280
-L281:
+    jz L281
+L282:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L280:
+L281:
     mov esi, ebp
     call Lrd_slow
-    jmp L281
+    jmp L282
     ALIGN 16
 Lf_54:
     mov dh, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L282
-L283:
+    jz L283
+L284:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L282:
+L283:
     mov esi, ebp
     call Lrd_slow
-    jmp L283
+    jmp L284
     ALIGN 16
 Lf_55:
     mov dh, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L284
-L285:
+    jz L285
+L286:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L284:
+L285:
     mov esi, ebp
     call Lrd_slow
-    jmp L285
+    jmp L286
     ALIGN 16
 Lf_56:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L286
-L287:
+    jz L287
+L288:
     mov dh, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L288
-L289:
+    jz L289
+L290:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L286:
+L287:
     call Lrd_slow
-    jmp L287
-L288:
+    jmp L288
+L289:
     mov esi, ebp
     call Lrd_slow
-    jmp L289
+    jmp L290
     ALIGN 16
 Lf_57:
     mov dh, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L290
-L291:
+    jz L291
+L292:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L290:
+L291:
     mov esi, ebp
     call Lrd_slow
-    jmp L291
+    jmp L292
     ALIGN 16
 Lf_58:
     mov dl, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L292
-L293:
+    jz L293
+L294:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L292:
+L293:
     mov esi, ebp
     call Lrd_slow
-    jmp L293
+    jmp L294
     ALIGN 16
 Lf_59:
     mov dl, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L294
-L295:
+    jz L295
+L296:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L294:
+L295:
     mov esi, ebp
     call Lrd_slow
-    jmp L295
+    jmp L296
     ALIGN 16
 Lf_5A:
     mov dl, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L296
-L297:
+    jz L297
+L298:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L296:
+L297:
     mov esi, ebp
     call Lrd_slow
-    jmp L297
+    jmp L298
     ALIGN 16
 Lf_5B:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L298
-L299:
+    jz L299
+L300:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L298:
+L299:
     mov esi, ebp
     call Lrd_slow
-    jmp L299
+    jmp L300
     ALIGN 16
 Lf_5C:
     mov dl, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L300
-L301:
+    jz L301
+L302:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L300:
+L301:
     mov esi, ebp
     call Lrd_slow
-    jmp L301
+    jmp L302
     ALIGN 16
 Lf_5D:
     mov dl, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L302
-L303:
+    jz L303
+L304:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L302:
+L303:
     mov esi, ebp
     call Lrd_slow
-    jmp L303
+    jmp L304
     ALIGN 16
 Lf_5E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L304
-L305:
+    jz L305
+L306:
     mov dl, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L306
-L307:
+    jz L307
+L308:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L304:
+L305:
     call Lrd_slow
-    jmp L305
-L306:
+    jmp L306
+L307:
     mov esi, ebp
     call Lrd_slow
-    jmp L307
+    jmp L308
     ALIGN 16
 Lf_5F:
     mov dl, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L308
-L309:
+    jz L309
+L310:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L308:
+L309:
     mov esi, ebp
     call Lrd_slow
-    jmp L309
+    jmp L310
     ALIGN 16
 Lf_60:
     mov bh, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L310
-L311:
+    jz L311
+L312:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L310:
+L311:
     mov esi, ebp
     call Lrd_slow
-    jmp L311
+    jmp L312
     ALIGN 16
 Lf_61:
     mov bh, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L312
-L313:
+    jz L313
+L314:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L312:
+L313:
     mov esi, ebp
     call Lrd_slow
-    jmp L313
+    jmp L314
     ALIGN 16
 Lf_62:
     mov bh, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L314
-L315:
+    jz L315
+L316:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L314:
+L315:
     mov esi, ebp
     call Lrd_slow
-    jmp L315
+    jmp L316
     ALIGN 16
 Lf_63:
     mov bh, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L316
-L317:
+    jz L317
+L318:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L316:
+L317:
     mov esi, ebp
     call Lrd_slow
-    jmp L317
+    jmp L318
     ALIGN 16
 Lf_64:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L318
-L319:
+    jz L319
+L320:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L318:
+L319:
     mov esi, ebp
     call Lrd_slow
-    jmp L319
+    jmp L320
     ALIGN 16
 Lf_65:
     mov bh, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L320
-L321:
+    jz L321
+L322:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L320:
+L321:
     mov esi, ebp
     call Lrd_slow
-    jmp L321
+    jmp L322
     ALIGN 16
 Lf_66:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L322
-L323:
+    jz L323
+L324:
     mov bh, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L324
-L325:
+    jz L325
+L326:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L322:
+L323:
     call Lrd_slow
-    jmp L323
-L324:
+    jmp L324
+L325:
     mov esi, ebp
     call Lrd_slow
-    jmp L325
+    jmp L326
     ALIGN 16
 Lf_67:
     mov bh, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L326
-L327:
+    jz L327
+L328:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L326:
+L327:
     mov esi, ebp
     call Lrd_slow
-    jmp L327
+    jmp L328
     ALIGN 16
 Lf_68:
     mov bl, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L328
-L329:
+    jz L329
+L330:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L328:
+L329:
     mov esi, ebp
     call Lrd_slow
-    jmp L329
+    jmp L330
     ALIGN 16
 Lf_69:
     mov bl, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L330
-L331:
+    jz L331
+L332:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L330:
+L331:
     mov esi, ebp
     call Lrd_slow
-    jmp L331
+    jmp L332
     ALIGN 16
 Lf_6A:
     mov bl, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L332
-L333:
+    jz L333
+L334:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L332:
+L333:
     mov esi, ebp
     call Lrd_slow
-    jmp L333
+    jmp L334
     ALIGN 16
 Lf_6B:
     mov bl, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L334
-L335:
+    jz L335
+L336:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L334:
+L335:
     mov esi, ebp
     call Lrd_slow
-    jmp L335
+    jmp L336
     ALIGN 16
 Lf_6C:
     mov bl, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L336
-L337:
+    jz L337
+L338:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L336:
+L337:
     mov esi, ebp
     call Lrd_slow
-    jmp L337
+    jmp L338
     ALIGN 16
 Lf_6D:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L338
-L339:
+    jz L339
+L340:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L338:
+L339:
     mov esi, ebp
     call Lrd_slow
-    jmp L339
+    jmp L340
     ALIGN 16
 Lf_6E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L340
-L341:
+    jz L341
+L342:
     mov bl, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L342
-L343:
+    jz L343
+L344:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L340:
+L341:
     call Lrd_slow
-    jmp L341
-L342:
+    jmp L342
+L343:
     mov esi, ebp
     call Lrd_slow
-    jmp L343
+    jmp L344
     ALIGN 16
 Lf_6F:
     mov bl, al
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L344
-L345:
+    jz L345
+L346:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L344:
+L345:
     mov esi, ebp
     call Lrd_slow
-    jmp L345
+    jmp L346
     ALIGN 16
 Lf_70:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L346
+    jz L347
     mov byte ptr [rdi+rsi], ch
-L347:
+L348:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L348
-L349:
+    jz L349
+L350:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L346:
+L347:
     mov byte ptr [rsp+40], ch
     call Lwr_slow
-    jmp L347
-L348:
+    jmp L348
+L349:
     mov esi, ebp
     call Lrd_slow
-    jmp L349
+    jmp L350
     ALIGN 16
 Lf_71:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L350
+    jz L351
     mov byte ptr [rdi+rsi], cl
-L351:
+L352:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L352
-L353:
+    jz L353
+L354:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L350:
+L351:
     mov byte ptr [rsp+40], cl
     call Lwr_slow
-    jmp L351
-L352:
+    jmp L352
+L353:
     mov esi, ebp
     call Lrd_slow
-    jmp L353
+    jmp L354
     ALIGN 16
 Lf_72:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L354
+    jz L355
     mov byte ptr [rdi+rsi], dh
-L355:
+L356:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L356
-L357:
+    jz L357
+L358:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L354:
+L355:
     mov byte ptr [rsp+40], dh
     call Lwr_slow
-    jmp L355
-L356:
+    jmp L356
+L357:
     mov esi, ebp
     call Lrd_slow
-    jmp L357
+    jmp L358
     ALIGN 16
 Lf_73:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L358
+    jz L359
     mov byte ptr [rdi+rsi], dl
-L359:
+L360:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L360
-L361:
+    jz L361
+L362:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L358:
+L359:
     mov byte ptr [rsp+40], dl
     call Lwr_slow
-    jmp L359
-L360:
+    jmp L360
+L361:
     mov esi, ebp
     call Lrd_slow
-    jmp L361
+    jmp L362
     ALIGN 16
 Lf_74:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L362
+    jz L363
     mov byte ptr [rdi+rsi], bh
-L363:
+L364:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L364
-L365:
+    jz L365
+L366:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L362:
+L363:
     mov byte ptr [rsp+40], bh
     call Lwr_slow
-    jmp L363
-L364:
+    jmp L364
+L365:
     mov esi, ebp
     call Lrd_slow
-    jmp L365
+    jmp L366
     ALIGN 16
 Lf_75:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L366
+    jz L367
     mov byte ptr [rdi+rsi], bl
-L367:
+L368:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L368
-L369:
+    jz L369
+L370:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L366:
+L367:
     mov byte ptr [rsp+40], bl
     call Lwr_slow
-    jmp L367
-L368:
+    jmp L368
+L369:
     mov esi, ebp
     call Lrd_slow
-    jmp L369
+    jmp L370
     ALIGN 16
 Lf_76:
     mov byte ptr [r15+24], al
@@ -4578,13 +4615,13 @@ Lf_76:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L370
+    cmp byte ptr [r15+572675], 0
+    jne L371
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L370:
+L371:
     sub rsp, 32
     mov rcx, r15
     mov edx, 118
@@ -4601,2309 +4638,2309 @@ L370:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L371
-L372:
+    jz L372
+L373:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L371:
+L372:
     mov esi, ebp
     call Lrd_slow
-    jmp L372
+    jmp L373
     ALIGN 16
 Lf_77:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L373
+    jz L374
     mov byte ptr [rdi+rsi], al
-L374:
+L375:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L375
-L376:
+    jz L376
+L377:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L373:
+L374:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L374
-L375:
+    jmp L375
+L376:
     mov esi, ebp
     call Lrd_slow
-    jmp L376
+    jmp L377
     ALIGN 16
 Lf_78:
     mov al, ch
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L377
-L378:
+    jz L378
+L379:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L377:
+L378:
     mov esi, ebp
     call Lrd_slow
-    jmp L378
+    jmp L379
     ALIGN 16
 Lf_79:
     mov al, cl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L379
-L380:
+    jz L380
+L381:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L379:
+L380:
     mov esi, ebp
     call Lrd_slow
-    jmp L380
+    jmp L381
     ALIGN 16
 Lf_7A:
     mov al, dh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L381
-L382:
+    jz L382
+L383:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L381:
+L382:
     mov esi, ebp
     call Lrd_slow
-    jmp L382
+    jmp L383
     ALIGN 16
 Lf_7B:
     mov al, dl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L383
-L384:
+    jz L384
+L385:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L383:
+L384:
     mov esi, ebp
     call Lrd_slow
-    jmp L384
+    jmp L385
     ALIGN 16
 Lf_7C:
     mov al, bh
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L385
-L386:
+    jz L386
+L387:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L385:
+L386:
     mov esi, ebp
     call Lrd_slow
-    jmp L386
+    jmp L387
     ALIGN 16
 Lf_7D:
     mov al, bl
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L387
-L388:
+    jz L388
+L389:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L387:
+L388:
     mov esi, ebp
     call Lrd_slow
-    jmp L388
+    jmp L389
     ALIGN 16
 Lf_7E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L389
-L390:
+    jz L390
+L391:
     mov al, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L391
-L392:
+    jz L392
+L393:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L389:
+L390:
     call Lrd_slow
-    jmp L390
-L391:
+    jmp L391
+L392:
     mov esi, ebp
     call Lrd_slow
-    jmp L392
+    jmp L393
     ALIGN 16
 Lf_7F:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L393
-L394:
+    jz L394
+L395:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L393:
+L394:
     mov esi, ebp
     call Lrd_slow
-    jmp L394
+    jmp L395
     ALIGN 16
 Lf_80:
     add al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L395
-L396:
+    jz L396
+L397:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L395:
+L396:
     mov esi, ebp
     call Lrd_slow
-    jmp L396
+    jmp L397
     ALIGN 16
 Lf_81:
     add al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L397
-L398:
+    jz L398
+L399:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L397:
+L398:
     mov esi, ebp
     call Lrd_slow
-    jmp L398
+    jmp L399
     ALIGN 16
 Lf_82:
     add al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L399
-L400:
+    jz L400
+L401:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L399:
+L400:
     mov esi, ebp
     call Lrd_slow
-    jmp L400
+    jmp L401
     ALIGN 16
 Lf_83:
     add al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L401
-L402:
+    jz L402
+L403:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L401:
+L402:
     mov esi, ebp
     call Lrd_slow
-    jmp L402
+    jmp L403
     ALIGN 16
 Lf_84:
     add al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L403
-L404:
+    jz L404
+L405:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L403:
+L404:
     mov esi, ebp
     call Lrd_slow
-    jmp L404
+    jmp L405
     ALIGN 16
 Lf_85:
     add al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L405
-L406:
+    jz L406
+L407:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L405:
+L406:
     mov esi, ebp
     call Lrd_slow
-    jmp L406
+    jmp L407
     ALIGN 16
 Lf_86:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L407
-L408:
+    jz L408
+L409:
     movzx r10d, byte ptr [rdi+rsi]
     add al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L409
-L410:
+    jz L410
+L411:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L407:
+L408:
     call Lrd_slow
-    jmp L408
-L409:
+    jmp L409
+L410:
     mov esi, ebp
     call Lrd_slow
-    jmp L410
+    jmp L411
     ALIGN 16
 Lf_87:
     add al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L411
-L412:
+    jz L412
+L413:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L411:
+L412:
     mov esi, ebp
     call Lrd_slow
-    jmp L412
+    jmp L413
     ALIGN 16
 Lf_88:
     bt r8d, 4
     adc al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L413
-L414:
+    jz L414
+L415:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L413:
+L414:
     mov esi, ebp
     call Lrd_slow
-    jmp L414
+    jmp L415
     ALIGN 16
 Lf_89:
     bt r8d, 4
     adc al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L415
-L416:
+    jz L416
+L417:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L415:
+L416:
     mov esi, ebp
     call Lrd_slow
-    jmp L416
+    jmp L417
     ALIGN 16
 Lf_8A:
     bt r8d, 4
     adc al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L417
-L418:
+    jz L418
+L419:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L417:
+L418:
     mov esi, ebp
     call Lrd_slow
-    jmp L418
+    jmp L419
     ALIGN 16
 Lf_8B:
     bt r8d, 4
     adc al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L419
-L420:
+    jz L420
+L421:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L419:
+L420:
     mov esi, ebp
     call Lrd_slow
-    jmp L420
+    jmp L421
     ALIGN 16
 Lf_8C:
     bt r8d, 4
     adc al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L421
-L422:
+    jz L422
+L423:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L421:
+L422:
     mov esi, ebp
     call Lrd_slow
-    jmp L422
+    jmp L423
     ALIGN 16
 Lf_8D:
     bt r8d, 4
     adc al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L423
-L424:
+    jz L424
+L425:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L423:
+L424:
     mov esi, ebp
     call Lrd_slow
-    jmp L424
+    jmp L425
     ALIGN 16
 Lf_8E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L425
-L426:
+    jz L426
+L427:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     adc al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L427
-L428:
+    jz L428
+L429:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L425:
+L426:
     call Lrd_slow
-    jmp L426
-L427:
+    jmp L427
+L428:
     mov esi, ebp
     call Lrd_slow
-    jmp L428
+    jmp L429
     ALIGN 16
 Lf_8F:
     bt r8d, 4
     adc al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L429
-L430:
+    jz L430
+L431:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L429:
+L430:
     mov esi, ebp
     call Lrd_slow
-    jmp L430
+    jmp L431
     ALIGN 16
 Lf_90:
     sub al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L431
-L432:
+    jz L432
+L433:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L431:
+L432:
     mov esi, ebp
     call Lrd_slow
-    jmp L432
+    jmp L433
     ALIGN 16
 Lf_91:
     sub al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L433
-L434:
+    jz L434
+L435:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L433:
+L434:
     mov esi, ebp
     call Lrd_slow
-    jmp L434
+    jmp L435
     ALIGN 16
 Lf_92:
     sub al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L435
-L436:
+    jz L436
+L437:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L435:
+L436:
     mov esi, ebp
     call Lrd_slow
-    jmp L436
+    jmp L437
     ALIGN 16
 Lf_93:
     sub al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L437
-L438:
+    jz L438
+L439:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L437:
+L438:
     mov esi, ebp
     call Lrd_slow
-    jmp L438
+    jmp L439
     ALIGN 16
 Lf_94:
     sub al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L439
-L440:
+    jz L440
+L441:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L439:
+L440:
     mov esi, ebp
     call Lrd_slow
-    jmp L440
+    jmp L441
     ALIGN 16
 Lf_95:
     sub al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L441
-L442:
+    jz L442
+L443:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L441:
+L442:
     mov esi, ebp
     call Lrd_slow
-    jmp L442
+    jmp L443
     ALIGN 16
 Lf_96:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L443
-L444:
+    jz L444
+L445:
     movzx r10d, byte ptr [rdi+rsi]
     sub al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L445
-L446:
+    jz L446
+L447:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L443:
+L444:
     call Lrd_slow
-    jmp L444
-L445:
+    jmp L445
+L446:
     mov esi, ebp
     call Lrd_slow
-    jmp L446
+    jmp L447
     ALIGN 16
 Lf_97:
     sub al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L447
-L448:
+    jz L448
+L449:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L447:
+L448:
     mov esi, ebp
     call Lrd_slow
-    jmp L448
+    jmp L449
     ALIGN 16
 Lf_98:
     bt r8d, 4
     sbb al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L449
-L450:
+    jz L450
+L451:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L449:
+L450:
     mov esi, ebp
     call Lrd_slow
-    jmp L450
+    jmp L451
     ALIGN 16
 Lf_99:
     bt r8d, 4
     sbb al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L451
-L452:
+    jz L452
+L453:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L451:
+L452:
     mov esi, ebp
     call Lrd_slow
-    jmp L452
+    jmp L453
     ALIGN 16
 Lf_9A:
     bt r8d, 4
     sbb al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L453
-L454:
+    jz L454
+L455:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L453:
+L454:
     mov esi, ebp
     call Lrd_slow
-    jmp L454
+    jmp L455
     ALIGN 16
 Lf_9B:
     bt r8d, 4
     sbb al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L455
-L456:
+    jz L456
+L457:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L455:
+L456:
     mov esi, ebp
     call Lrd_slow
-    jmp L456
+    jmp L457
     ALIGN 16
 Lf_9C:
     bt r8d, 4
     sbb al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L457
-L458:
+    jz L458
+L459:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L457:
+L458:
     mov esi, ebp
     call Lrd_slow
-    jmp L458
+    jmp L459
     ALIGN 16
 Lf_9D:
     bt r8d, 4
     sbb al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L459
-L460:
+    jz L460
+L461:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L459:
+L460:
     mov esi, ebp
     call Lrd_slow
-    jmp L460
+    jmp L461
     ALIGN 16
 Lf_9E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L461
-L462:
+    jz L462
+L463:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     sbb al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L463
-L464:
+    jz L464
+L465:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L461:
+L462:
     call Lrd_slow
-    jmp L462
-L463:
+    jmp L463
+L464:
     mov esi, ebp
     call Lrd_slow
-    jmp L464
+    jmp L465
     ALIGN 16
 Lf_9F:
     bt r8d, 4
     sbb al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L465
-L466:
+    jz L466
+L467:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L465:
+L466:
     mov esi, ebp
     call Lrd_slow
-    jmp L466
+    jmp L467
     ALIGN 16
 Lf_A0:
     and al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L467
-L468:
+    jz L468
+L469:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L467:
+L468:
     mov esi, ebp
     call Lrd_slow
-    jmp L468
+    jmp L469
     ALIGN 16
 Lf_A1:
     and al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L469
-L470:
+    jz L470
+L471:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L469:
+L470:
     mov esi, ebp
     call Lrd_slow
-    jmp L470
+    jmp L471
     ALIGN 16
 Lf_A2:
     and al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L471
-L472:
+    jz L472
+L473:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L471:
+L472:
     mov esi, ebp
     call Lrd_slow
-    jmp L472
+    jmp L473
     ALIGN 16
 Lf_A3:
     and al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L473
-L474:
+    jz L474
+L475:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L473:
+L474:
     mov esi, ebp
     call Lrd_slow
-    jmp L474
+    jmp L475
     ALIGN 16
 Lf_A4:
     and al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L475
-L476:
+    jz L476
+L477:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L475:
+L476:
     mov esi, ebp
     call Lrd_slow
-    jmp L476
+    jmp L477
     ALIGN 16
 Lf_A5:
     and al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L477
-L478:
+    jz L478
+L479:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L477:
+L478:
     mov esi, ebp
     call Lrd_slow
-    jmp L478
+    jmp L479
     ALIGN 16
 Lf_A6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L479
-L480:
+    jz L480
+L481:
     movzx r10d, byte ptr [rdi+rsi]
     and al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L481
-L482:
+    jz L482
+L483:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L479:
+L480:
     call Lrd_slow
-    jmp L480
-L481:
+    jmp L481
+L482:
     mov esi, ebp
     call Lrd_slow
-    jmp L482
+    jmp L483
     ALIGN 16
 Lf_A7:
     and al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L483
-L484:
+    jz L484
+L485:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L483:
+L484:
     mov esi, ebp
     call Lrd_slow
-    jmp L484
+    jmp L485
     ALIGN 16
 Lf_A8:
     xor al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L485
-L486:
+    jz L486
+L487:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L485:
+L486:
     mov esi, ebp
     call Lrd_slow
-    jmp L486
+    jmp L487
     ALIGN 16
 Lf_A9:
     xor al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L487
-L488:
+    jz L488
+L489:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L487:
+L488:
     mov esi, ebp
     call Lrd_slow
-    jmp L488
+    jmp L489
     ALIGN 16
 Lf_AA:
     xor al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L489
-L490:
+    jz L490
+L491:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L489:
+L490:
     mov esi, ebp
     call Lrd_slow
-    jmp L490
+    jmp L491
     ALIGN 16
 Lf_AB:
     xor al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L491
-L492:
+    jz L492
+L493:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L491:
+L492:
     mov esi, ebp
     call Lrd_slow
-    jmp L492
+    jmp L493
     ALIGN 16
 Lf_AC:
     xor al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L493
-L494:
+    jz L494
+L495:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L493:
+L494:
     mov esi, ebp
     call Lrd_slow
-    jmp L494
+    jmp L495
     ALIGN 16
 Lf_AD:
     xor al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L495
-L496:
+    jz L496
+L497:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L495:
+L496:
     mov esi, ebp
     call Lrd_slow
-    jmp L496
+    jmp L497
     ALIGN 16
 Lf_AE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L497
-L498:
+    jz L498
+L499:
     movzx r10d, byte ptr [rdi+rsi]
     xor al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L499
-L500:
+    jz L500
+L501:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L497:
+L498:
     call Lrd_slow
-    jmp L498
-L499:
+    jmp L499
+L500:
     mov esi, ebp
     call Lrd_slow
-    jmp L500
+    jmp L501
     ALIGN 16
 Lf_AF:
     xor al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L501
-L502:
+    jz L502
+L503:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L501:
+L502:
     mov esi, ebp
     call Lrd_slow
-    jmp L502
+    jmp L503
     ALIGN 16
 Lf_B0:
     or al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L503
-L504:
+    jz L504
+L505:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L503:
+L504:
     mov esi, ebp
     call Lrd_slow
-    jmp L504
+    jmp L505
     ALIGN 16
 Lf_B1:
     or al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L505
-L506:
+    jz L506
+L507:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L505:
+L506:
     mov esi, ebp
     call Lrd_slow
-    jmp L506
+    jmp L507
     ALIGN 16
 Lf_B2:
     or al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L507
-L508:
+    jz L508
+L509:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L507:
+L508:
     mov esi, ebp
     call Lrd_slow
-    jmp L508
+    jmp L509
     ALIGN 16
 Lf_B3:
     or al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L509
-L510:
+    jz L510
+L511:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L509:
+L510:
     mov esi, ebp
     call Lrd_slow
-    jmp L510
+    jmp L511
     ALIGN 16
 Lf_B4:
     or al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L511
-L512:
+    jz L512
+L513:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L511:
+L512:
     mov esi, ebp
     call Lrd_slow
-    jmp L512
+    jmp L513
     ALIGN 16
 Lf_B5:
     or al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L513
-L514:
+    jz L514
+L515:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L513:
+L514:
     mov esi, ebp
     call Lrd_slow
-    jmp L514
+    jmp L515
     ALIGN 16
 Lf_B6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L515
-L516:
+    jz L516
+L517:
     movzx r10d, byte ptr [rdi+rsi]
     or al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L517
-L518:
+    jz L518
+L519:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L515:
+L516:
     call Lrd_slow
-    jmp L516
-L517:
+    jmp L517
+L518:
     mov esi, ebp
     call Lrd_slow
-    jmp L518
+    jmp L519
     ALIGN 16
 Lf_B7:
     or al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L519
-L520:
+    jz L520
+L521:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L519:
+L520:
     mov esi, ebp
     call Lrd_slow
-    jmp L520
+    jmp L521
     ALIGN 16
 Lf_B8:
     cmp al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L521
-L522:
+    jz L522
+L523:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L521:
+L522:
     mov esi, ebp
     call Lrd_slow
-    jmp L522
+    jmp L523
     ALIGN 16
 Lf_B9:
     cmp al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L523
-L524:
+    jz L524
+L525:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L523:
+L524:
     mov esi, ebp
     call Lrd_slow
-    jmp L524
+    jmp L525
     ALIGN 16
 Lf_BA:
     cmp al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L525
-L526:
+    jz L526
+L527:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L525:
+L526:
     mov esi, ebp
     call Lrd_slow
-    jmp L526
+    jmp L527
     ALIGN 16
 Lf_BB:
     cmp al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L527
-L528:
+    jz L528
+L529:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L527:
+L528:
     mov esi, ebp
     call Lrd_slow
-    jmp L528
+    jmp L529
     ALIGN 16
 Lf_BC:
     cmp al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L529
-L530:
+    jz L530
+L531:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L529:
+L530:
     mov esi, ebp
     call Lrd_slow
-    jmp L530
+    jmp L531
     ALIGN 16
 Lf_BD:
     cmp al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L531
-L532:
+    jz L532
+L533:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L531:
+L532:
     mov esi, ebp
     call Lrd_slow
-    jmp L532
+    jmp L533
     ALIGN 16
 Lf_BE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L533
-L534:
+    jz L534
+L535:
     movzx r10d, byte ptr [rdi+rsi]
     cmp al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L535
-L536:
+    jz L536
+L537:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L533:
+L534:
     call Lrd_slow
-    jmp L534
-L535:
+    jmp L535
+L536:
     mov esi, ebp
     call Lrd_slow
-    jmp L536
+    jmp L537
     ALIGN 16
 Lf_BF:
     cmp al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L537
-L538:
+    jz L538
+L539:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L537:
+L538:
     mov esi, ebp
     call Lrd_slow
-    jmp L538
+    jmp L539
     ALIGN 16
 Lf_C0:
     add r14, 4
     test r8b, 128
-    jnz L539
+    jnz L540
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L540
-L541:
+    jz L541
+L542:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L542
-L543:
+    jz L543
+L544:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-L539:
+L540:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L544
-L545:
+    jz L545
+L546:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L540:
+L541:
     call Lrd_slow
-    jmp L541
-L542:
+    jmp L542
+L543:
     call Lrd_slow
-    jmp L543
-L544:
+    jmp L544
+L545:
     mov esi, ebp
     call Lrd_slow
-    jmp L545
+    jmp L546
     ALIGN 16
 Lf_C1:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L546
-L547:
+    jz L547
+L548:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L548
-L549:
+    jz L549
+L550:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -6911,173 +6948,173 @@ L549:
     mov ecx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L550
-L551:
+    jz L551
+L552:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L546:
+L547:
     call Lrd_slow
-    jmp L547
-L548:
+    jmp L548
+L549:
     call Lrd_slow
-    jmp L549
-L550:
+    jmp L550
+L551:
     mov esi, ebp
     call Lrd_slow
-    jmp L551
+    jmp L552
     ALIGN 16
 Lf_C2:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L552
-L553:
+    jz L553
+L554:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L554
-L555:
+    jz L555
+L556:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jnz L556
+    jnz L557
     mov ebp, r11d
     add r14, 4
-L556:
+L557:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L557
-L558:
+    jz L558
+L559:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L552:
+L553:
     call Lrd_slow
-    jmp L553
-L554:
+    jmp L554
+L555:
     call Lrd_slow
-    jmp L555
-L557:
+    jmp L556
+L558:
     mov esi, ebp
     call Lrd_slow
-    jmp L558
+    jmp L559
     ALIGN 16
 Lf_C3:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L559
-L560:
+    jz L560
+L561:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L561
-L562:
+    jz L562
+L563:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-L563:
+L564:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L564
-L565:
+    jz L565
+L566:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L559:
+L560:
     call Lrd_slow
-    jmp L560
-L561:
+    jmp L561
+L562:
     call Lrd_slow
-    jmp L562
-L564:
+    jmp L563
+L565:
     mov esi, ebp
     call Lrd_slow
-    jmp L565
+    jmp L566
     ALIGN 16
 Lf_C4:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L566
-L567:
+    jz L567
+L568:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L568
-L569:
+    jz L569
+L570:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jnz L570
+    jnz L571
     add r14, 4
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
@@ -7088,66 +7125,66 @@ L569:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L571
+    jz L572
     mov byte ptr [rdi+rsi], r10b
-L572:
+L573:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L573
-L574:
+    cmp r14, qword ptr [r15+572600]
+    jae L574
+L575:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L575
+    jz L576
     mov byte ptr [rdi+rsi], r11b
-L576:
+L577:
     mov ebp, dword ptr [rsp+48]
-L570:
+L571:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L577
-L578:
+    jz L578
+L579:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L566:
+L567:
     call Lrd_slow
-    jmp L567
-L568:
+    jmp L568
+L569:
     call Lrd_slow
-    jmp L569
-L571:
+    jmp L570
+L572:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L572
-L573:
+    jmp L573
+L574:
     call Ltick_slow4
-    jmp L574
-L575:
+    jmp L575
+L576:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L576
-L577:
+    jmp L577
+L578:
     mov esi, ebp
     call Lrd_slow
-    jmp L578
+    jmp L579
     ALIGN 16
 Lf_C5:
     add r14, 4
@@ -7159,100 +7196,100 @@ Lf_C5:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L579
+    jz L580
     mov byte ptr [rdi+rsi], r10b
-L580:
+L581:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L581
-L582:
+    cmp r14, qword ptr [r15+572600]
+    jae L582
+L583:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L583
+    jz L584
     mov byte ptr [rdi+rsi], r11b
-L584:
+L585:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L585
-L586:
+    jz L586
+L587:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L579:
+L580:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L580
-L581:
+    jmp L581
+L582:
     call Ltick_slow4
-    jmp L582
-L583:
+    jmp L583
+L584:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L584
-L585:
+    jmp L585
+L586:
     mov esi, ebp
     call Lrd_slow
-    jmp L586
+    jmp L587
     ALIGN 16
 Lf_C6:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L587
-L588:
+    jz L588
+L589:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     add al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L589
-L590:
+    jz L590
+L591:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L587:
+L588:
     call Lrd_slow
-    jmp L588
-L589:
+    jmp L589
+L590:
     mov esi, ebp
     call Lrd_slow
-    jmp L590
+    jmp L591
     ALIGN 16
 Lf_C7:
     add r14, 4
@@ -7264,138 +7301,138 @@ Lf_C7:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L591
+    jz L592
     mov byte ptr [rdi+rsi], r10b
-L592:
+L593:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L593
-L594:
+    cmp r14, qword ptr [r15+572600]
+    jae L594
+L595:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L595
+    jz L596
     mov byte ptr [rdi+rsi], r11b
-L596:
+L597:
     mov ebp, 0
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L597
-L598:
+    jz L598
+L599:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L591:
+L592:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L592
-L593:
+    jmp L593
+L594:
     call Ltick_slow4
-    jmp L594
-L595:
+    jmp L595
+L596:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L596
-L597:
+    jmp L597
+L598:
     mov esi, ebp
     call Lrd_slow
-    jmp L598
+    jmp L599
     ALIGN 16
 Lf_C8:
     add r14, 4
     test r8b, 128
-    jz L599
+    jz L600
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L600
-L601:
+    jz L601
+L602:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L602
-L603:
+    jz L603
+L604:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-L599:
+L600:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L604
-L605:
+    jz L605
+L606:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L600:
+L601:
     call Lrd_slow
-    jmp L601
-L602:
+    jmp L602
+L603:
     call Lrd_slow
-    jmp L603
-L604:
+    jmp L604
+L605:
     mov esi, ebp
     call Lrd_slow
-    jmp L605
+    jmp L606
     ALIGN 16
 Lf_C9:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L606
-L607:
+    jz L607
+L608:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L608
-L609:
+    jz L609
+L610:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -7404,136 +7441,136 @@ L609:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L610
-L611:
+    jz L611
+L612:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L606:
+L607:
     call Lrd_slow
-    jmp L607
-L608:
+    jmp L608
+L609:
     call Lrd_slow
-    jmp L609
-L610:
+    jmp L610
+L611:
     mov esi, ebp
     call Lrd_slow
-    jmp L611
+    jmp L612
     ALIGN 16
 Lf_CA:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L612
-L613:
+    jz L613
+L614:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L614
-L615:
+    jz L615
+L616:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jz L616
+    jz L617
     mov ebp, r11d
     add r14, 4
-L616:
+L617:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L617
-L618:
+    jz L618
+L619:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L612:
+L613:
     call Lrd_slow
-    jmp L613
-L614:
+    jmp L614
+L615:
     call Lrd_slow
-    jmp L615
-L617:
+    jmp L616
+L618:
     mov esi, ebp
     call Lrd_slow
-    jmp L618
+    jmp L619
     ALIGN 16
 Lf_CB:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L619
-L620:
+    jz L620
+L621:
     movzx esi, byte ptr [rdi+rsi]
     inc bp
     lea rdi, Ljt_fcb
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L619:
+L620:
     call Lrd_slow
-    jmp L620
+    jmp L621
     ALIGN 16
 Lf_CC:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L621
-L622:
+    jz L622
+L623:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L623
-L624:
+    jz L624
+L625:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jz L625
+    jz L626
     add r14, 4
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
@@ -7544,86 +7581,86 @@ L624:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L626
+    jz L627
     mov byte ptr [rdi+rsi], r10b
-L627:
+L628:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L628
-L629:
+    cmp r14, qword ptr [r15+572600]
+    jae L629
+L630:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L630
+    jz L631
     mov byte ptr [rdi+rsi], r11b
-L631:
+L632:
     mov ebp, dword ptr [rsp+48]
-L625:
+L626:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L632
-L633:
+    jz L633
+L634:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L621:
+L622:
     call Lrd_slow
-    jmp L622
-L623:
+    jmp L623
+L624:
     call Lrd_slow
-    jmp L624
-L626:
+    jmp L625
+L627:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L627
-L628:
+    jmp L628
+L629:
     call Ltick_slow4
-    jmp L629
-L630:
+    jmp L630
+L631:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L631
-L632:
+    jmp L632
+L633:
     mov esi, ebp
     call Lrd_slow
-    jmp L633
+    jmp L634
     ALIGN 16
 Lf_CD:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L634
-L635:
+    jz L635
+L636:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L636
-L637:
+    jz L637
+L638:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -7638,109 +7675,109 @@ L637:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L639
+    jz L640
     mov byte ptr [rdi+rsi], r10b
-L640:
+L641:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L641
-L642:
+    cmp r14, qword ptr [r15+572600]
+    jae L642
+L643:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L643
+    jz L644
     mov byte ptr [rdi+rsi], r11b
-L644:
+L645:
     mov ebp, dword ptr [rsp+48]
-L638:
+L639:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L645
-L646:
+    jz L646
+L647:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L634:
+L635:
     call Lrd_slow
-    jmp L635
-L636:
+    jmp L636
+L637:
     call Lrd_slow
-    jmp L637
-L639:
+    jmp L638
+L640:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L640
-L641:
+    jmp L641
+L642:
     call Ltick_slow4
-    jmp L642
-L643:
+    jmp L643
+L644:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L644
-L645:
+    jmp L645
+L646:
     mov esi, ebp
     call Lrd_slow
-    jmp L646
+    jmp L647
     ALIGN 16
 Lf_CE:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L647
-L648:
+    jz L648
+L649:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     bt r8d, 4
     adc al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L649
-L650:
+    jz L650
+L651:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L647:
+L648:
     call Lrd_slow
-    jmp L648
-L649:
+    jmp L649
+L650:
     mov esi, ebp
     call Lrd_slow
-    jmp L650
+    jmp L651
     ALIGN 16
 Lf_CF:
     add r14, 4
@@ -7752,138 +7789,138 @@ Lf_CF:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L651
+    jz L652
     mov byte ptr [rdi+rsi], r10b
-L652:
+L653:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L653
-L654:
+    cmp r14, qword ptr [r15+572600]
+    jae L654
+L655:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L655
+    jz L656
     mov byte ptr [rdi+rsi], r11b
-L656:
+L657:
     mov ebp, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L657
-L658:
+    jz L658
+L659:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L651:
+L652:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L652
-L653:
+    jmp L653
+L654:
     call Ltick_slow4
-    jmp L654
-L655:
+    jmp L655
+L656:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L656
-L657:
+    jmp L657
+L658:
     mov esi, ebp
     call Lrd_slow
-    jmp L658
+    jmp L659
     ALIGN 16
 Lf_D0:
     add r14, 4
     test r8b, 16
-    jnz L659
+    jnz L660
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L660
-L661:
+    jz L661
+L662:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L662
-L663:
+    jz L663
+L664:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-L659:
+L660:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L664
-L665:
+    jz L665
+L666:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L660:
+L661:
     call Lrd_slow
-    jmp L661
-L662:
+    jmp L662
+L663:
     call Lrd_slow
-    jmp L663
-L664:
+    jmp L664
+L665:
     mov esi, ebp
     call Lrd_slow
-    jmp L665
+    jmp L666
     ALIGN 16
 Lf_D1:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L666
-L667:
+    jz L667
+L668:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L668
-L669:
+    jz L669
+L670:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -7891,142 +7928,142 @@ L669:
     mov edx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L670
-L671:
+    jz L671
+L672:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L666:
+L667:
     call Lrd_slow
-    jmp L667
-L668:
+    jmp L668
+L669:
     call Lrd_slow
-    jmp L669
-L670:
+    jmp L670
+L671:
     mov esi, ebp
     call Lrd_slow
-    jmp L671
+    jmp L672
     ALIGN 16
 Lf_D2:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L672
-L673:
+    jz L673
+L674:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L674
-L675:
+    jz L675
+L676:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jnz L676
+    jnz L677
     mov ebp, r11d
     add r14, 4
-L676:
+L677:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L677
-L678:
+    jz L678
+L679:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L672:
+L673:
     call Lrd_slow
-    jmp L673
-L674:
+    jmp L674
+L675:
     call Lrd_slow
-    jmp L675
-L677:
+    jmp L676
+L678:
     mov esi, ebp
     call Lrd_slow
-    jmp L678
+    jmp L679
     ALIGN 16
 Lf_D3:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L679
-L680:
+    jz L680
+L681:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L679:
+L680:
     mov esi, ebp
     call Lrd_slow
-    jmp L680
+    jmp L681
     ALIGN 16
 Lf_D4:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L681
-L682:
+    jz L682
+L683:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L683
-L684:
+    jz L684
+L685:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jnz L685
+    jnz L686
     add r14, 4
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
@@ -8037,66 +8074,66 @@ L684:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L686
+    jz L687
     mov byte ptr [rdi+rsi], r10b
-L687:
+L688:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L688
-L689:
+    cmp r14, qword ptr [r15+572600]
+    jae L689
+L690:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L690
+    jz L691
     mov byte ptr [rdi+rsi], r11b
-L691:
+L692:
     mov ebp, dword ptr [rsp+48]
-L685:
+L686:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L692
-L693:
+    jz L693
+L694:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L681:
+L682:
     call Lrd_slow
-    jmp L682
-L683:
+    jmp L683
+L684:
     call Lrd_slow
-    jmp L684
-L686:
+    jmp L685
+L687:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L687
-L688:
+    jmp L688
+L689:
     call Ltick_slow4
-    jmp L689
-L690:
+    jmp L690
+L691:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L691
-L692:
+    jmp L692
+L693:
     mov esi, ebp
     call Lrd_slow
-    jmp L693
+    jmp L694
     ALIGN 16
 Lf_D5:
     add r14, 4
@@ -8108,100 +8145,100 @@ Lf_D5:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L694
+    jz L695
     mov byte ptr [rdi+rsi], r10b
-L695:
+L696:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L696
-L697:
+    cmp r14, qword ptr [r15+572600]
+    jae L697
+L698:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L698
+    jz L699
     mov byte ptr [rdi+rsi], r11b
-L699:
+L700:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L700
-L701:
+    jz L701
+L702:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L694:
+L695:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L695
-L696:
+    jmp L696
+L697:
     call Ltick_slow4
-    jmp L697
-L698:
+    jmp L698
+L699:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L699
-L700:
+    jmp L700
+L701:
     mov esi, ebp
     call Lrd_slow
-    jmp L701
+    jmp L702
     ALIGN 16
 Lf_D6:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L702
-L703:
+    jz L703
+L704:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     sub al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L704
-L705:
+    jz L705
+L706:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L702:
+L703:
     call Lrd_slow
-    jmp L703
-L704:
+    jmp L704
+L705:
     mov esi, ebp
     call Lrd_slow
-    jmp L705
+    jmp L706
     ALIGN 16
 Lf_D7:
     add r14, 4
@@ -8213,138 +8250,138 @@ Lf_D7:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L706
+    jz L707
     mov byte ptr [rdi+rsi], r10b
-L707:
+L708:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L708
-L709:
+    cmp r14, qword ptr [r15+572600]
+    jae L709
+L710:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L710
+    jz L711
     mov byte ptr [rdi+rsi], r11b
-L711:
+L712:
     mov ebp, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L712
-L713:
+    jz L713
+L714:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L706:
+L707:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L707
-L708:
+    jmp L708
+L709:
     call Ltick_slow4
-    jmp L709
-L710:
+    jmp L710
+L711:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L711
-L712:
+    jmp L712
+L713:
     mov esi, ebp
     call Lrd_slow
-    jmp L713
+    jmp L714
     ALIGN 16
 Lf_D8:
     add r14, 4
     test r8b, 16
-    jz L714
+    jz L715
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L715
-L716:
+    jz L716
+L717:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L717
-L718:
+    jz L718
+L719:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-L714:
+L715:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L719
-L720:
+    jz L720
+L721:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L715:
+L716:
     call Lrd_slow
-    jmp L716
-L717:
+    jmp L717
+L718:
     call Lrd_slow
-    jmp L718
-L719:
+    jmp L719
+L720:
     mov esi, ebp
     call Lrd_slow
-    jmp L720
+    jmp L721
     ALIGN 16
 Lf_D9:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L721
-L722:
+    jz L722
+L723:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L723
-L724:
+    jz L724
+L725:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -8364,13 +8401,13 @@ L724:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L725
+    cmp byte ptr [r15+572675], 0
+    jne L726
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L725:
+L726:
     sub rsp, 32
     mov rcx, r15
     mov edx, 217
@@ -8387,145 +8424,145 @@ L725:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L726
-L727:
+    jz L727
+L728:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L721:
+L722:
     call Lrd_slow
-    jmp L722
-L723:
+    jmp L723
+L724:
     call Lrd_slow
-    jmp L724
-L726:
+    jmp L725
+L727:
     mov esi, ebp
     call Lrd_slow
-    jmp L727
+    jmp L728
     ALIGN 16
 Lf_DA:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L728
-L729:
+    jz L729
+L730:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L730
-L731:
+    jz L731
+L732:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jz L732
+    jz L733
     mov ebp, r11d
     add r14, 4
-L732:
+L733:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L733
-L734:
+    jz L734
+L735:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L728:
+L729:
     call Lrd_slow
-    jmp L729
-L730:
+    jmp L730
+L731:
     call Lrd_slow
-    jmp L731
-L733:
+    jmp L732
+L734:
     mov esi, ebp
     call Lrd_slow
-    jmp L734
+    jmp L735
     ALIGN 16
 Lf_DB:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L735
-L736:
+    jz L736
+L737:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L735:
+L736:
     mov esi, ebp
     call Lrd_slow
-    jmp L736
+    jmp L737
     ALIGN 16
 Lf_DC:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L737
-L738:
+    jz L738
+L739:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L739
-L740:
+    jz L740
+L741:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jz L741
+    jz L742
     add r14, 4
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
@@ -8536,134 +8573,134 @@ L740:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L742
+    jz L743
     mov byte ptr [rdi+rsi], r10b
-L743:
+L744:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L744
-L745:
+    cmp r14, qword ptr [r15+572600]
+    jae L745
+L746:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L746
+    jz L747
     mov byte ptr [rdi+rsi], r11b
-L747:
+L748:
     mov ebp, dword ptr [rsp+48]
-L741:
+L742:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L748
-L749:
+    jz L749
+L750:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L737:
+L738:
     call Lrd_slow
-    jmp L738
-L739:
+    jmp L739
+L740:
     call Lrd_slow
-    jmp L740
-L742:
+    jmp L741
+L743:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L743
-L744:
+    jmp L744
+L745:
     call Ltick_slow4
-    jmp L745
-L746:
+    jmp L746
+L747:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L747
-L748:
+    jmp L748
+L749:
     mov esi, ebp
     call Lrd_slow
-    jmp L749
+    jmp L750
     ALIGN 16
 Lf_DD:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L750
-L751:
+    jz L751
+L752:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L750:
+L751:
     mov esi, ebp
     call Lrd_slow
-    jmp L751
+    jmp L752
     ALIGN 16
 Lf_DE:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L752
-L753:
+    jz L753
+L754:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     bt r8d, 4
     sbb al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L754
-L755:
+    jz L755
+L756:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L752:
+L753:
     call Lrd_slow
-    jmp L753
-L754:
+    jmp L754
+L755:
     mov esi, ebp
     call Lrd_slow
-    jmp L755
+    jmp L756
     ALIGN 16
 Lf_DF:
     add r14, 4
@@ -8675,141 +8712,141 @@ Lf_DF:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L756
+    jz L757
     mov byte ptr [rdi+rsi], r10b
-L757:
+L758:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L758
-L759:
+    cmp r14, qword ptr [r15+572600]
+    jae L759
+L760:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L760
+    jz L761
     mov byte ptr [rdi+rsi], r11b
-L761:
+L762:
     mov ebp, 24
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L762
-L763:
+    jz L763
+L764:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L756:
+L757:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L757
-L758:
+    jmp L758
+L759:
     call Ltick_slow4
-    jmp L759
-L760:
+    jmp L760
+L761:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L761
-L762:
+    jmp L762
+L763:
     mov esi, ebp
     call Lrd_slow
-    jmp L763
+    jmp L764
     ALIGN 16
 Lf_E0:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L766
-L767:
+    jz L767
+L768:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp r10d, 128
-    jb L764
+    jb L765
     cmp r10d, 255
-    je L764
+    je L765
     add r14, 4
-    mov rdi, qword ptr [r15+572560]
+    mov rdi, qword ptr [r15+572576]
     mov byte ptr [rdi+r10+65280], al
-    jmp L765
-L764:
+    jmp L766
+L765:
     movzx esi, r10b
     or esi, 65280
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L768
+    jz L769
     mov byte ptr [rdi+rsi], al
-L769:
-L765:
+L770:
+L766:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L770
-L771:
+    jz L771
+L772:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L766:
+L767:
     call Lrd_slow
-    jmp L767
-L768:
+    jmp L768
+L769:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L769
-L770:
+    jmp L770
+L771:
     mov esi, ebp
     call Lrd_slow
-    jmp L771
+    jmp L772
     ALIGN 16
 Lf_E1:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L772
-L773:
+    jz L773
+L774:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L774
-L775:
+    jz L775
+L776:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -8817,33 +8854,33 @@ L775:
     mov ebx, r11d
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L776
-L777:
+    jz L777
+L778:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L772:
+L773:
     call Lrd_slow
-    jmp L773
-L774:
+    jmp L774
+L775:
     call Lrd_slow
-    jmp L775
-L776:
+    jmp L776
+L777:
     mov esi, ebp
     call Lrd_slow
-    jmp L777
+    jmp L778
     ALIGN 16
 Lf_E2:
     movzx esi, cl
@@ -8851,88 +8888,88 @@ Lf_E2:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L778
+    jz L779
     mov byte ptr [rdi+rsi], al
-L779:
+L780:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L780
-L781:
+    jz L781
+L782:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L778:
+L779:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L779
-L780:
+    jmp L780
+L781:
     mov esi, ebp
     call Lrd_slow
-    jmp L781
+    jmp L782
     ALIGN 16
 Lf_E3:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L782
-L783:
+    jz L783
+L784:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L782:
+L783:
     mov esi, ebp
     call Lrd_slow
-    jmp L783
+    jmp L784
     ALIGN 16
 Lf_E4:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L784
-L785:
+    jz L785
+L786:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L784:
+L785:
     mov esi, ebp
     call Lrd_slow
-    jmp L785
+    jmp L786
     ALIGN 16
 Lf_E5:
     add r14, 4
@@ -8944,99 +8981,99 @@ Lf_E5:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L786
+    jz L787
     mov byte ptr [rdi+rsi], r10b
-L787:
+L788:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L788
-L789:
+    cmp r14, qword ptr [r15+572600]
+    jae L789
+L790:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L790
+    jz L791
     mov byte ptr [rdi+rsi], r11b
-L791:
+L792:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L792
-L793:
+    jz L793
+L794:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L786:
+L787:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L787
-L788:
+    jmp L788
+L789:
     call Ltick_slow4
-    jmp L789
-L790:
+    jmp L790
+L791:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L791
-L792:
+    jmp L792
+L793:
     mov esi, ebp
     call Lrd_slow
-    jmp L793
+    jmp L794
     ALIGN 16
 Lf_E6:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L794
-L795:
+    jz L795
+L796:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     and al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L796
-L797:
+    jz L797
+L798:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L794:
+L795:
     call Lrd_slow
-    jmp L795
-L796:
+    jmp L796
+L797:
     mov esi, ebp
     call Lrd_slow
-    jmp L797
+    jmp L798
     ALIGN 16
 Lf_E7:
     add r14, 4
@@ -9048,69 +9085,69 @@ Lf_E7:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L798
+    jz L799
     mov byte ptr [rdi+rsi], r10b
-L799:
+L800:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L800
-L801:
+    cmp r14, qword ptr [r15+572600]
+    jae L801
+L802:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L802
+    jz L803
     mov byte ptr [rdi+rsi], r11b
-L803:
+L804:
     mov ebp, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L804
-L805:
+    jz L805
+L806:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L798:
+L799:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L799
-L800:
+    jmp L800
+L801:
     call Ltick_slow4
-    jmp L801
-L802:
+    jmp L802
+L803:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L803
-L804:
+    jmp L804
+L805:
     mov esi, ebp
     call Lrd_slow
-    jmp L805
+    jmp L806
     ALIGN 16
 Lf_E8:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L806
-L807:
+    jz L807
+L808:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov edi, r9d
@@ -9134,76 +9171,76 @@ L807:
     add r14, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L808
-L809:
+    jz L809
+L810:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L806:
+L807:
     call Lrd_slow
-    jmp L807
-L808:
+    jmp L808
+L809:
     mov esi, ebp
     call Lrd_slow
-    jmp L809
+    jmp L810
     ALIGN 16
 Lf_E9:
     mov ebp, ebx
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L810
-L811:
+    jz L811
+L812:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L810:
+L811:
     mov esi, ebp
     call Lrd_slow
-    jmp L811
+    jmp L812
     ALIGN 16
 Lf_EA:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L812
-L813:
+    jz L813
+L814:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L814
-L815:
+    jz L815
+L816:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -9212,160 +9249,160 @@ L815:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L816
+    jz L817
     mov byte ptr [rdi+rsi], al
-L817:
+L818:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L818
-L819:
+    jz L819
+L820:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L812:
+L813:
     call Lrd_slow
-    jmp L813
-L814:
+    jmp L814
+L815:
     call Lrd_slow
-    jmp L815
-L816:
+    jmp L816
+L817:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L817
-L818:
+    jmp L818
+L819:
     mov esi, ebp
     call Lrd_slow
-    jmp L819
+    jmp L820
     ALIGN 16
 Lf_EB:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L820
-L821:
+    jz L821
+L822:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L820:
+L821:
     mov esi, ebp
     call Lrd_slow
-    jmp L821
+    jmp L822
     ALIGN 16
 Lf_EC:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L822
-L823:
+    jz L823
+L824:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L822:
+L823:
     mov esi, ebp
     call Lrd_slow
-    jmp L823
+    jmp L824
     ALIGN 16
 Lf_ED:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L824
-L825:
+    jz L825
+L826:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L824:
+L825:
     mov esi, ebp
     call Lrd_slow
-    jmp L825
+    jmp L826
     ALIGN 16
 Lf_EE:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L826
-L827:
+    jz L827
+L828:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     xor al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L828
-L829:
+    jz L829
+L830:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L826:
+L827:
     call Lrd_slow
-    jmp L827
-L828:
+    jmp L828
+L829:
     mov esi, ebp
     call Lrd_slow
-    jmp L829
+    jmp L830
     ALIGN 16
 Lf_EF:
     add r14, 4
@@ -9377,140 +9414,140 @@ Lf_EF:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L830
+    jz L831
     mov byte ptr [rdi+rsi], r10b
-L831:
+L832:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L832
-L833:
+    cmp r14, qword ptr [r15+572600]
+    jae L833
+L834:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L834
+    jz L835
     mov byte ptr [rdi+rsi], r11b
-L835:
+L836:
     mov ebp, 40
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L836
-L837:
+    jz L837
+L838:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L830:
+L831:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L831
-L832:
+    jmp L832
+L833:
     call Ltick_slow4
-    jmp L833
-L834:
+    jmp L834
+L835:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L835
-L836:
+    jmp L836
+L837:
     mov esi, ebp
     call Lrd_slow
-    jmp L837
+    jmp L838
     ALIGN 16
 Lf_F0:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L840
-L841:
+    jz L841
+L842:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp r10d, 128
-    jb L838
+    jb L839
     cmp r10d, 255
-    je L838
+    je L839
     add r14, 4
-    mov rdi, qword ptr [r15+572560]
+    mov rdi, qword ptr [r15+572576]
     mov al, byte ptr [rdi+r10+65280]
-    jmp L839
-L838:
+    jmp L840
+L839:
     movzx esi, r10b
     or esi, 65280
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L842
-L843:
+    jz L843
+L844:
     mov al, byte ptr [rdi+rsi]
-L839:
+L840:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L844
-L845:
+    jz L845
+L846:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L840:
+L841:
     call Lrd_slow
-    jmp L841
-L842:
+    jmp L842
+L843:
     call Lrd_slow
-    jmp L843
-L844:
+    jmp L844
+L845:
     mov esi, ebp
     call Lrd_slow
-    jmp L845
+    jmp L846
     ALIGN 16
 Lf_F1:
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L846
-L847:
+    jz L847
+L848:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L848
-L849:
+    jz L849
+L850:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -9521,33 +9558,33 @@ L849:
     and r8d, 240
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L850
-L851:
+    jz L851
+L852:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L846:
+L847:
     call Lrd_slow
-    jmp L847
-L848:
+    jmp L848
+L849:
     call Lrd_slow
-    jmp L849
-L850:
+    jmp L850
+L851:
     mov esi, ebp
     call Lrd_slow
-    jmp L851
+    jmp L852
     ALIGN 16
 Lf_F2:
     movzx esi, cl
@@ -9555,37 +9592,37 @@ Lf_F2:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L852
-L853:
+    jz L853
+L854:
     mov al, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L854
-L855:
+    jz L855
+L856:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L852:
+L853:
     call Lrd_slow
-    jmp L853
-L854:
+    jmp L854
+L855:
     mov esi, ebp
     call Lrd_slow
-    jmp L855
+    jmp L856
     ALIGN 16
 Lf_F3:
     mov byte ptr [r15+24], al
@@ -9601,13 +9638,13 @@ Lf_F3:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L856
+    cmp byte ptr [r15+572675], 0
+    jne L857
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L856:
+L857:
     sub rsp, 32
     mov rcx, r15
     mov edx, 243
@@ -9624,55 +9661,55 @@ L856:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L857
-L858:
+    jz L858
+L859:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L857:
+L858:
     mov esi, ebp
     call Lrd_slow
-    jmp L858
+    jmp L859
     ALIGN 16
 Lf_F4:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L859
-L860:
+    jz L860
+L861:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L859:
+L860:
     mov esi, ebp
     call Lrd_slow
-    jmp L860
+    jmp L861
     ALIGN 16
 Lf_F5:
     add r14, 4
@@ -9686,99 +9723,99 @@ Lf_F5:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L861
+    jz L862
     mov byte ptr [rdi+rsi], r10b
-L862:
+L863:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L863
-L864:
+    cmp r14, qword ptr [r15+572600]
+    jae L864
+L865:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L865
+    jz L866
     mov byte ptr [rdi+rsi], r11b
-L866:
+L867:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L867
-L868:
+    jz L868
+L869:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L861:
+L862:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L862
-L863:
+    jmp L863
+L864:
     call Ltick_slow4
-    jmp L864
-L865:
+    jmp L865
+L866:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L866
-L867:
+    jmp L867
+L868:
     mov esi, ebp
     call Lrd_slow
-    jmp L868
+    jmp L869
     ALIGN 16
 Lf_F6:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L869
-L870:
+    jz L870
+L871:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     or al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L871
-L872:
+    jz L872
+L873:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L869:
+L870:
     call Lrd_slow
-    jmp L870
-L871:
+    jmp L871
+L872:
     mov esi, ebp
     call Lrd_slow
-    jmp L872
+    jmp L873
     ALIGN 16
 Lf_F7:
     add r14, 4
@@ -9790,69 +9827,69 @@ Lf_F7:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L873
+    jz L874
     mov byte ptr [rdi+rsi], r10b
-L874:
+L875:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L875
-L876:
+    cmp r14, qword ptr [r15+572600]
+    jae L876
+L877:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L877
+    jz L878
     mov byte ptr [rdi+rsi], r11b
-L878:
+L879:
     mov ebp, 48
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L879
-L880:
+    jz L880
+L881:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L873:
+L874:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L874
-L875:
+    jmp L875
+L876:
     call Ltick_slow4
-    jmp L876
-L877:
+    jmp L877
+L878:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L878
-L879:
+    jmp L879
+L880:
     mov esi, ebp
     call Lrd_slow
-    jmp L880
+    jmp L881
     ALIGN 16
 Lf_F8:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L881
-L882:
+    jz L882
+L883:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov edi, r9d
@@ -9876,77 +9913,77 @@ L882:
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L883
-L884:
+    jz L884
+L885:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L881:
+L882:
     call Lrd_slow
-    jmp L882
-L883:
+    jmp L883
+L884:
     mov esi, ebp
     call Lrd_slow
-    jmp L884
+    jmp L885
     ALIGN 16
 Lf_F9:
     mov r9d, ebx
     add r14, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L885
-L886:
+    jz L886
+L887:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L885:
+L886:
     mov esi, ebp
     call Lrd_slow
-    jmp L886
+    jmp L887
     ALIGN 16
 Lf_FA:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L887
-L888:
+    jz L888
+L889:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L889
-L890:
+    jz L890
+L891:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -9955,43 +9992,43 @@ L890:
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L891
-L892:
+    jz L892
+L893:
     mov al, byte ptr [rdi+rsi]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L893
-L894:
+    jz L894
+L895:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L887:
+L888:
     call Lrd_slow
-    jmp L888
-L889:
+    jmp L889
+L890:
     call Lrd_slow
-    jmp L890
-L891:
+    jmp L891
+L892:
     call Lrd_slow
-    jmp L892
-L893:
+    jmp L893
+L894:
     mov esi, ebp
     call Lrd_slow
-    jmp L894
+    jmp L895
     ALIGN 16
 Lf_FB:
     mov byte ptr [r15+24], al
@@ -10007,13 +10044,13 @@ Lf_FB:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L895
+    cmp byte ptr [r15+572675], 0
+    jne L896
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L895:
+L896:
     sub rsp, 32
     mov rcx, r15
     mov edx, 251
@@ -10030,122 +10067,122 @@ L895:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L896
-L897:
+    jz L897
+L898:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L896:
+L897:
     mov esi, ebp
     call Lrd_slow
-    jmp L897
+    jmp L898
     ALIGN 16
 Lf_FC:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L898
-L899:
+    jz L899
+L900:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L898:
+L899:
     mov esi, ebp
     call Lrd_slow
-    jmp L899
+    jmp L900
     ALIGN 16
 Lf_FD:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L900
-L901:
+    jz L901
+L902:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L900:
+L901:
     mov esi, ebp
     call Lrd_slow
-    jmp L901
+    jmp L902
     ALIGN 16
 Lf_FE:
     mov esi, ebp
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L902
-L903:
+    jz L903
+L904:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L904
-L905:
+    jz L905
+L906:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L902:
+L903:
     call Lrd_slow
-    jmp L903
-L904:
+    jmp L904
+L905:
     mov esi, ebp
     call Lrd_slow
-    jmp L905
+    jmp L906
     ALIGN 16
 Lf_FF:
     add r14, 4
@@ -10157,59 +10194,59 @@ Lf_FF:
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L906
+    jz L907
     mov byte ptr [rdi+rsi], r10b
-L907:
+L908:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L908
-L909:
+    cmp r14, qword ptr [r15+572600]
+    jae L909
+L910:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L910
+    jz L911
     mov byte ptr [rdi+rsi], r11b
-L911:
+L912:
     mov ebp, 56
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L912
-L913:
+    jz L913
+L914:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L906:
+L907:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L907
-L908:
+    jmp L908
+L909:
     call Ltick_slow4
-    jmp L909
-L910:
+    jmp L910
+L911:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L911
-L912:
+    jmp L912
+L913:
     mov esi, ebp
     call Lrd_slow
-    jmp L913
+    jmp L914
     ALIGN 16
 Lfcb_00:
     rol ch, 1
@@ -10217,31 +10254,31 @@ Lfcb_00:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L914
-L915:
+    jz L915
+L916:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L914:
+L915:
     mov esi, ebp
     call Lrd_slow
-    jmp L915
+    jmp L916
     ALIGN 16
 Lfcb_01:
     rol cl, 1
@@ -10249,31 +10286,31 @@ Lfcb_01:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L916
-L917:
+    jz L917
+L918:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L916:
+L917:
     mov esi, ebp
     call Lrd_slow
-    jmp L917
+    jmp L918
     ALIGN 16
 Lfcb_02:
     rol dh, 1
@@ -10281,31 +10318,31 @@ Lfcb_02:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L918
-L919:
+    jz L919
+L920:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L918:
+L919:
     mov esi, ebp
     call Lrd_slow
-    jmp L919
+    jmp L920
     ALIGN 16
 Lfcb_03:
     rol dl, 1
@@ -10313,31 +10350,31 @@ Lfcb_03:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L920
-L921:
+    jz L921
+L922:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L920:
+L921:
     mov esi, ebp
     call Lrd_slow
-    jmp L921
+    jmp L922
     ALIGN 16
 Lfcb_04:
     rol bh, 1
@@ -10345,31 +10382,31 @@ Lfcb_04:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L922
-L923:
+    jz L923
+L924:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L922:
+L923:
     mov esi, ebp
     call Lrd_slow
-    jmp L923
+    jmp L924
     ALIGN 16
 Lfcb_05:
     rol bl, 1
@@ -10377,87 +10414,87 @@ Lfcb_05:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L924
-L925:
+    jz L925
+L926:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L924:
+L925:
     mov esi, ebp
     call Lrd_slow
-    jmp L925
+    jmp L926
     ALIGN 16
 Lfcb_06:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L926
-L927:
+    jz L927
+L928:
     movzx r10d, byte ptr [rdi+rsi]
     rol r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L928
+    jz L929
     mov byte ptr [rdi+rsi], r10b
-L929:
+L930:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L930
-L931:
+    jz L931
+L932:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L926:
+L927:
     call Lrd_slow
-    jmp L927
-L928:
+    jmp L928
+L929:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L929
-L930:
+    jmp L930
+L931:
     mov esi, ebp
     call Lrd_slow
-    jmp L931
+    jmp L932
     ALIGN 16
 Lfcb_07:
     rol al, 1
@@ -10465,31 +10502,31 @@ Lfcb_07:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L932
-L933:
+    jz L933
+L934:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L932:
+L933:
     mov esi, ebp
     call Lrd_slow
-    jmp L933
+    jmp L934
     ALIGN 16
 Lfcb_08:
     ror ch, 1
@@ -10497,31 +10534,31 @@ Lfcb_08:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L934
-L935:
+    jz L935
+L936:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L934:
+L935:
     mov esi, ebp
     call Lrd_slow
-    jmp L935
+    jmp L936
     ALIGN 16
 Lfcb_09:
     ror cl, 1
@@ -10529,31 +10566,31 @@ Lfcb_09:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L936
-L937:
+    jz L937
+L938:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L936:
+L937:
     mov esi, ebp
     call Lrd_slow
-    jmp L937
+    jmp L938
     ALIGN 16
 Lfcb_0A:
     ror dh, 1
@@ -10561,31 +10598,31 @@ Lfcb_0A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L938
-L939:
+    jz L939
+L940:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L938:
+L939:
     mov esi, ebp
     call Lrd_slow
-    jmp L939
+    jmp L940
     ALIGN 16
 Lfcb_0B:
     ror dl, 1
@@ -10593,31 +10630,31 @@ Lfcb_0B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L940
-L941:
+    jz L941
+L942:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L940:
+L941:
     mov esi, ebp
     call Lrd_slow
-    jmp L941
+    jmp L942
     ALIGN 16
 Lfcb_0C:
     ror bh, 1
@@ -10625,31 +10662,31 @@ Lfcb_0C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L942
-L943:
+    jz L943
+L944:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L942:
+L943:
     mov esi, ebp
     call Lrd_slow
-    jmp L943
+    jmp L944
     ALIGN 16
 Lfcb_0D:
     ror bl, 1
@@ -10657,87 +10694,87 @@ Lfcb_0D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L944
-L945:
+    jz L945
+L946:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L944:
+L945:
     mov esi, ebp
     call Lrd_slow
-    jmp L945
+    jmp L946
     ALIGN 16
 Lfcb_0E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L946
-L947:
+    jz L947
+L948:
     movzx r10d, byte ptr [rdi+rsi]
     ror r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L948
+    jz L949
     mov byte ptr [rdi+rsi], r10b
-L949:
+L950:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L950
-L951:
+    jz L951
+L952:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L946:
+L947:
     call Lrd_slow
-    jmp L947
-L948:
+    jmp L948
+L949:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L949
-L950:
+    jmp L950
+L951:
     mov esi, ebp
     call Lrd_slow
-    jmp L951
+    jmp L952
     ALIGN 16
 Lfcb_0F:
     ror al, 1
@@ -10745,31 +10782,31 @@ Lfcb_0F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L952
-L953:
+    jz L953
+L954:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L952:
+L953:
     mov esi, ebp
     call Lrd_slow
-    jmp L953
+    jmp L954
     ALIGN 16
 Lfcb_10:
     bt r8d, 4
@@ -10778,31 +10815,31 @@ Lfcb_10:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L954
-L955:
+    jz L955
+L956:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L954:
+L955:
     mov esi, ebp
     call Lrd_slow
-    jmp L955
+    jmp L956
     ALIGN 16
 Lfcb_11:
     bt r8d, 4
@@ -10811,31 +10848,31 @@ Lfcb_11:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L956
-L957:
+    jz L957
+L958:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L956:
+L957:
     mov esi, ebp
     call Lrd_slow
-    jmp L957
+    jmp L958
     ALIGN 16
 Lfcb_12:
     bt r8d, 4
@@ -10844,31 +10881,31 @@ Lfcb_12:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L958
-L959:
+    jz L959
+L960:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L958:
+L959:
     mov esi, ebp
     call Lrd_slow
-    jmp L959
+    jmp L960
     ALIGN 16
 Lfcb_13:
     bt r8d, 4
@@ -10877,31 +10914,31 @@ Lfcb_13:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L960
-L961:
+    jz L961
+L962:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L960:
+L961:
     mov esi, ebp
     call Lrd_slow
-    jmp L961
+    jmp L962
     ALIGN 16
 Lfcb_14:
     bt r8d, 4
@@ -10910,31 +10947,31 @@ Lfcb_14:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L962
-L963:
+    jz L963
+L964:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L962:
+L963:
     mov esi, ebp
     call Lrd_slow
-    jmp L963
+    jmp L964
     ALIGN 16
 Lfcb_15:
     bt r8d, 4
@@ -10943,41 +10980,41 @@ Lfcb_15:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L964
-L965:
+    jz L965
+L966:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L964:
+L965:
     mov esi, ebp
     call Lrd_slow
-    jmp L965
+    jmp L966
     ALIGN 16
 Lfcb_16:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L966
-L967:
+    jz L967
+L968:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     rcl r10b, 1
@@ -10985,46 +11022,46 @@ L967:
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L968
+    jz L969
     mov byte ptr [rdi+rsi], r10b
-L969:
+L970:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L970
-L971:
+    jz L971
+L972:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L966:
+L967:
     call Lrd_slow
-    jmp L967
-L968:
+    jmp L968
+L969:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L969
-L970:
+    jmp L970
+L971:
     mov esi, ebp
     call Lrd_slow
-    jmp L971
+    jmp L972
     ALIGN 16
 Lfcb_17:
     bt r8d, 4
@@ -11033,31 +11070,31 @@ Lfcb_17:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L972
-L973:
+    jz L973
+L974:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L972:
+L973:
     mov esi, ebp
     call Lrd_slow
-    jmp L973
+    jmp L974
     ALIGN 16
 Lfcb_18:
     bt r8d, 4
@@ -11066,31 +11103,31 @@ Lfcb_18:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L974
-L975:
+    jz L975
+L976:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L974:
+L975:
     mov esi, ebp
     call Lrd_slow
-    jmp L975
+    jmp L976
     ALIGN 16
 Lfcb_19:
     bt r8d, 4
@@ -11099,31 +11136,31 @@ Lfcb_19:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L976
-L977:
+    jz L977
+L978:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L976:
+L977:
     mov esi, ebp
     call Lrd_slow
-    jmp L977
+    jmp L978
     ALIGN 16
 Lfcb_1A:
     bt r8d, 4
@@ -11132,31 +11169,31 @@ Lfcb_1A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L978
-L979:
+    jz L979
+L980:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L978:
+L979:
     mov esi, ebp
     call Lrd_slow
-    jmp L979
+    jmp L980
     ALIGN 16
 Lfcb_1B:
     bt r8d, 4
@@ -11165,31 +11202,31 @@ Lfcb_1B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L980
-L981:
+    jz L981
+L982:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L980:
+L981:
     mov esi, ebp
     call Lrd_slow
-    jmp L981
+    jmp L982
     ALIGN 16
 Lfcb_1C:
     bt r8d, 4
@@ -11198,31 +11235,31 @@ Lfcb_1C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L982
-L983:
+    jz L983
+L984:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L982:
+L983:
     mov esi, ebp
     call Lrd_slow
-    jmp L983
+    jmp L984
     ALIGN 16
 Lfcb_1D:
     bt r8d, 4
@@ -11231,41 +11268,41 @@ Lfcb_1D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L984
-L985:
+    jz L985
+L986:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L984:
+L985:
     mov esi, ebp
     call Lrd_slow
-    jmp L985
+    jmp L986
     ALIGN 16
 Lfcb_1E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L986
-L987:
+    jz L987
+L988:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     rcr r10b, 1
@@ -11273,46 +11310,46 @@ L987:
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L988
+    jz L989
     mov byte ptr [rdi+rsi], r10b
-L989:
+L990:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L990
-L991:
+    jz L991
+L992:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L986:
+L987:
     call Lrd_slow
-    jmp L987
-L988:
+    jmp L988
+L989:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L989
-L990:
+    jmp L990
+L991:
     mov esi, ebp
     call Lrd_slow
-    jmp L991
+    jmp L992
     ALIGN 16
 Lfcb_1F:
     bt r8d, 4
@@ -11321,31 +11358,31 @@ Lfcb_1F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L992
-L993:
+    jz L993
+L994:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L992:
+L993:
     mov esi, ebp
     call Lrd_slow
-    jmp L993
+    jmp L994
     ALIGN 16
 Lfcb_20:
     shl ch, 1
@@ -11353,31 +11390,31 @@ Lfcb_20:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L994
-L995:
+    jz L995
+L996:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L994:
+L995:
     mov esi, ebp
     call Lrd_slow
-    jmp L995
+    jmp L996
     ALIGN 16
 Lfcb_21:
     shl cl, 1
@@ -11385,31 +11422,31 @@ Lfcb_21:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L996
-L997:
+    jz L997
+L998:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L996:
+L997:
     mov esi, ebp
     call Lrd_slow
-    jmp L997
+    jmp L998
     ALIGN 16
 Lfcb_22:
     shl dh, 1
@@ -11417,31 +11454,31 @@ Lfcb_22:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L998
-L999:
+    jz L999
+L1000:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L998:
+L999:
     mov esi, ebp
     call Lrd_slow
-    jmp L999
+    jmp L1000
     ALIGN 16
 Lfcb_23:
     shl dl, 1
@@ -11449,31 +11486,31 @@ Lfcb_23:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1000
-L1001:
+    jz L1001
+L1002:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1000:
+L1001:
     mov esi, ebp
     call Lrd_slow
-    jmp L1001
+    jmp L1002
     ALIGN 16
 Lfcb_24:
     shl bh, 1
@@ -11481,31 +11518,31 @@ Lfcb_24:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1002
-L1003:
+    jz L1003
+L1004:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1002:
+L1003:
     mov esi, ebp
     call Lrd_slow
-    jmp L1003
+    jmp L1004
     ALIGN 16
 Lfcb_25:
     shl bl, 1
@@ -11513,87 +11550,87 @@ Lfcb_25:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1004
-L1005:
+    jz L1005
+L1006:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1004:
+L1005:
     mov esi, ebp
     call Lrd_slow
-    jmp L1005
+    jmp L1006
     ALIGN 16
 Lfcb_26:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1006
-L1007:
+    jz L1007
+L1008:
     movzx r10d, byte ptr [rdi+rsi]
     shl r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1008
+    jz L1009
     mov byte ptr [rdi+rsi], r10b
-L1009:
+L1010:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1010
-L1011:
+    jz L1011
+L1012:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1006:
+L1007:
     call Lrd_slow
-    jmp L1007
-L1008:
+    jmp L1008
+L1009:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1009
-L1010:
+    jmp L1010
+L1011:
     mov esi, ebp
     call Lrd_slow
-    jmp L1011
+    jmp L1012
     ALIGN 16
 Lfcb_27:
     shl al, 1
@@ -11601,31 +11638,31 @@ Lfcb_27:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1012
-L1013:
+    jz L1013
+L1014:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1012:
+L1013:
     mov esi, ebp
     call Lrd_slow
-    jmp L1013
+    jmp L1014
     ALIGN 16
 Lfcb_28:
     sar ch, 1
@@ -11633,31 +11670,31 @@ Lfcb_28:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1014
-L1015:
+    jz L1015
+L1016:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1014:
+L1015:
     mov esi, ebp
     call Lrd_slow
-    jmp L1015
+    jmp L1016
     ALIGN 16
 Lfcb_29:
     sar cl, 1
@@ -11665,31 +11702,31 @@ Lfcb_29:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1016
-L1017:
+    jz L1017
+L1018:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1016:
+L1017:
     mov esi, ebp
     call Lrd_slow
-    jmp L1017
+    jmp L1018
     ALIGN 16
 Lfcb_2A:
     sar dh, 1
@@ -11697,31 +11734,31 @@ Lfcb_2A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1018
-L1019:
+    jz L1019
+L1020:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1018:
+L1019:
     mov esi, ebp
     call Lrd_slow
-    jmp L1019
+    jmp L1020
     ALIGN 16
 Lfcb_2B:
     sar dl, 1
@@ -11729,31 +11766,31 @@ Lfcb_2B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1020
-L1021:
+    jz L1021
+L1022:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1020:
+L1021:
     mov esi, ebp
     call Lrd_slow
-    jmp L1021
+    jmp L1022
     ALIGN 16
 Lfcb_2C:
     sar bh, 1
@@ -11761,31 +11798,31 @@ Lfcb_2C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1022
-L1023:
+    jz L1023
+L1024:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1022:
+L1023:
     mov esi, ebp
     call Lrd_slow
-    jmp L1023
+    jmp L1024
     ALIGN 16
 Lfcb_2D:
     sar bl, 1
@@ -11793,87 +11830,87 @@ Lfcb_2D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1024
-L1025:
+    jz L1025
+L1026:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1024:
+L1025:
     mov esi, ebp
     call Lrd_slow
-    jmp L1025
+    jmp L1026
     ALIGN 16
 Lfcb_2E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1026
-L1027:
+    jz L1027
+L1028:
     movzx r10d, byte ptr [rdi+rsi]
     sar r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1028
+    jz L1029
     mov byte ptr [rdi+rsi], r10b
-L1029:
+L1030:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1030
-L1031:
+    jz L1031
+L1032:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1026:
+L1027:
     call Lrd_slow
-    jmp L1027
-L1028:
+    jmp L1028
+L1029:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1029
-L1030:
+    jmp L1030
+L1031:
     mov esi, ebp
     call Lrd_slow
-    jmp L1031
+    jmp L1032
     ALIGN 16
 Lfcb_2F:
     sar al, 1
@@ -11881,279 +11918,279 @@ Lfcb_2F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1032
-L1033:
+    jz L1033
+L1034:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1032:
+L1033:
     mov esi, ebp
     call Lrd_slow
-    jmp L1033
+    jmp L1034
     ALIGN 16
 Lfcb_30:
     rol ch, 4
     movzx edi, ch
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1034
-L1035:
+    jz L1035
+L1036:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1034:
+L1035:
     mov esi, ebp
     call Lrd_slow
-    jmp L1035
+    jmp L1036
     ALIGN 16
 Lfcb_31:
     rol cl, 4
     movzx edi, cl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1036
-L1037:
+    jz L1037
+L1038:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1036:
+L1037:
     mov esi, ebp
     call Lrd_slow
-    jmp L1037
+    jmp L1038
     ALIGN 16
 Lfcb_32:
     rol dh, 4
     movzx edi, dh
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1038
-L1039:
+    jz L1039
+L1040:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1038:
+L1039:
     mov esi, ebp
     call Lrd_slow
-    jmp L1039
+    jmp L1040
     ALIGN 16
 Lfcb_33:
     rol dl, 4
     movzx edi, dl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1040
-L1041:
+    jz L1041
+L1042:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1040:
+L1041:
     mov esi, ebp
     call Lrd_slow
-    jmp L1041
+    jmp L1042
     ALIGN 16
 Lfcb_34:
     rol bh, 4
     movzx edi, bh
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1042
-L1043:
+    jz L1043
+L1044:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1042:
+L1043:
     mov esi, ebp
     call Lrd_slow
-    jmp L1043
+    jmp L1044
     ALIGN 16
 Lfcb_35:
     rol bl, 4
     movzx edi, bl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1044
-L1045:
+    jz L1045
+L1046:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1044:
+L1045:
     mov esi, ebp
     call Lrd_slow
-    jmp L1045
+    jmp L1046
     ALIGN 16
 Lfcb_36:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1046
-L1047:
+    jz L1047
+L1048:
     movzx r10d, byte ptr [rdi+rsi]
     rol r10b, 4
     movzx edi, r10b
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1048
+    jz L1049
     mov byte ptr [rdi+rsi], r10b
-L1049:
+L1050:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1050
-L1051:
+    jz L1051
+L1052:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1046:
+L1047:
     call Lrd_slow
-    jmp L1047
-L1048:
+    jmp L1048
+L1049:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1049
-L1050:
+    jmp L1050
+L1051:
     mov esi, ebp
     call Lrd_slow
-    jmp L1051
+    jmp L1052
     ALIGN 16
 Lfcb_37:
     rol al, 4
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1052
-L1053:
+    jz L1053
+L1054:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1052:
+L1053:
     mov esi, ebp
     call Lrd_slow
-    jmp L1053
+    jmp L1054
     ALIGN 16
 Lfcb_38:
     shr ch, 1
@@ -12161,31 +12198,31 @@ Lfcb_38:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1054
-L1055:
+    jz L1055
+L1056:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1054:
+L1055:
     mov esi, ebp
     call Lrd_slow
-    jmp L1055
+    jmp L1056
     ALIGN 16
 Lfcb_39:
     shr cl, 1
@@ -12193,31 +12230,31 @@ Lfcb_39:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1056
-L1057:
+    jz L1057
+L1058:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1056:
+L1057:
     mov esi, ebp
     call Lrd_slow
-    jmp L1057
+    jmp L1058
     ALIGN 16
 Lfcb_3A:
     shr dh, 1
@@ -12225,31 +12262,31 @@ Lfcb_3A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1058
-L1059:
+    jz L1059
+L1060:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1058:
+L1059:
     mov esi, ebp
     call Lrd_slow
-    jmp L1059
+    jmp L1060
     ALIGN 16
 Lfcb_3B:
     shr dl, 1
@@ -12257,31 +12294,31 @@ Lfcb_3B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1060
-L1061:
+    jz L1061
+L1062:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1060:
+L1061:
     mov esi, ebp
     call Lrd_slow
-    jmp L1061
+    jmp L1062
     ALIGN 16
 Lfcb_3C:
     shr bh, 1
@@ -12289,31 +12326,31 @@ Lfcb_3C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1062
-L1063:
+    jz L1063
+L1064:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1062:
+L1063:
     mov esi, ebp
     call Lrd_slow
-    jmp L1063
+    jmp L1064
     ALIGN 16
 Lfcb_3D:
     shr bl, 1
@@ -12321,87 +12358,87 @@ Lfcb_3D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1064
-L1065:
+    jz L1065
+L1066:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1064:
+L1065:
     mov esi, ebp
     call Lrd_slow
-    jmp L1065
+    jmp L1066
     ALIGN 16
 Lfcb_3E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1066
-L1067:
+    jz L1067
+L1068:
     movzx r10d, byte ptr [rdi+rsi]
     shr r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1068
+    jz L1069
     mov byte ptr [rdi+rsi], r10b
-L1069:
+L1070:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1070
-L1071:
+    jz L1071
+L1072:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1066:
+L1067:
     call Lrd_slow
-    jmp L1067
-L1068:
+    jmp L1068
+L1069:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1069
-L1070:
+    jmp L1070
+L1071:
     mov esi, ebp
     call Lrd_slow
-    jmp L1071
+    jmp L1072
     ALIGN 16
 Lfcb_3F:
     shr al, 1
@@ -12409,31 +12446,31 @@ Lfcb_3F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1072
-L1073:
+    jz L1073
+L1074:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1072:
+L1073:
     mov esi, ebp
     call Lrd_slow
-    jmp L1073
+    jmp L1074
     ALIGN 16
 Lfcb_40:
     mov edi, 0
@@ -12445,27 +12482,27 @@ Lfcb_40:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1074
-L1075:
+    jz L1075
+L1076:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1074:
+L1075:
     mov esi, ebp
     call Lrd_slow
-    jmp L1075
+    jmp L1076
     ALIGN 16
 Lfcb_41:
     mov edi, 0
@@ -12477,27 +12514,27 @@ Lfcb_41:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1076
-L1077:
+    jz L1077
+L1078:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1076:
+L1077:
     mov esi, ebp
     call Lrd_slow
-    jmp L1077
+    jmp L1078
     ALIGN 16
 Lfcb_42:
     mov edi, 0
@@ -12509,27 +12546,27 @@ Lfcb_42:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1078
-L1079:
+    jz L1079
+L1080:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1078:
+L1079:
     mov esi, ebp
     call Lrd_slow
-    jmp L1079
+    jmp L1080
     ALIGN 16
 Lfcb_43:
     mov edi, 0
@@ -12541,27 +12578,27 @@ Lfcb_43:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1080
-L1081:
+    jz L1081
+L1082:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1080:
+L1081:
     mov esi, ebp
     call Lrd_slow
-    jmp L1081
+    jmp L1082
     ALIGN 16
 Lfcb_44:
     mov edi, 0
@@ -12573,27 +12610,27 @@ Lfcb_44:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1082
-L1083:
+    jz L1083
+L1084:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1082:
+L1083:
     mov esi, ebp
     call Lrd_slow
-    jmp L1083
+    jmp L1084
     ALIGN 16
 Lfcb_45:
     mov edi, 0
@@ -12605,37 +12642,37 @@ Lfcb_45:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1084
-L1085:
+    jz L1085
+L1086:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1084:
+L1085:
     mov esi, ebp
     call Lrd_slow
-    jmp L1085
+    jmp L1086
     ALIGN 16
 Lfcb_46:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1086
-L1087:
+    jz L1087
+L1088:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 1
@@ -12646,30 +12683,30 @@ L1087:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1088
-L1089:
+    jz L1089
+L1090:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1086:
+L1087:
     call Lrd_slow
-    jmp L1087
-L1088:
+    jmp L1088
+L1089:
     mov esi, ebp
     call Lrd_slow
-    jmp L1089
+    jmp L1090
     ALIGN 16
 Lfcb_47:
     mov edi, 0
@@ -12681,27 +12718,27 @@ Lfcb_47:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1090
-L1091:
+    jz L1091
+L1092:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1090:
+L1091:
     mov esi, ebp
     call Lrd_slow
-    jmp L1091
+    jmp L1092
     ALIGN 16
 Lfcb_48:
     mov edi, 0
@@ -12713,27 +12750,27 @@ Lfcb_48:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1092
-L1093:
+    jz L1093
+L1094:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1092:
+L1093:
     mov esi, ebp
     call Lrd_slow
-    jmp L1093
+    jmp L1094
     ALIGN 16
 Lfcb_49:
     mov edi, 0
@@ -12745,27 +12782,27 @@ Lfcb_49:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1094
-L1095:
+    jz L1095
+L1096:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1094:
+L1095:
     mov esi, ebp
     call Lrd_slow
-    jmp L1095
+    jmp L1096
     ALIGN 16
 Lfcb_4A:
     mov edi, 0
@@ -12777,27 +12814,27 @@ Lfcb_4A:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1096
-L1097:
+    jz L1097
+L1098:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1096:
+L1097:
     mov esi, ebp
     call Lrd_slow
-    jmp L1097
+    jmp L1098
     ALIGN 16
 Lfcb_4B:
     mov edi, 0
@@ -12809,27 +12846,27 @@ Lfcb_4B:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1098
-L1099:
+    jz L1099
+L1100:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1098:
+L1099:
     mov esi, ebp
     call Lrd_slow
-    jmp L1099
+    jmp L1100
     ALIGN 16
 Lfcb_4C:
     mov edi, 0
@@ -12841,27 +12878,27 @@ Lfcb_4C:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1100
-L1101:
+    jz L1101
+L1102:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1100:
+L1101:
     mov esi, ebp
     call Lrd_slow
-    jmp L1101
+    jmp L1102
     ALIGN 16
 Lfcb_4D:
     mov edi, 0
@@ -12873,37 +12910,37 @@ Lfcb_4D:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1102
-L1103:
+    jz L1103
+L1104:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1102:
+L1103:
     mov esi, ebp
     call Lrd_slow
-    jmp L1103
+    jmp L1104
     ALIGN 16
 Lfcb_4E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1104
-L1105:
+    jz L1105
+L1106:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 2
@@ -12914,30 +12951,30 @@ L1105:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1106
-L1107:
+    jz L1107
+L1108:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1104:
+L1105:
     call Lrd_slow
-    jmp L1105
-L1106:
+    jmp L1106
+L1107:
     mov esi, ebp
     call Lrd_slow
-    jmp L1107
+    jmp L1108
     ALIGN 16
 Lfcb_4F:
     mov edi, 0
@@ -12949,27 +12986,27 @@ Lfcb_4F:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1108
-L1109:
+    jz L1109
+L1110:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1108:
+L1109:
     mov esi, ebp
     call Lrd_slow
-    jmp L1109
+    jmp L1110
     ALIGN 16
 Lfcb_50:
     mov edi, 0
@@ -12981,27 +13018,27 @@ Lfcb_50:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1110
-L1111:
+    jz L1111
+L1112:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1110:
+L1111:
     mov esi, ebp
     call Lrd_slow
-    jmp L1111
+    jmp L1112
     ALIGN 16
 Lfcb_51:
     mov edi, 0
@@ -13013,27 +13050,27 @@ Lfcb_51:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1112
-L1113:
+    jz L1113
+L1114:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1112:
+L1113:
     mov esi, ebp
     call Lrd_slow
-    jmp L1113
+    jmp L1114
     ALIGN 16
 Lfcb_52:
     mov edi, 0
@@ -13045,27 +13082,27 @@ Lfcb_52:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1114
-L1115:
+    jz L1115
+L1116:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1114:
+L1115:
     mov esi, ebp
     call Lrd_slow
-    jmp L1115
+    jmp L1116
     ALIGN 16
 Lfcb_53:
     mov edi, 0
@@ -13077,27 +13114,27 @@ Lfcb_53:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1116
-L1117:
+    jz L1117
+L1118:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1116:
+L1117:
     mov esi, ebp
     call Lrd_slow
-    jmp L1117
+    jmp L1118
     ALIGN 16
 Lfcb_54:
     mov edi, 0
@@ -13109,27 +13146,27 @@ Lfcb_54:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1118
-L1119:
+    jz L1119
+L1120:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1118:
+L1119:
     mov esi, ebp
     call Lrd_slow
-    jmp L1119
+    jmp L1120
     ALIGN 16
 Lfcb_55:
     mov edi, 0
@@ -13141,37 +13178,37 @@ Lfcb_55:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1120
-L1121:
+    jz L1121
+L1122:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1120:
+L1121:
     mov esi, ebp
     call Lrd_slow
-    jmp L1121
+    jmp L1122
     ALIGN 16
 Lfcb_56:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1122
-L1123:
+    jz L1123
+L1124:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 4
@@ -13182,30 +13219,30 @@ L1123:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1124
-L1125:
+    jz L1125
+L1126:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1122:
+L1123:
     call Lrd_slow
-    jmp L1123
-L1124:
+    jmp L1124
+L1125:
     mov esi, ebp
     call Lrd_slow
-    jmp L1125
+    jmp L1126
     ALIGN 16
 Lfcb_57:
     mov edi, 0
@@ -13217,27 +13254,27 @@ Lfcb_57:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1126
-L1127:
+    jz L1127
+L1128:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1126:
+L1127:
     mov esi, ebp
     call Lrd_slow
-    jmp L1127
+    jmp L1128
     ALIGN 16
 Lfcb_58:
     mov edi, 0
@@ -13249,27 +13286,27 @@ Lfcb_58:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1128
-L1129:
+    jz L1129
+L1130:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1128:
+L1129:
     mov esi, ebp
     call Lrd_slow
-    jmp L1129
+    jmp L1130
     ALIGN 16
 Lfcb_59:
     mov edi, 0
@@ -13281,27 +13318,27 @@ Lfcb_59:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1130
-L1131:
+    jz L1131
+L1132:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1130:
+L1131:
     mov esi, ebp
     call Lrd_slow
-    jmp L1131
+    jmp L1132
     ALIGN 16
 Lfcb_5A:
     mov edi, 0
@@ -13313,27 +13350,27 @@ Lfcb_5A:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1132
-L1133:
+    jz L1133
+L1134:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1132:
+L1133:
     mov esi, ebp
     call Lrd_slow
-    jmp L1133
+    jmp L1134
     ALIGN 16
 Lfcb_5B:
     mov edi, 0
@@ -13345,27 +13382,27 @@ Lfcb_5B:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1134
-L1135:
+    jz L1135
+L1136:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1134:
+L1135:
     mov esi, ebp
     call Lrd_slow
-    jmp L1135
+    jmp L1136
     ALIGN 16
 Lfcb_5C:
     mov edi, 0
@@ -13377,27 +13414,27 @@ Lfcb_5C:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1136
-L1137:
+    jz L1137
+L1138:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1136:
+L1137:
     mov esi, ebp
     call Lrd_slow
-    jmp L1137
+    jmp L1138
     ALIGN 16
 Lfcb_5D:
     mov edi, 0
@@ -13409,37 +13446,37 @@ Lfcb_5D:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1138
-L1139:
+    jz L1139
+L1140:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1138:
+L1139:
     mov esi, ebp
     call Lrd_slow
-    jmp L1139
+    jmp L1140
     ALIGN 16
 Lfcb_5E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1140
-L1141:
+    jz L1141
+L1142:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 8
@@ -13450,30 +13487,30 @@ L1141:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1142
-L1143:
+    jz L1143
+L1144:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1140:
+L1141:
     call Lrd_slow
-    jmp L1141
-L1142:
+    jmp L1142
+L1143:
     mov esi, ebp
     call Lrd_slow
-    jmp L1143
+    jmp L1144
     ALIGN 16
 Lfcb_5F:
     mov edi, 0
@@ -13485,27 +13522,27 @@ Lfcb_5F:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1144
-L1145:
+    jz L1145
+L1146:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1144:
+L1145:
     mov esi, ebp
     call Lrd_slow
-    jmp L1145
+    jmp L1146
     ALIGN 16
 Lfcb_60:
     mov edi, 0
@@ -13517,27 +13554,27 @@ Lfcb_60:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1146
-L1147:
+    jz L1147
+L1148:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1146:
+L1147:
     mov esi, ebp
     call Lrd_slow
-    jmp L1147
+    jmp L1148
     ALIGN 16
 Lfcb_61:
     mov edi, 0
@@ -13549,27 +13586,27 @@ Lfcb_61:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1148
-L1149:
+    jz L1149
+L1150:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1148:
+L1149:
     mov esi, ebp
     call Lrd_slow
-    jmp L1149
+    jmp L1150
     ALIGN 16
 Lfcb_62:
     mov edi, 0
@@ -13581,27 +13618,27 @@ Lfcb_62:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1150
-L1151:
+    jz L1151
+L1152:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1150:
+L1151:
     mov esi, ebp
     call Lrd_slow
-    jmp L1151
+    jmp L1152
     ALIGN 16
 Lfcb_63:
     mov edi, 0
@@ -13613,27 +13650,27 @@ Lfcb_63:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1152
-L1153:
+    jz L1153
+L1154:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1152:
+L1153:
     mov esi, ebp
     call Lrd_slow
-    jmp L1153
+    jmp L1154
     ALIGN 16
 Lfcb_64:
     mov edi, 0
@@ -13645,27 +13682,27 @@ Lfcb_64:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1154
-L1155:
+    jz L1155
+L1156:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1154:
+L1155:
     mov esi, ebp
     call Lrd_slow
-    jmp L1155
+    jmp L1156
     ALIGN 16
 Lfcb_65:
     mov edi, 0
@@ -13677,37 +13714,37 @@ Lfcb_65:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1156
-L1157:
+    jz L1157
+L1158:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1156:
+L1157:
     mov esi, ebp
     call Lrd_slow
-    jmp L1157
+    jmp L1158
     ALIGN 16
 Lfcb_66:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1158
-L1159:
+    jz L1159
+L1160:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 16
@@ -13718,30 +13755,30 @@ L1159:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1160
-L1161:
+    jz L1161
+L1162:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1158:
+L1159:
     call Lrd_slow
-    jmp L1159
-L1160:
+    jmp L1160
+L1161:
     mov esi, ebp
     call Lrd_slow
-    jmp L1161
+    jmp L1162
     ALIGN 16
 Lfcb_67:
     mov edi, 0
@@ -13753,27 +13790,27 @@ Lfcb_67:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1162
-L1163:
+    jz L1163
+L1164:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1162:
+L1163:
     mov esi, ebp
     call Lrd_slow
-    jmp L1163
+    jmp L1164
     ALIGN 16
 Lfcb_68:
     mov edi, 0
@@ -13785,27 +13822,27 @@ Lfcb_68:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1164
-L1165:
+    jz L1165
+L1166:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1164:
+L1165:
     mov esi, ebp
     call Lrd_slow
-    jmp L1165
+    jmp L1166
     ALIGN 16
 Lfcb_69:
     mov edi, 0
@@ -13817,27 +13854,27 @@ Lfcb_69:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1166
-L1167:
+    jz L1167
+L1168:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1166:
+L1167:
     mov esi, ebp
     call Lrd_slow
-    jmp L1167
+    jmp L1168
     ALIGN 16
 Lfcb_6A:
     mov edi, 0
@@ -13849,27 +13886,27 @@ Lfcb_6A:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1168
-L1169:
+    jz L1169
+L1170:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1168:
+L1169:
     mov esi, ebp
     call Lrd_slow
-    jmp L1169
+    jmp L1170
     ALIGN 16
 Lfcb_6B:
     mov edi, 0
@@ -13881,27 +13918,27 @@ Lfcb_6B:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1170
-L1171:
+    jz L1171
+L1172:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1170:
+L1171:
     mov esi, ebp
     call Lrd_slow
-    jmp L1171
+    jmp L1172
     ALIGN 16
 Lfcb_6C:
     mov edi, 0
@@ -13913,27 +13950,27 @@ Lfcb_6C:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1172
-L1173:
+    jz L1173
+L1174:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1172:
+L1173:
     mov esi, ebp
     call Lrd_slow
-    jmp L1173
+    jmp L1174
     ALIGN 16
 Lfcb_6D:
     mov edi, 0
@@ -13945,37 +13982,37 @@ Lfcb_6D:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1174
-L1175:
+    jz L1175
+L1176:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1174:
+L1175:
     mov esi, ebp
     call Lrd_slow
-    jmp L1175
+    jmp L1176
     ALIGN 16
 Lfcb_6E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1176
-L1177:
+    jz L1177
+L1178:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 32
@@ -13986,30 +14023,30 @@ L1177:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1178
-L1179:
+    jz L1179
+L1180:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1176:
+L1177:
     call Lrd_slow
-    jmp L1177
-L1178:
+    jmp L1178
+L1179:
     mov esi, ebp
     call Lrd_slow
-    jmp L1179
+    jmp L1180
     ALIGN 16
 Lfcb_6F:
     mov edi, 0
@@ -14021,27 +14058,27 @@ Lfcb_6F:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1180
-L1181:
+    jz L1181
+L1182:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1180:
+L1181:
     mov esi, ebp
     call Lrd_slow
-    jmp L1181
+    jmp L1182
     ALIGN 16
 Lfcb_70:
     mov edi, 0
@@ -14053,27 +14090,27 @@ Lfcb_70:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1182
-L1183:
+    jz L1183
+L1184:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1182:
+L1183:
     mov esi, ebp
     call Lrd_slow
-    jmp L1183
+    jmp L1184
     ALIGN 16
 Lfcb_71:
     mov edi, 0
@@ -14085,27 +14122,27 @@ Lfcb_71:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1184
-L1185:
+    jz L1185
+L1186:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1184:
+L1185:
     mov esi, ebp
     call Lrd_slow
-    jmp L1185
+    jmp L1186
     ALIGN 16
 Lfcb_72:
     mov edi, 0
@@ -14117,27 +14154,27 @@ Lfcb_72:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1186
-L1187:
+    jz L1187
+L1188:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1186:
+L1187:
     mov esi, ebp
     call Lrd_slow
-    jmp L1187
+    jmp L1188
     ALIGN 16
 Lfcb_73:
     mov edi, 0
@@ -14149,27 +14186,27 @@ Lfcb_73:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1188
-L1189:
+    jz L1189
+L1190:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1188:
+L1189:
     mov esi, ebp
     call Lrd_slow
-    jmp L1189
+    jmp L1190
     ALIGN 16
 Lfcb_74:
     mov edi, 0
@@ -14181,27 +14218,27 @@ Lfcb_74:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1190
-L1191:
+    jz L1191
+L1192:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1190:
+L1191:
     mov esi, ebp
     call Lrd_slow
-    jmp L1191
+    jmp L1192
     ALIGN 16
 Lfcb_75:
     mov edi, 0
@@ -14213,37 +14250,37 @@ Lfcb_75:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1192
-L1193:
+    jz L1193
+L1194:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1192:
+L1193:
     mov esi, ebp
     call Lrd_slow
-    jmp L1193
+    jmp L1194
     ALIGN 16
 Lfcb_76:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1194
-L1195:
+    jz L1195
+L1196:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 64
@@ -14254,30 +14291,30 @@ L1195:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1196
-L1197:
+    jz L1197
+L1198:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1194:
+L1195:
     call Lrd_slow
-    jmp L1195
-L1196:
+    jmp L1196
+L1197:
     mov esi, ebp
     call Lrd_slow
-    jmp L1197
+    jmp L1198
     ALIGN 16
 Lfcb_77:
     mov edi, 0
@@ -14289,27 +14326,27 @@ Lfcb_77:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1198
-L1199:
+    jz L1199
+L1200:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1198:
+L1199:
     mov esi, ebp
     call Lrd_slow
-    jmp L1199
+    jmp L1200
     ALIGN 16
 Lfcb_78:
     mov edi, 0
@@ -14321,27 +14358,27 @@ Lfcb_78:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1200
-L1201:
+    jz L1201
+L1202:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1200:
+L1201:
     mov esi, ebp
     call Lrd_slow
-    jmp L1201
+    jmp L1202
     ALIGN 16
 Lfcb_79:
     mov edi, 0
@@ -14353,27 +14390,27 @@ Lfcb_79:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1202
-L1203:
+    jz L1203
+L1204:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1202:
+L1203:
     mov esi, ebp
     call Lrd_slow
-    jmp L1203
+    jmp L1204
     ALIGN 16
 Lfcb_7A:
     mov edi, 0
@@ -14385,27 +14422,27 @@ Lfcb_7A:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1204
-L1205:
+    jz L1205
+L1206:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1204:
+L1205:
     mov esi, ebp
     call Lrd_slow
-    jmp L1205
+    jmp L1206
     ALIGN 16
 Lfcb_7B:
     mov edi, 0
@@ -14417,27 +14454,27 @@ Lfcb_7B:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1206
-L1207:
+    jz L1207
+L1208:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1206:
+L1207:
     mov esi, ebp
     call Lrd_slow
-    jmp L1207
+    jmp L1208
     ALIGN 16
 Lfcb_7C:
     mov edi, 0
@@ -14449,27 +14486,27 @@ Lfcb_7C:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1208
-L1209:
+    jz L1209
+L1210:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1208:
+L1209:
     mov esi, ebp
     call Lrd_slow
-    jmp L1209
+    jmp L1210
     ALIGN 16
 Lfcb_7D:
     mov edi, 0
@@ -14481,37 +14518,37 @@ Lfcb_7D:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1210
-L1211:
+    jz L1211
+L1212:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1210:
+L1211:
     mov esi, ebp
     call Lrd_slow
-    jmp L1211
+    jmp L1212
     ALIGN 16
 Lfcb_7E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1212
-L1213:
+    jz L1213
+L1214:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 128
@@ -14522,30 +14559,30 @@ L1213:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1214
-L1215:
+    jz L1215
+L1216:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1212:
+L1213:
     call Lrd_slow
-    jmp L1213
-L1214:
+    jmp L1214
+L1215:
     mov esi, ebp
     call Lrd_slow
-    jmp L1215
+    jmp L1216
     ALIGN 16
 Lfcb_7F:
     mov edi, 0
@@ -14557,3739 +14594,3739 @@ Lfcb_7F:
     or r8d, edi
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1216
-L1217:
+    jz L1217
+L1218:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1216:
+L1217:
     mov esi, ebp
     call Lrd_slow
-    jmp L1217
+    jmp L1218
     ALIGN 16
 Lfcb_80:
     and ch, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1218
-L1219:
+    jz L1219
+L1220:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1218:
+L1219:
     mov esi, ebp
     call Lrd_slow
-    jmp L1219
+    jmp L1220
     ALIGN 16
 Lfcb_81:
     and cl, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1220
-L1221:
+    jz L1221
+L1222:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1220:
+L1221:
     mov esi, ebp
     call Lrd_slow
-    jmp L1221
+    jmp L1222
     ALIGN 16
 Lfcb_82:
     and dh, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1222
-L1223:
+    jz L1223
+L1224:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1222:
+L1223:
     mov esi, ebp
     call Lrd_slow
-    jmp L1223
+    jmp L1224
     ALIGN 16
 Lfcb_83:
     and dl, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1224
-L1225:
+    jz L1225
+L1226:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1224:
+L1225:
     mov esi, ebp
     call Lrd_slow
-    jmp L1225
+    jmp L1226
     ALIGN 16
 Lfcb_84:
     and bh, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1226
-L1227:
+    jz L1227
+L1228:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1226:
+L1227:
     mov esi, ebp
     call Lrd_slow
-    jmp L1227
+    jmp L1228
     ALIGN 16
 Lfcb_85:
     and bl, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1228
-L1229:
+    jz L1229
+L1230:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1228:
+L1229:
     mov esi, ebp
     call Lrd_slow
-    jmp L1229
+    jmp L1230
     ALIGN 16
 Lfcb_86:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1230
-L1231:
+    jz L1231
+L1232:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 254
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1232
+    jz L1233
     mov byte ptr [rdi+rsi], r10b
-L1233:
+L1234:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1234
-L1235:
+    jz L1235
+L1236:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1230:
+L1231:
     call Lrd_slow
-    jmp L1231
-L1232:
+    jmp L1232
+L1233:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1233
-L1234:
+    jmp L1234
+L1235:
     mov esi, ebp
     call Lrd_slow
-    jmp L1235
+    jmp L1236
     ALIGN 16
 Lfcb_87:
     and al, 254
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1236
-L1237:
+    jz L1237
+L1238:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1236:
+L1237:
     mov esi, ebp
     call Lrd_slow
-    jmp L1237
+    jmp L1238
     ALIGN 16
 Lfcb_88:
     and ch, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1238
-L1239:
+    jz L1239
+L1240:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1238:
+L1239:
     mov esi, ebp
     call Lrd_slow
-    jmp L1239
+    jmp L1240
     ALIGN 16
 Lfcb_89:
     and cl, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1240
-L1241:
+    jz L1241
+L1242:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1240:
+L1241:
     mov esi, ebp
     call Lrd_slow
-    jmp L1241
+    jmp L1242
     ALIGN 16
 Lfcb_8A:
     and dh, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1242
-L1243:
+    jz L1243
+L1244:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1242:
+L1243:
     mov esi, ebp
     call Lrd_slow
-    jmp L1243
+    jmp L1244
     ALIGN 16
 Lfcb_8B:
     and dl, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1244
-L1245:
+    jz L1245
+L1246:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1244:
+L1245:
     mov esi, ebp
     call Lrd_slow
-    jmp L1245
+    jmp L1246
     ALIGN 16
 Lfcb_8C:
     and bh, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1246
-L1247:
+    jz L1247
+L1248:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1246:
+L1247:
     mov esi, ebp
     call Lrd_slow
-    jmp L1247
+    jmp L1248
     ALIGN 16
 Lfcb_8D:
     and bl, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1248
-L1249:
+    jz L1249
+L1250:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1248:
+L1249:
     mov esi, ebp
     call Lrd_slow
-    jmp L1249
+    jmp L1250
     ALIGN 16
 Lfcb_8E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1250
-L1251:
+    jz L1251
+L1252:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 253
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1252
+    jz L1253
     mov byte ptr [rdi+rsi], r10b
-L1253:
+L1254:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1254
-L1255:
+    jz L1255
+L1256:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1250:
+L1251:
     call Lrd_slow
-    jmp L1251
-L1252:
+    jmp L1252
+L1253:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1253
-L1254:
+    jmp L1254
+L1255:
     mov esi, ebp
     call Lrd_slow
-    jmp L1255
+    jmp L1256
     ALIGN 16
 Lfcb_8F:
     and al, 253
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1256
-L1257:
+    jz L1257
+L1258:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1256:
+L1257:
     mov esi, ebp
     call Lrd_slow
-    jmp L1257
+    jmp L1258
     ALIGN 16
 Lfcb_90:
     and ch, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1258
-L1259:
+    jz L1259
+L1260:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1258:
+L1259:
     mov esi, ebp
     call Lrd_slow
-    jmp L1259
+    jmp L1260
     ALIGN 16
 Lfcb_91:
     and cl, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1260
-L1261:
+    jz L1261
+L1262:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1260:
+L1261:
     mov esi, ebp
     call Lrd_slow
-    jmp L1261
+    jmp L1262
     ALIGN 16
 Lfcb_92:
     and dh, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1262
-L1263:
+    jz L1263
+L1264:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1262:
+L1263:
     mov esi, ebp
     call Lrd_slow
-    jmp L1263
+    jmp L1264
     ALIGN 16
 Lfcb_93:
     and dl, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1264
-L1265:
+    jz L1265
+L1266:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1264:
+L1265:
     mov esi, ebp
     call Lrd_slow
-    jmp L1265
+    jmp L1266
     ALIGN 16
 Lfcb_94:
     and bh, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1266
-L1267:
+    jz L1267
+L1268:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1266:
+L1267:
     mov esi, ebp
     call Lrd_slow
-    jmp L1267
+    jmp L1268
     ALIGN 16
 Lfcb_95:
     and bl, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1268
-L1269:
+    jz L1269
+L1270:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1268:
+L1269:
     mov esi, ebp
     call Lrd_slow
-    jmp L1269
+    jmp L1270
     ALIGN 16
 Lfcb_96:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1270
-L1271:
+    jz L1271
+L1272:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 251
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1272
+    jz L1273
     mov byte ptr [rdi+rsi], r10b
-L1273:
+L1274:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1274
-L1275:
+    jz L1275
+L1276:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1270:
+L1271:
     call Lrd_slow
-    jmp L1271
-L1272:
+    jmp L1272
+L1273:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1273
-L1274:
+    jmp L1274
+L1275:
     mov esi, ebp
     call Lrd_slow
-    jmp L1275
+    jmp L1276
     ALIGN 16
 Lfcb_97:
     and al, 251
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1276
-L1277:
+    jz L1277
+L1278:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1276:
+L1277:
     mov esi, ebp
     call Lrd_slow
-    jmp L1277
+    jmp L1278
     ALIGN 16
 Lfcb_98:
     and ch, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1278
-L1279:
+    jz L1279
+L1280:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1278:
+L1279:
     mov esi, ebp
     call Lrd_slow
-    jmp L1279
+    jmp L1280
     ALIGN 16
 Lfcb_99:
     and cl, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1280
-L1281:
+    jz L1281
+L1282:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1280:
+L1281:
     mov esi, ebp
     call Lrd_slow
-    jmp L1281
+    jmp L1282
     ALIGN 16
 Lfcb_9A:
     and dh, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1282
-L1283:
+    jz L1283
+L1284:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1282:
+L1283:
     mov esi, ebp
     call Lrd_slow
-    jmp L1283
+    jmp L1284
     ALIGN 16
 Lfcb_9B:
     and dl, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1284
-L1285:
+    jz L1285
+L1286:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1284:
+L1285:
     mov esi, ebp
     call Lrd_slow
-    jmp L1285
+    jmp L1286
     ALIGN 16
 Lfcb_9C:
     and bh, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1286
-L1287:
+    jz L1287
+L1288:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1286:
+L1287:
     mov esi, ebp
     call Lrd_slow
-    jmp L1287
+    jmp L1288
     ALIGN 16
 Lfcb_9D:
     and bl, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1288
-L1289:
+    jz L1289
+L1290:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1288:
+L1289:
     mov esi, ebp
     call Lrd_slow
-    jmp L1289
+    jmp L1290
     ALIGN 16
 Lfcb_9E:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1290
-L1291:
+    jz L1291
+L1292:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 247
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1292
+    jz L1293
     mov byte ptr [rdi+rsi], r10b
-L1293:
+L1294:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1294
-L1295:
+    jz L1295
+L1296:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1290:
+L1291:
     call Lrd_slow
-    jmp L1291
-L1292:
+    jmp L1292
+L1293:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1293
-L1294:
+    jmp L1294
+L1295:
     mov esi, ebp
     call Lrd_slow
-    jmp L1295
+    jmp L1296
     ALIGN 16
 Lfcb_9F:
     and al, 247
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1296
-L1297:
+    jz L1297
+L1298:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1296:
+L1297:
     mov esi, ebp
     call Lrd_slow
-    jmp L1297
+    jmp L1298
     ALIGN 16
 Lfcb_A0:
     and ch, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1298
-L1299:
+    jz L1299
+L1300:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1298:
+L1299:
     mov esi, ebp
     call Lrd_slow
-    jmp L1299
+    jmp L1300
     ALIGN 16
 Lfcb_A1:
     and cl, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1300
-L1301:
+    jz L1301
+L1302:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1300:
+L1301:
     mov esi, ebp
     call Lrd_slow
-    jmp L1301
+    jmp L1302
     ALIGN 16
 Lfcb_A2:
     and dh, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1302
-L1303:
+    jz L1303
+L1304:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1302:
+L1303:
     mov esi, ebp
     call Lrd_slow
-    jmp L1303
+    jmp L1304
     ALIGN 16
 Lfcb_A3:
     and dl, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1304
-L1305:
+    jz L1305
+L1306:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1304:
+L1305:
     mov esi, ebp
     call Lrd_slow
-    jmp L1305
+    jmp L1306
     ALIGN 16
 Lfcb_A4:
     and bh, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1306
-L1307:
+    jz L1307
+L1308:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1306:
+L1307:
     mov esi, ebp
     call Lrd_slow
-    jmp L1307
+    jmp L1308
     ALIGN 16
 Lfcb_A5:
     and bl, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1308
-L1309:
+    jz L1309
+L1310:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1308:
+L1309:
     mov esi, ebp
     call Lrd_slow
-    jmp L1309
+    jmp L1310
     ALIGN 16
 Lfcb_A6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1310
-L1311:
+    jz L1311
+L1312:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 239
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1312
+    jz L1313
     mov byte ptr [rdi+rsi], r10b
-L1313:
+L1314:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1314
-L1315:
+    jz L1315
+L1316:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1310:
+L1311:
     call Lrd_slow
-    jmp L1311
-L1312:
+    jmp L1312
+L1313:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1313
-L1314:
+    jmp L1314
+L1315:
     mov esi, ebp
     call Lrd_slow
-    jmp L1315
+    jmp L1316
     ALIGN 16
 Lfcb_A7:
     and al, 239
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1316
-L1317:
+    jz L1317
+L1318:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1316:
+L1317:
     mov esi, ebp
     call Lrd_slow
-    jmp L1317
+    jmp L1318
     ALIGN 16
 Lfcb_A8:
     and ch, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1318
-L1319:
+    jz L1319
+L1320:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1318:
+L1319:
     mov esi, ebp
     call Lrd_slow
-    jmp L1319
+    jmp L1320
     ALIGN 16
 Lfcb_A9:
     and cl, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1320
-L1321:
+    jz L1321
+L1322:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1320:
+L1321:
     mov esi, ebp
     call Lrd_slow
-    jmp L1321
+    jmp L1322
     ALIGN 16
 Lfcb_AA:
     and dh, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1322
-L1323:
+    jz L1323
+L1324:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1322:
+L1323:
     mov esi, ebp
     call Lrd_slow
-    jmp L1323
+    jmp L1324
     ALIGN 16
 Lfcb_AB:
     and dl, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1324
-L1325:
+    jz L1325
+L1326:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1324:
+L1325:
     mov esi, ebp
     call Lrd_slow
-    jmp L1325
+    jmp L1326
     ALIGN 16
 Lfcb_AC:
     and bh, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1326
-L1327:
+    jz L1327
+L1328:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1326:
+L1327:
     mov esi, ebp
     call Lrd_slow
-    jmp L1327
+    jmp L1328
     ALIGN 16
 Lfcb_AD:
     and bl, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1328
-L1329:
+    jz L1329
+L1330:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1328:
+L1329:
     mov esi, ebp
     call Lrd_slow
-    jmp L1329
+    jmp L1330
     ALIGN 16
 Lfcb_AE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1330
-L1331:
+    jz L1331
+L1332:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 223
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1332
+    jz L1333
     mov byte ptr [rdi+rsi], r10b
-L1333:
+L1334:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1334
-L1335:
+    jz L1335
+L1336:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1330:
+L1331:
     call Lrd_slow
-    jmp L1331
-L1332:
+    jmp L1332
+L1333:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1333
-L1334:
+    jmp L1334
+L1335:
     mov esi, ebp
     call Lrd_slow
-    jmp L1335
+    jmp L1336
     ALIGN 16
 Lfcb_AF:
     and al, 223
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1336
-L1337:
+    jz L1337
+L1338:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1336:
+L1337:
     mov esi, ebp
     call Lrd_slow
-    jmp L1337
+    jmp L1338
     ALIGN 16
 Lfcb_B0:
     and ch, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1338
-L1339:
+    jz L1339
+L1340:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1338:
+L1339:
     mov esi, ebp
     call Lrd_slow
-    jmp L1339
+    jmp L1340
     ALIGN 16
 Lfcb_B1:
     and cl, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1340
-L1341:
+    jz L1341
+L1342:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1340:
+L1341:
     mov esi, ebp
     call Lrd_slow
-    jmp L1341
+    jmp L1342
     ALIGN 16
 Lfcb_B2:
     and dh, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1342
-L1343:
+    jz L1343
+L1344:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1342:
+L1343:
     mov esi, ebp
     call Lrd_slow
-    jmp L1343
+    jmp L1344
     ALIGN 16
 Lfcb_B3:
     and dl, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1344
-L1345:
+    jz L1345
+L1346:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1344:
+L1345:
     mov esi, ebp
     call Lrd_slow
-    jmp L1345
+    jmp L1346
     ALIGN 16
 Lfcb_B4:
     and bh, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1346
-L1347:
+    jz L1347
+L1348:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1346:
+L1347:
     mov esi, ebp
     call Lrd_slow
-    jmp L1347
+    jmp L1348
     ALIGN 16
 Lfcb_B5:
     and bl, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1348
-L1349:
+    jz L1349
+L1350:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1348:
+L1349:
     mov esi, ebp
     call Lrd_slow
-    jmp L1349
+    jmp L1350
     ALIGN 16
 Lfcb_B6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1350
-L1351:
+    jz L1351
+L1352:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 191
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1352
+    jz L1353
     mov byte ptr [rdi+rsi], r10b
-L1353:
+L1354:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1354
-L1355:
+    jz L1355
+L1356:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1350:
+L1351:
     call Lrd_slow
-    jmp L1351
-L1352:
+    jmp L1352
+L1353:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1353
-L1354:
+    jmp L1354
+L1355:
     mov esi, ebp
     call Lrd_slow
-    jmp L1355
+    jmp L1356
     ALIGN 16
 Lfcb_B7:
     and al, 191
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1356
-L1357:
+    jz L1357
+L1358:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1356:
+L1357:
     mov esi, ebp
     call Lrd_slow
-    jmp L1357
+    jmp L1358
     ALIGN 16
 Lfcb_B8:
     and ch, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1358
-L1359:
+    jz L1359
+L1360:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1358:
+L1359:
     mov esi, ebp
     call Lrd_slow
-    jmp L1359
+    jmp L1360
     ALIGN 16
 Lfcb_B9:
     and cl, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1360
-L1361:
+    jz L1361
+L1362:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1360:
+L1361:
     mov esi, ebp
     call Lrd_slow
-    jmp L1361
+    jmp L1362
     ALIGN 16
 Lfcb_BA:
     and dh, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1362
-L1363:
+    jz L1363
+L1364:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1362:
+L1363:
     mov esi, ebp
     call Lrd_slow
-    jmp L1363
+    jmp L1364
     ALIGN 16
 Lfcb_BB:
     and dl, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1364
-L1365:
+    jz L1365
+L1366:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1364:
+L1365:
     mov esi, ebp
     call Lrd_slow
-    jmp L1365
+    jmp L1366
     ALIGN 16
 Lfcb_BC:
     and bh, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1366
-L1367:
+    jz L1367
+L1368:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1366:
+L1367:
     mov esi, ebp
     call Lrd_slow
-    jmp L1367
+    jmp L1368
     ALIGN 16
 Lfcb_BD:
     and bl, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1368
-L1369:
+    jz L1369
+L1370:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1368:
+L1369:
     mov esi, ebp
     call Lrd_slow
-    jmp L1369
+    jmp L1370
     ALIGN 16
 Lfcb_BE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1370
-L1371:
+    jz L1371
+L1372:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 127
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1372
+    jz L1373
     mov byte ptr [rdi+rsi], r10b
-L1373:
+L1374:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1374
-L1375:
+    jz L1375
+L1376:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1370:
+L1371:
     call Lrd_slow
-    jmp L1371
-L1372:
+    jmp L1372
+L1373:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1373
-L1374:
+    jmp L1374
+L1375:
     mov esi, ebp
     call Lrd_slow
-    jmp L1375
+    jmp L1376
     ALIGN 16
 Lfcb_BF:
     and al, 127
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1376
-L1377:
+    jz L1377
+L1378:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1376:
+L1377:
     mov esi, ebp
     call Lrd_slow
-    jmp L1377
+    jmp L1378
     ALIGN 16
 Lfcb_C0:
     or ch, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1378
-L1379:
+    jz L1379
+L1380:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1378:
+L1379:
     mov esi, ebp
     call Lrd_slow
-    jmp L1379
+    jmp L1380
     ALIGN 16
 Lfcb_C1:
     or cl, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1380
-L1381:
+    jz L1381
+L1382:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1380:
+L1381:
     mov esi, ebp
     call Lrd_slow
-    jmp L1381
+    jmp L1382
     ALIGN 16
 Lfcb_C2:
     or dh, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1382
-L1383:
+    jz L1383
+L1384:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1382:
+L1383:
     mov esi, ebp
     call Lrd_slow
-    jmp L1383
+    jmp L1384
     ALIGN 16
 Lfcb_C3:
     or dl, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1384
-L1385:
+    jz L1385
+L1386:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1384:
+L1385:
     mov esi, ebp
     call Lrd_slow
-    jmp L1385
+    jmp L1386
     ALIGN 16
 Lfcb_C4:
     or bh, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1386
-L1387:
+    jz L1387
+L1388:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1386:
+L1387:
     mov esi, ebp
     call Lrd_slow
-    jmp L1387
+    jmp L1388
     ALIGN 16
 Lfcb_C5:
     or bl, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1388
-L1389:
+    jz L1389
+L1390:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1388:
+L1389:
     mov esi, ebp
     call Lrd_slow
-    jmp L1389
+    jmp L1390
     ALIGN 16
 Lfcb_C6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1390
-L1391:
+    jz L1391
+L1392:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 1
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1392
+    jz L1393
     mov byte ptr [rdi+rsi], r10b
-L1393:
+L1394:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1394
-L1395:
+    jz L1395
+L1396:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1390:
+L1391:
     call Lrd_slow
-    jmp L1391
-L1392:
+    jmp L1392
+L1393:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1393
-L1394:
+    jmp L1394
+L1395:
     mov esi, ebp
     call Lrd_slow
-    jmp L1395
+    jmp L1396
     ALIGN 16
 Lfcb_C7:
     or al, 1
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1396
-L1397:
+    jz L1397
+L1398:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1396:
+L1397:
     mov esi, ebp
     call Lrd_slow
-    jmp L1397
+    jmp L1398
     ALIGN 16
 Lfcb_C8:
     or ch, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1398
-L1399:
+    jz L1399
+L1400:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1398:
+L1399:
     mov esi, ebp
     call Lrd_slow
-    jmp L1399
+    jmp L1400
     ALIGN 16
 Lfcb_C9:
     or cl, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1400
-L1401:
+    jz L1401
+L1402:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1400:
+L1401:
     mov esi, ebp
     call Lrd_slow
-    jmp L1401
+    jmp L1402
     ALIGN 16
 Lfcb_CA:
     or dh, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1402
-L1403:
+    jz L1403
+L1404:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1402:
+L1403:
     mov esi, ebp
     call Lrd_slow
-    jmp L1403
+    jmp L1404
     ALIGN 16
 Lfcb_CB:
     or dl, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1404
-L1405:
+    jz L1405
+L1406:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1404:
+L1405:
     mov esi, ebp
     call Lrd_slow
-    jmp L1405
+    jmp L1406
     ALIGN 16
 Lfcb_CC:
     or bh, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1406
-L1407:
+    jz L1407
+L1408:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1406:
+L1407:
     mov esi, ebp
     call Lrd_slow
-    jmp L1407
+    jmp L1408
     ALIGN 16
 Lfcb_CD:
     or bl, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1408
-L1409:
+    jz L1409
+L1410:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1408:
+L1409:
     mov esi, ebp
     call Lrd_slow
-    jmp L1409
+    jmp L1410
     ALIGN 16
 Lfcb_CE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1410
-L1411:
+    jz L1411
+L1412:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 2
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1412
+    jz L1413
     mov byte ptr [rdi+rsi], r10b
-L1413:
+L1414:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1414
-L1415:
+    jz L1415
+L1416:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1410:
+L1411:
     call Lrd_slow
-    jmp L1411
-L1412:
+    jmp L1412
+L1413:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1413
-L1414:
+    jmp L1414
+L1415:
     mov esi, ebp
     call Lrd_slow
-    jmp L1415
+    jmp L1416
     ALIGN 16
 Lfcb_CF:
     or al, 2
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1416
-L1417:
+    jz L1417
+L1418:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1416:
+L1417:
     mov esi, ebp
     call Lrd_slow
-    jmp L1417
+    jmp L1418
     ALIGN 16
 Lfcb_D0:
     or ch, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1418
-L1419:
+    jz L1419
+L1420:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1418:
+L1419:
     mov esi, ebp
     call Lrd_slow
-    jmp L1419
+    jmp L1420
     ALIGN 16
 Lfcb_D1:
     or cl, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1420
-L1421:
+    jz L1421
+L1422:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1420:
+L1421:
     mov esi, ebp
     call Lrd_slow
-    jmp L1421
+    jmp L1422
     ALIGN 16
 Lfcb_D2:
     or dh, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1422
-L1423:
+    jz L1423
+L1424:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1422:
+L1423:
     mov esi, ebp
     call Lrd_slow
-    jmp L1423
+    jmp L1424
     ALIGN 16
 Lfcb_D3:
     or dl, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1424
-L1425:
+    jz L1425
+L1426:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1424:
+L1425:
     mov esi, ebp
     call Lrd_slow
-    jmp L1425
+    jmp L1426
     ALIGN 16
 Lfcb_D4:
     or bh, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1426
-L1427:
+    jz L1427
+L1428:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1426:
+L1427:
     mov esi, ebp
     call Lrd_slow
-    jmp L1427
+    jmp L1428
     ALIGN 16
 Lfcb_D5:
     or bl, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1428
-L1429:
+    jz L1429
+L1430:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1428:
+L1429:
     mov esi, ebp
     call Lrd_slow
-    jmp L1429
+    jmp L1430
     ALIGN 16
 Lfcb_D6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1430
-L1431:
+    jz L1431
+L1432:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 4
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1432
+    jz L1433
     mov byte ptr [rdi+rsi], r10b
-L1433:
+L1434:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1434
-L1435:
+    jz L1435
+L1436:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1430:
+L1431:
     call Lrd_slow
-    jmp L1431
-L1432:
+    jmp L1432
+L1433:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1433
-L1434:
+    jmp L1434
+L1435:
     mov esi, ebp
     call Lrd_slow
-    jmp L1435
+    jmp L1436
     ALIGN 16
 Lfcb_D7:
     or al, 4
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1436
-L1437:
+    jz L1437
+L1438:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1436:
+L1437:
     mov esi, ebp
     call Lrd_slow
-    jmp L1437
+    jmp L1438
     ALIGN 16
 Lfcb_D8:
     or ch, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1438
-L1439:
+    jz L1439
+L1440:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1438:
+L1439:
     mov esi, ebp
     call Lrd_slow
-    jmp L1439
+    jmp L1440
     ALIGN 16
 Lfcb_D9:
     or cl, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1440
-L1441:
+    jz L1441
+L1442:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1440:
+L1441:
     mov esi, ebp
     call Lrd_slow
-    jmp L1441
+    jmp L1442
     ALIGN 16
 Lfcb_DA:
     or dh, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1442
-L1443:
+    jz L1443
+L1444:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1442:
+L1443:
     mov esi, ebp
     call Lrd_slow
-    jmp L1443
+    jmp L1444
     ALIGN 16
 Lfcb_DB:
     or dl, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1444
-L1445:
+    jz L1445
+L1446:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1444:
+L1445:
     mov esi, ebp
     call Lrd_slow
-    jmp L1445
+    jmp L1446
     ALIGN 16
 Lfcb_DC:
     or bh, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1446
-L1447:
+    jz L1447
+L1448:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1446:
+L1447:
     mov esi, ebp
     call Lrd_slow
-    jmp L1447
+    jmp L1448
     ALIGN 16
 Lfcb_DD:
     or bl, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1448
-L1449:
+    jz L1449
+L1450:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1448:
+L1449:
     mov esi, ebp
     call Lrd_slow
-    jmp L1449
+    jmp L1450
     ALIGN 16
 Lfcb_DE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1450
-L1451:
+    jz L1451
+L1452:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 8
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1452
+    jz L1453
     mov byte ptr [rdi+rsi], r10b
-L1453:
+L1454:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1454
-L1455:
+    jz L1455
+L1456:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1450:
+L1451:
     call Lrd_slow
-    jmp L1451
-L1452:
+    jmp L1452
+L1453:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1453
-L1454:
+    jmp L1454
+L1455:
     mov esi, ebp
     call Lrd_slow
-    jmp L1455
+    jmp L1456
     ALIGN 16
 Lfcb_DF:
     or al, 8
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1456
-L1457:
+    jz L1457
+L1458:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1456:
+L1457:
     mov esi, ebp
     call Lrd_slow
-    jmp L1457
+    jmp L1458
     ALIGN 16
 Lfcb_E0:
     or ch, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1458
-L1459:
+    jz L1459
+L1460:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1458:
+L1459:
     mov esi, ebp
     call Lrd_slow
-    jmp L1459
+    jmp L1460
     ALIGN 16
 Lfcb_E1:
     or cl, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1460
-L1461:
+    jz L1461
+L1462:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1460:
+L1461:
     mov esi, ebp
     call Lrd_slow
-    jmp L1461
+    jmp L1462
     ALIGN 16
 Lfcb_E2:
     or dh, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1462
-L1463:
+    jz L1463
+L1464:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1462:
+L1463:
     mov esi, ebp
     call Lrd_slow
-    jmp L1463
+    jmp L1464
     ALIGN 16
 Lfcb_E3:
     or dl, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1464
-L1465:
+    jz L1465
+L1466:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1464:
+L1465:
     mov esi, ebp
     call Lrd_slow
-    jmp L1465
+    jmp L1466
     ALIGN 16
 Lfcb_E4:
     or bh, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1466
-L1467:
+    jz L1467
+L1468:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1466:
+L1467:
     mov esi, ebp
     call Lrd_slow
-    jmp L1467
+    jmp L1468
     ALIGN 16
 Lfcb_E5:
     or bl, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1468
-L1469:
+    jz L1469
+L1470:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1468:
+L1469:
     mov esi, ebp
     call Lrd_slow
-    jmp L1469
+    jmp L1470
     ALIGN 16
 Lfcb_E6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1470
-L1471:
+    jz L1471
+L1472:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 16
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1472
+    jz L1473
     mov byte ptr [rdi+rsi], r10b
-L1473:
+L1474:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1474
-L1475:
+    jz L1475
+L1476:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1470:
+L1471:
     call Lrd_slow
-    jmp L1471
-L1472:
+    jmp L1472
+L1473:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1473
-L1474:
+    jmp L1474
+L1475:
     mov esi, ebp
     call Lrd_slow
-    jmp L1475
+    jmp L1476
     ALIGN 16
 Lfcb_E7:
     or al, 16
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1476
-L1477:
+    jz L1477
+L1478:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1476:
+L1477:
     mov esi, ebp
     call Lrd_slow
-    jmp L1477
+    jmp L1478
     ALIGN 16
 Lfcb_E8:
     or ch, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1478
-L1479:
+    jz L1479
+L1480:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1478:
+L1479:
     mov esi, ebp
     call Lrd_slow
-    jmp L1479
+    jmp L1480
     ALIGN 16
 Lfcb_E9:
     or cl, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1480
-L1481:
+    jz L1481
+L1482:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1480:
+L1481:
     mov esi, ebp
     call Lrd_slow
-    jmp L1481
+    jmp L1482
     ALIGN 16
 Lfcb_EA:
     or dh, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1482
-L1483:
+    jz L1483
+L1484:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1482:
+L1483:
     mov esi, ebp
     call Lrd_slow
-    jmp L1483
+    jmp L1484
     ALIGN 16
 Lfcb_EB:
     or dl, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1484
-L1485:
+    jz L1485
+L1486:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1484:
+L1485:
     mov esi, ebp
     call Lrd_slow
-    jmp L1485
+    jmp L1486
     ALIGN 16
 Lfcb_EC:
     or bh, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1486
-L1487:
+    jz L1487
+L1488:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1486:
+L1487:
     mov esi, ebp
     call Lrd_slow
-    jmp L1487
+    jmp L1488
     ALIGN 16
 Lfcb_ED:
     or bl, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1488
-L1489:
+    jz L1489
+L1490:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1488:
+L1489:
     mov esi, ebp
     call Lrd_slow
-    jmp L1489
+    jmp L1490
     ALIGN 16
 Lfcb_EE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1490
-L1491:
+    jz L1491
+L1492:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 32
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1492
+    jz L1493
     mov byte ptr [rdi+rsi], r10b
-L1493:
+L1494:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1494
-L1495:
+    jz L1495
+L1496:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1490:
+L1491:
     call Lrd_slow
-    jmp L1491
-L1492:
+    jmp L1492
+L1493:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1493
-L1494:
+    jmp L1494
+L1495:
     mov esi, ebp
     call Lrd_slow
-    jmp L1495
+    jmp L1496
     ALIGN 16
 Lfcb_EF:
     or al, 32
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1496
-L1497:
+    jz L1497
+L1498:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1496:
+L1497:
     mov esi, ebp
     call Lrd_slow
-    jmp L1497
+    jmp L1498
     ALIGN 16
 Lfcb_F0:
     or ch, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1498
-L1499:
+    jz L1499
+L1500:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1498:
+L1499:
     mov esi, ebp
     call Lrd_slow
-    jmp L1499
+    jmp L1500
     ALIGN 16
 Lfcb_F1:
     or cl, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1500
-L1501:
+    jz L1501
+L1502:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1500:
+L1501:
     mov esi, ebp
     call Lrd_slow
-    jmp L1501
+    jmp L1502
     ALIGN 16
 Lfcb_F2:
     or dh, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1502
-L1503:
+    jz L1503
+L1504:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1502:
+L1503:
     mov esi, ebp
     call Lrd_slow
-    jmp L1503
+    jmp L1504
     ALIGN 16
 Lfcb_F3:
     or dl, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1504
-L1505:
+    jz L1505
+L1506:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1504:
+L1505:
     mov esi, ebp
     call Lrd_slow
-    jmp L1505
+    jmp L1506
     ALIGN 16
 Lfcb_F4:
     or bh, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1506
-L1507:
+    jz L1507
+L1508:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1506:
+L1507:
     mov esi, ebp
     call Lrd_slow
-    jmp L1507
+    jmp L1508
     ALIGN 16
 Lfcb_F5:
     or bl, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1508
-L1509:
+    jz L1509
+L1510:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1508:
+L1509:
     mov esi, ebp
     call Lrd_slow
-    jmp L1509
+    jmp L1510
     ALIGN 16
 Lfcb_F6:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1510
-L1511:
+    jz L1511
+L1512:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 64
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1512
+    jz L1513
     mov byte ptr [rdi+rsi], r10b
-L1513:
+L1514:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1514
-L1515:
+    jz L1515
+L1516:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1510:
+L1511:
     call Lrd_slow
-    jmp L1511
-L1512:
+    jmp L1512
+L1513:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1513
-L1514:
+    jmp L1514
+L1515:
     mov esi, ebp
     call Lrd_slow
-    jmp L1515
+    jmp L1516
     ALIGN 16
 Lfcb_F7:
     or al, 64
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1516
-L1517:
+    jz L1517
+L1518:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1516:
+L1517:
     mov esi, ebp
     call Lrd_slow
-    jmp L1517
+    jmp L1518
     ALIGN 16
 Lfcb_F8:
     or ch, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1518
-L1519:
+    jz L1519
+L1520:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1518:
+L1519:
     mov esi, ebp
     call Lrd_slow
-    jmp L1519
+    jmp L1520
     ALIGN 16
 Lfcb_F9:
     or cl, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1520
-L1521:
+    jz L1521
+L1522:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1520:
+L1521:
     mov esi, ebp
     call Lrd_slow
-    jmp L1521
+    jmp L1522
     ALIGN 16
 Lfcb_FA:
     or dh, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1522
-L1523:
+    jz L1523
+L1524:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1522:
+L1523:
     mov esi, ebp
     call Lrd_slow
-    jmp L1523
+    jmp L1524
     ALIGN 16
 Lfcb_FB:
     or dl, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1524
-L1525:
+    jz L1525
+L1526:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1524:
+L1525:
     mov esi, ebp
     call Lrd_slow
-    jmp L1525
+    jmp L1526
     ALIGN 16
 Lfcb_FC:
     or bh, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1526
-L1527:
+    jz L1527
+L1528:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1526:
+L1527:
     mov esi, ebp
     call Lrd_slow
-    jmp L1527
+    jmp L1528
     ALIGN 16
 Lfcb_FD:
     or bl, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1528
-L1529:
+    jz L1529
+L1530:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1528:
+L1529:
     mov esi, ebp
     call Lrd_slow
-    jmp L1529
+    jmp L1530
     ALIGN 16
 Lfcb_FE:
     mov esi, ebx
     add r14, 4
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1530
-L1531:
+    jz L1531
+L1532:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 128
     add r14, 4
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1532
+    jz L1533
     mov byte ptr [rdi+rsi], r10b
-L1533:
+L1534:
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1534
-L1535:
+    jz L1535
+L1536:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1530:
+L1531:
     call Lrd_slow
-    jmp L1531
-L1532:
+    jmp L1532
+L1533:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1533
-L1534:
+    jmp L1534
+L1535:
     mov esi, ebp
     call Lrd_slow
-    jmp L1535
+    jmp L1536
     ALIGN 16
 Lfcb_FF:
     or al, 128
     cmp r14, r13
     jae Lslow_top
-    test byte ptr [r15+rbp+498556], 3
+    test byte ptr [r15+rbp+498572], 3
     jnz Lslow_top
     dec r12
     js Lexit_budget
     add r14, 4
     mov esi, ebp
     shr esi, 12
-    mov rdi, qword ptr [r15+rsi*8+572288]
+    mov rdi, qword ptr [r15+rsi*8+572304]
     test rdi, rdi
-    jz L1536
-L1537:
+    jz L1537
+L1538:
     movzx esi, byte ptr [rdi+rbp]
     inc bp
     lea rdi, Ljt_f
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1536:
+L1537:
     mov esi, ebp
     call Lrd_slow
-    jmp L1537
+    jmp L1538
     ALIGN 16
 Lc_00:
     jmp Lnext
@@ -18297,85 +18334,85 @@ Lc_00:
 Lc_01:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1538
-L1539:
+    cmp r14, qword ptr [r15+572600]
+    jae L1539
+L1540:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1540
-L1541:
+    jz L1541
+L1542:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1542
-L1543:
+    cmp r14, qword ptr [r15+572600]
+    jae L1543
+L1544:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1544
-L1545:
+    jz L1545
+L1546:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov ecx, r11d
     jmp Lnext
-L1538:
+L1539:
     call Ltick_slow4
-    jmp L1539
-L1540:
+    jmp L1540
+L1541:
     call Lrd_slow
-    jmp L1541
-L1542:
+    jmp L1542
+L1543:
     call Ltick_slow4
-    jmp L1543
-L1544:
+    jmp L1544
+L1545:
     call Lrd_slow
-    jmp L1545
+    jmp L1546
     ALIGN 16
 Lc_02:
     mov esi, ecx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1546
-L1547:
+    cmp r14, qword ptr [r15+572600]
+    jae L1547
+L1548:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1548
+    jz L1549
     mov byte ptr [rdi+rsi], al
-L1549:
+L1550:
     jmp Lnext
-L1546:
+L1547:
     call Ltick_slow4
-    jmp L1547
-L1548:
+    jmp L1548
+L1549:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L1549
+    jmp L1550
     ALIGN 16
 Lc_03:
     inc cx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1550
-L1551:
+    cmp r14, qword ptr [r15+572600]
+    jae L1551
+L1552:
     jmp Lnext
-L1550:
+L1551:
     call Ltick_slow4
-    jmp L1551
+    jmp L1552
     ALIGN 16
 Lc_04:
     inc ch
     movzx edi, ch
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -18383,31 +18420,31 @@ Lc_05:
     dec ch
     movzx edi, ch
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_06:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1552
-L1553:
+    cmp r14, qword ptr [r15+572600]
+    jae L1553
+L1554:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1554
-L1555:
+    jz L1555
+L1556:
     mov ch, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1552:
+L1553:
     call Ltick_slow4
-    jmp L1553
-L1554:
+    jmp L1554
+L1555:
     call Lrd_slow
-    jmp L1555
+    jmp L1556
     ALIGN 16
 Lc_07:
     xor r8d, r8d
@@ -18419,28 +18456,28 @@ Lc_07:
 Lc_08:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1556
-L1557:
+    cmp r14, qword ptr [r15+572600]
+    jae L1557
+L1558:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1558
-L1559:
+    jz L1559
+L1560:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1560
-L1561:
+    cmp r14, qword ptr [r15+572600]
+    jae L1561
+L1562:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1562
-L1563:
+    jz L1563
+L1564:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
@@ -18448,58 +18485,58 @@ L1563:
     mov esi, r11d
     mov r10d, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1564
-L1565:
+    cmp r14, qword ptr [r15+572600]
+    jae L1565
+L1566:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1566
+    jz L1567
     mov byte ptr [rdi+rsi], r10b
-L1567:
+L1568:
     lea esi, [r11+1]
     and esi, 65535
     mov r10d, r9d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1568
-L1569:
+    cmp r14, qword ptr [r15+572600]
+    jae L1569
+L1570:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1570
+    jz L1571
     mov byte ptr [rdi+rsi], r10b
-L1571:
+L1572:
     jmp Lnext
-L1556:
+L1557:
     call Ltick_slow4
-    jmp L1557
-L1558:
+    jmp L1558
+L1559:
     call Lrd_slow
-    jmp L1559
-L1560:
+    jmp L1560
+L1561:
     call Ltick_slow4
-    jmp L1561
-L1562:
+    jmp L1562
+L1563:
     call Lrd_slow
-    jmp L1563
-L1564:
+    jmp L1564
+L1565:
     call Ltick_slow4
-    jmp L1565
-L1566:
+    jmp L1566
+L1567:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1567
-L1568:
+    jmp L1568
+L1569:
     call Ltick_slow4
-    jmp L1569
-L1570:
+    jmp L1570
+L1571:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1571
+    jmp L1572
     ALIGN 16
 Lc_09:
     mov edi, ebx
@@ -18516,51 +18553,51 @@ Lc_09:
     or r8d, esi
     and ebx, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1572
-L1573:
+    cmp r14, qword ptr [r15+572600]
+    jae L1573
+L1574:
     jmp Lnext
-L1572:
+L1573:
     call Ltick_slow4
-    jmp L1573
+    jmp L1574
     ALIGN 16
 Lc_0A:
     mov esi, ecx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1574
-L1575:
+    cmp r14, qword ptr [r15+572600]
+    jae L1575
+L1576:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1576
-L1577:
+    jz L1577
+L1578:
     mov al, byte ptr [rdi+rsi]
     jmp Lnext
-L1574:
+L1575:
     call Ltick_slow4
-    jmp L1575
-L1576:
+    jmp L1576
+L1577:
     call Lrd_slow
-    jmp L1577
+    jmp L1578
     ALIGN 16
 Lc_0B:
     dec cx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1578
-L1579:
+    cmp r14, qword ptr [r15+572600]
+    jae L1579
+L1580:
     jmp Lnext
-L1578:
+L1579:
     call Ltick_slow4
-    jmp L1579
+    jmp L1580
     ALIGN 16
 Lc_0C:
     inc cl
     movzx edi, cl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -18568,31 +18605,31 @@ Lc_0D:
     dec cl
     movzx edi, cl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_0E:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1580
-L1581:
+    cmp r14, qword ptr [r15+572600]
+    jae L1581
+L1582:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1582
-L1583:
+    jz L1583
+L1584:
     mov cl, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1580:
+L1581:
     call Ltick_slow4
-    jmp L1581
-L1582:
+    jmp L1582
+L1583:
     call Lrd_slow
-    jmp L1583
+    jmp L1584
     ALIGN 16
 Lc_0F:
     xor r8d, r8d
@@ -18604,107 +18641,144 @@ Lc_0F:
 Lc_10:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1584
-L1585:
+    cmp r14, qword ptr [r15+572600]
+    jae L1585
+L1586:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1586
-L1587:
+    jz L1587
+L1588:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
+    mov byte ptr [r15+24], al
+    mov byte ptr [r15+25], r8b
+    mov edi, ecx
+    rol di, 8
+    mov word ptr [r15+26], di
+    mov edi, edx
+    rol di, 8
+    mov word ptr [r15+28], di
+    mov edi, ebx
+    rol di, 8
+    mov word ptr [r15+30], di
+    mov word ptr [r15+32], r9w
+    mov word ptr [r15+34], bp
+    cmp byte ptr [r15+572675], 0
+    jne L1589
+    mov qword ptr [r15+40], r14
+    movzx edi, word ptr [r15+572672]
+    add edi, r14d
+    mov word ptr [r15+65858], di
+L1589:
+    sub rsp, 32
+    mov rcx, r15
+    mov edx, 16
+    call gbc_asm_op
+    add rsp, 32
+    movzx eax, byte ptr [r15+24]
+    movzx r8d, byte ptr [r15+25]
+    movzx ecx, word ptr [r15+26]
+    rol cx, 8
+    movzx edx, word ptr [r15+28]
+    rol dx, 8
+    movzx ebx, word ptr [r15+30]
+    rol bx, 8
+    movzx r9d, word ptr [r15+32]
+    movzx ebp, word ptr [r15+34]
+    mov r14, qword ptr [r15+40]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
-L1584:
+L1585:
     call Ltick_slow4
-    jmp L1585
-L1586:
+    jmp L1586
+L1587:
     call Lrd_slow
-    jmp L1587
+    jmp L1588
     ALIGN 16
 Lc_11:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1588
-L1589:
+    cmp r14, qword ptr [r15+572600]
+    jae L1590
+L1591:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1590
-L1591:
+    jz L1592
+L1593:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1592
-L1593:
+    cmp r14, qword ptr [r15+572600]
+    jae L1594
+L1595:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1594
-L1595:
+    jz L1596
+L1597:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov edx, r11d
     jmp Lnext
-L1588:
-    call Ltick_slow4
-    jmp L1589
 L1590:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1591
 L1592:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1593
 L1594:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1595
+L1596:
+    call Lrd_slow
+    jmp L1597
     ALIGN 16
 Lc_12:
     mov esi, edx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1596
-L1597:
+    cmp r14, qword ptr [r15+572600]
+    jae L1598
+L1599:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1598
+    jz L1600
     mov byte ptr [rdi+rsi], al
-L1599:
+L1601:
     jmp Lnext
-L1596:
-    call Ltick_slow4
-    jmp L1597
 L1598:
+    call Ltick_slow4
+    jmp L1599
+L1600:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L1599
+    jmp L1601
     ALIGN 16
 Lc_13:
     inc dx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1600
-L1601:
+    cmp r14, qword ptr [r15+572600]
+    jae L1602
+L1603:
     jmp Lnext
-L1600:
+L1602:
     call Ltick_slow4
-    jmp L1601
+    jmp L1603
     ALIGN 16
 Lc_14:
     inc dh
     movzx edi, dh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -18712,31 +18786,31 @@ Lc_15:
     dec dh
     movzx edi, dh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_16:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1602
-L1603:
+    cmp r14, qword ptr [r15+572600]
+    jae L1604
+L1605:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1604
-L1605:
+    jz L1606
+L1607:
     mov dh, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1602:
-    call Ltick_slow4
-    jmp L1603
 L1604:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1605
+L1606:
+    call Lrd_slow
+    jmp L1607
     ALIGN 16
 Lc_17:
     bt r8d, 4
@@ -18749,35 +18823,35 @@ Lc_17:
 Lc_18:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1606
-L1607:
+    cmp r14, qword ptr [r15+572600]
+    jae L1608
+L1609:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1608
-L1609:
+    jz L1610
+L1611:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1611
+    cmp r14, qword ptr [r15+572600]
+    jae L1613
+L1614:
 L1612:
-L1610:
     jmp Lnext
-L1606:
-    call Ltick_slow4
-    jmp L1607
 L1608:
-    call Lrd_slow
-    jmp L1609
-L1611:
     call Ltick_slow4
-    jmp L1612
+    jmp L1609
+L1610:
+    call Lrd_slow
+    jmp L1611
+L1613:
+    call Ltick_slow4
+    jmp L1614
     ALIGN 16
 Lc_19:
     mov edi, ebx
@@ -18794,51 +18868,51 @@ Lc_19:
     or r8d, esi
     and ebx, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1613
-L1614:
-    jmp Lnext
-L1613:
-    call Ltick_slow4
-    jmp L1614
-    ALIGN 16
-Lc_1A:
-    mov esi, edx
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L1615
 L1616:
-    mov edi, esi
-    shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
-    test rdi, rdi
-    jz L1617
-L1618:
-    mov al, byte ptr [rdi+rsi]
     jmp Lnext
 L1615:
     call Ltick_slow4
     jmp L1616
+    ALIGN 16
+Lc_1A:
+    mov esi, edx
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L1617
+L1618:
+    mov edi, esi
+    shr edi, 12
+    mov rdi, qword ptr [r15+rdi*8+572304]
+    test rdi, rdi
+    jz L1619
+L1620:
+    mov al, byte ptr [rdi+rsi]
+    jmp Lnext
 L1617:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1618
+L1619:
+    call Lrd_slow
+    jmp L1620
     ALIGN 16
 Lc_1B:
     dec dx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1619
-L1620:
+    cmp r14, qword ptr [r15+572600]
+    jae L1621
+L1622:
     jmp Lnext
-L1619:
+L1621:
     call Ltick_slow4
-    jmp L1620
+    jmp L1622
     ALIGN 16
 Lc_1C:
     inc dl
     movzx edi, dl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -18846,31 +18920,31 @@ Lc_1D:
     dec dl
     movzx edi, dl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_1E:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1621
-L1622:
+    cmp r14, qword ptr [r15+572600]
+    jae L1623
+L1624:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1623
-L1624:
+    jz L1625
+L1626:
     mov dl, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1621:
-    call Ltick_slow4
-    jmp L1622
 L1623:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1624
+L1625:
+    call Lrd_slow
+    jmp L1626
     ALIGN 16
 Lc_1F:
     bt r8d, 4
@@ -18883,122 +18957,122 @@ Lc_1F:
 Lc_20:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1625
-L1626:
+    cmp r14, qword ptr [r15+572600]
+    jae L1627
+L1628:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1627
-L1628:
+    jz L1629
+L1630:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 128
-    jnz L1629
+    jnz L1631
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1630
+    cmp r14, qword ptr [r15+572600]
+    jae L1632
+L1633:
 L1631:
-L1629:
     jmp Lnext
-L1625:
-    call Ltick_slow4
-    jmp L1626
 L1627:
-    call Lrd_slow
-    jmp L1628
-L1630:
     call Ltick_slow4
-    jmp L1631
+    jmp L1628
+L1629:
+    call Lrd_slow
+    jmp L1630
+L1632:
+    call Ltick_slow4
+    jmp L1633
     ALIGN 16
 Lc_21:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1632
-L1633:
+    cmp r14, qword ptr [r15+572600]
+    jae L1634
+L1635:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1634
-L1635:
+    jz L1636
+L1637:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1636
-L1637:
+    cmp r14, qword ptr [r15+572600]
+    jae L1638
+L1639:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1638
-L1639:
+    jz L1640
+L1641:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov ebx, r11d
     jmp Lnext
-L1632:
-    call Ltick_slow4
-    jmp L1633
 L1634:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1635
 L1636:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1637
 L1638:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1639
+L1640:
+    call Lrd_slow
+    jmp L1641
     ALIGN 16
 Lc_22:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1640
-L1641:
+    cmp r14, qword ptr [r15+572600]
+    jae L1642
+L1643:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1642
+    jz L1644
     mov byte ptr [rdi+rsi], al
-L1643:
+L1645:
     lea ebx, [rsi+1]
     and ebx, 65535
     jmp Lnext
-L1640:
-    call Ltick_slow4
-    jmp L1641
 L1642:
+    call Ltick_slow4
+    jmp L1643
+L1644:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L1643
+    jmp L1645
     ALIGN 16
 Lc_23:
     inc bx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1644
-L1645:
+    cmp r14, qword ptr [r15+572600]
+    jae L1646
+L1647:
     jmp Lnext
-L1644:
+L1646:
     call Ltick_slow4
-    jmp L1645
+    jmp L1647
     ALIGN 16
 Lc_24:
     inc bh
     movzx edi, bh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -19006,107 +19080,107 @@ Lc_25:
     dec bh
     movzx edi, bh
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_26:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1646
-L1647:
+    cmp r14, qword ptr [r15+572600]
+    jae L1648
+L1649:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1648
-L1649:
+    jz L1650
+L1651:
     mov bh, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1646:
-    call Ltick_slow4
-    jmp L1647
 L1648:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1649
+L1650:
+    call Lrd_slow
+    jmp L1651
     ALIGN 16
 Lc_27:
     movzx edi, al
     mov esi, r8d
     and esi, 16
     test r8b, 64
-    jz L1650
+    jz L1652
     test r8b, 32
-    jz L1651
+    jz L1653
     sub edi, 6
-L1651:
+L1653:
     test esi, esi
-    jz L1655
+    jz L1657
     sub edi, 96
-    jmp L1655
-L1650:
-    test esi, esi
-    jnz L1652
-    cmp edi, 153
-    jbe L1653
+    jmp L1657
 L1652:
+    test esi, esi
+    jnz L1654
+    cmp edi, 153
+    jbe L1655
+L1654:
     add edi, 96
     mov esi, 16
-L1653:
+L1655:
     test r8b, 32
-    jnz L1654
+    jnz L1656
     mov r10d, edi
     and r10d, 15
     cmp r10d, 9
-    jbe L1655
-L1654:
+    jbe L1657
+L1656:
     add edi, 6
-L1655:
+L1657:
     mov eax, edi
     and r8d, 64
     or r8d, esi
     test al, al
-    jnz L1656
+    jnz L1658
     or r8d, 128
-L1656:
+L1658:
     jmp Lnext
     ALIGN 16
 Lc_28:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1657
-L1658:
+    cmp r14, qword ptr [r15+572600]
+    jae L1659
+L1660:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1659
-L1660:
+    jz L1661
+L1662:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 128
-    jz L1661
+    jz L1663
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1662
+    cmp r14, qword ptr [r15+572600]
+    jae L1664
+L1665:
 L1663:
-L1661:
     jmp Lnext
-L1657:
-    call Ltick_slow4
-    jmp L1658
 L1659:
-    call Lrd_slow
-    jmp L1660
-L1662:
     call Ltick_slow4
-    jmp L1663
+    jmp L1660
+L1661:
+    call Lrd_slow
+    jmp L1662
+L1664:
+    call Ltick_slow4
+    jmp L1665
     ALIGN 16
 Lc_29:
     mov edi, ebx
@@ -19123,53 +19197,53 @@ Lc_29:
     or r8d, esi
     and ebx, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1664
-L1665:
-    jmp Lnext
-L1664:
-    call Ltick_slow4
-    jmp L1665
-    ALIGN 16
-Lc_2A:
-    mov esi, ebx
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L1666
 L1667:
-    mov edi, esi
-    shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
-    test rdi, rdi
-    jz L1668
-L1669:
-    mov al, byte ptr [rdi+rsi]
-    lea ebx, [rsi+1]
-    and ebx, 65535
     jmp Lnext
 L1666:
     call Ltick_slow4
     jmp L1667
+    ALIGN 16
+Lc_2A:
+    mov esi, ebx
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L1668
+L1669:
+    mov edi, esi
+    shr edi, 12
+    mov rdi, qword ptr [r15+rdi*8+572304]
+    test rdi, rdi
+    jz L1670
+L1671:
+    mov al, byte ptr [rdi+rsi]
+    lea ebx, [rsi+1]
+    and ebx, 65535
+    jmp Lnext
 L1668:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1669
+L1670:
+    call Lrd_slow
+    jmp L1671
     ALIGN 16
 Lc_2B:
     dec bx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1670
-L1671:
+    cmp r14, qword ptr [r15+572600]
+    jae L1672
+L1673:
     jmp Lnext
-L1670:
+L1672:
     call Ltick_slow4
-    jmp L1671
+    jmp L1673
     ALIGN 16
 Lc_2C:
     inc bl
     movzx edi, bl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -19177,31 +19251,31 @@ Lc_2D:
     dec bl
     movzx edi, bl
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_2E:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1672
-L1673:
+    cmp r14, qword ptr [r15+572600]
+    jae L1674
+L1675:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1674
-L1675:
+    jz L1676
+L1677:
     mov bl, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1672:
-    call Ltick_slow4
-    jmp L1673
 L1674:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1675
+L1676:
+    call Lrd_slow
+    jmp L1677
     ALIGN 16
 Lc_2F:
     not al
@@ -19211,245 +19285,245 @@ Lc_2F:
 Lc_30:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1676
-L1677:
+    cmp r14, qword ptr [r15+572600]
+    jae L1678
+L1679:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1678
-L1679:
+    jz L1680
+L1681:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 16
-    jnz L1680
+    jnz L1682
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1681
+    cmp r14, qword ptr [r15+572600]
+    jae L1683
+L1684:
 L1682:
-L1680:
     jmp Lnext
-L1676:
-    call Ltick_slow4
-    jmp L1677
 L1678:
-    call Lrd_slow
-    jmp L1679
-L1681:
     call Ltick_slow4
-    jmp L1682
+    jmp L1679
+L1680:
+    call Lrd_slow
+    jmp L1681
+L1683:
+    call Ltick_slow4
+    jmp L1684
     ALIGN 16
 Lc_31:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1683
-L1684:
+    cmp r14, qword ptr [r15+572600]
+    jae L1685
+L1686:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1685
-L1686:
+    jz L1687
+L1688:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1687
-L1688:
+    cmp r14, qword ptr [r15+572600]
+    jae L1689
+L1690:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1689
-L1690:
+    jz L1691
+L1692:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov r9d, r11d
     jmp Lnext
-L1683:
-    call Ltick_slow4
-    jmp L1684
 L1685:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1686
 L1687:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1688
 L1689:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1690
+L1691:
+    call Lrd_slow
+    jmp L1692
     ALIGN 16
 Lc_32:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1691
-L1692:
+    cmp r14, qword ptr [r15+572600]
+    jae L1693
+L1694:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1693
+    jz L1695
     mov byte ptr [rdi+rsi], al
-L1694:
+L1696:
     lea ebx, [rsi-1]
     and ebx, 65535
     jmp Lnext
-L1691:
-    call Ltick_slow4
-    jmp L1692
 L1693:
+    call Ltick_slow4
+    jmp L1694
+L1695:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L1694
+    jmp L1696
     ALIGN 16
 Lc_33:
     inc r9w
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1695
-L1696:
-    jmp Lnext
-L1695:
-    call Ltick_slow4
-    jmp L1696
-    ALIGN 16
-Lc_34:
-    mov esi, ebx
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L1697
 L1698:
-    mov edi, esi
-    shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
-    test rdi, rdi
-    jz L1699
-L1700:
-    movzx r10d, byte ptr [rdi+rsi]
-    inc r10b
-    movzx edi, r10b
-    and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
-    or r8d, edi
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1701
-L1702:
-    mov edi, esi
-    shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
-    test rdi, rdi
-    jz L1703
-    mov byte ptr [rdi+rsi], r10b
-L1704:
     jmp Lnext
 L1697:
     call Ltick_slow4
     jmp L1698
+    ALIGN 16
+Lc_34:
+    mov esi, ebx
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L1699
+L1700:
+    mov edi, esi
+    shr edi, 12
+    mov rdi, qword ptr [r15+rdi*8+572304]
+    test rdi, rdi
+    jz L1701
+L1702:
+    movzx r10d, byte ptr [rdi+rsi]
+    inc r10b
+    movzx edi, r10b
+    and r8d, 16
+    movzx edi, byte ptr [r15+rdi+573224]
+    or r8d, edi
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L1703
+L1704:
+    mov edi, esi
+    shr edi, 8
+    mov rdi, qword ptr [r15+rdi*8+574248]
+    test rdi, rdi
+    jz L1705
+    mov byte ptr [rdi+rsi], r10b
+L1706:
+    jmp Lnext
 L1699:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1700
 L1701:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1702
 L1703:
+    call Ltick_slow4
+    jmp L1704
+L1705:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1704
+    jmp L1706
     ALIGN 16
 Lc_35:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1705
-L1706:
+    cmp r14, qword ptr [r15+572600]
+    jae L1707
+L1708:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1707
-L1708:
+    jz L1709
+L1710:
     movzx r10d, byte ptr [rdi+rsi]
     dec r10b
     movzx edi, r10b
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1709
-L1710:
+    cmp r14, qword ptr [r15+572600]
+    jae L1711
+L1712:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1711
+    jz L1713
     mov byte ptr [rdi+rsi], r10b
-L1712:
+L1714:
     jmp Lnext
-L1705:
-    call Ltick_slow4
-    jmp L1706
 L1707:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1708
 L1709:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1710
 L1711:
+    call Ltick_slow4
+    jmp L1712
+L1713:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1712
+    jmp L1714
     ALIGN 16
 Lc_36:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1713
-L1714:
+    cmp r14, qword ptr [r15+572600]
+    jae L1715
+L1716:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1715
-L1716:
+    jz L1717
+L1718:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1717
-L1718:
+    cmp r14, qword ptr [r15+572600]
+    jae L1719
+L1720:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1719
+    jz L1721
     mov byte ptr [rdi+rsi], r10b
-L1720:
+L1722:
     jmp Lnext
-L1713:
-    call Ltick_slow4
-    jmp L1714
 L1715:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1716
 L1717:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1718
 L1719:
+    call Ltick_slow4
+    jmp L1720
+L1721:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L1720
+    jmp L1722
     ALIGN 16
 Lc_37:
     and r8d, 128
@@ -19459,37 +19533,37 @@ Lc_37:
 Lc_38:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1721
-L1722:
+    cmp r14, qword ptr [r15+572600]
+    jae L1723
+L1724:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1723
-L1724:
+    jz L1725
+L1726:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     test r8b, 16
-    jz L1725
+    jz L1727
     movsx r10d, r10b
     add ebp, r10d
     and ebp, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1726
+    cmp r14, qword ptr [r15+572600]
+    jae L1728
+L1729:
 L1727:
-L1725:
     jmp Lnext
-L1721:
-    call Ltick_slow4
-    jmp L1722
 L1723:
-    call Lrd_slow
-    jmp L1724
-L1726:
     call Ltick_slow4
-    jmp L1727
+    jmp L1724
+L1725:
+    call Lrd_slow
+    jmp L1726
+L1728:
+    call Ltick_slow4
+    jmp L1729
     ALIGN 16
 Lc_39:
     mov edi, ebx
@@ -19506,53 +19580,53 @@ Lc_39:
     or r8d, esi
     and ebx, 65535
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1728
-L1729:
-    jmp Lnext
-L1728:
-    call Ltick_slow4
-    jmp L1729
-    ALIGN 16
-Lc_3A:
-    mov esi, ebx
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L1730
 L1731:
-    mov edi, esi
-    shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
-    test rdi, rdi
-    jz L1732
-L1733:
-    mov al, byte ptr [rdi+rsi]
-    lea ebx, [rsi-1]
-    and ebx, 65535
     jmp Lnext
 L1730:
     call Ltick_slow4
     jmp L1731
+    ALIGN 16
+Lc_3A:
+    mov esi, ebx
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L1732
+L1733:
+    mov edi, esi
+    shr edi, 12
+    mov rdi, qword ptr [r15+rdi*8+572304]
+    test rdi, rdi
+    jz L1734
+L1735:
+    mov al, byte ptr [rdi+rsi]
+    lea ebx, [rsi-1]
+    and ebx, 65535
+    jmp Lnext
 L1732:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1733
+L1734:
+    call Lrd_slow
+    jmp L1735
     ALIGN 16
 Lc_3B:
     dec r9w
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1734
-L1735:
+    cmp r14, qword ptr [r15+572600]
+    jae L1736
+L1737:
     jmp Lnext
-L1734:
+L1736:
     call Ltick_slow4
-    jmp L1735
+    jmp L1737
     ALIGN 16
 Lc_3C:
     inc al
     movzx edi, al
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573208]
+    movzx edi, byte ptr [r15+rdi+573224]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -19560,31 +19634,31 @@ Lc_3D:
     dec al
     movzx edi, al
     and r8d, 16
-    movzx edi, byte ptr [r15+rdi+573464]
+    movzx edi, byte ptr [r15+rdi+573480]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lc_3E:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1736
-L1737:
+    cmp r14, qword ptr [r15+572600]
+    jae L1738
+L1739:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1738
-L1739:
+    jz L1740
+L1741:
     mov al, byte ptr [rdi+rsi]
     inc bp
     jmp Lnext
-L1736:
-    call Ltick_slow4
-    jmp L1737
 L1738:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1739
+L1740:
+    call Lrd_slow
+    jmp L1741
     ALIGN 16
 Lc_3F:
     and r8d, 144
@@ -19617,23 +19691,23 @@ Lc_45:
 Lc_46:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1740
-L1741:
+    cmp r14, qword ptr [r15+572600]
+    jae L1742
+L1743:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1742
-L1743:
+    jz L1744
+L1745:
     mov ch, byte ptr [rdi+rsi]
     jmp Lnext
-L1740:
-    call Ltick_slow4
-    jmp L1741
 L1742:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1743
+L1744:
+    call Lrd_slow
+    jmp L1745
     ALIGN 16
 Lc_47:
     mov ch, al
@@ -19665,23 +19739,23 @@ Lc_4D:
 Lc_4E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1744
-L1745:
+    cmp r14, qword ptr [r15+572600]
+    jae L1746
+L1747:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1746
-L1747:
+    jz L1748
+L1749:
     mov cl, byte ptr [rdi+rsi]
     jmp Lnext
-L1744:
-    call Ltick_slow4
-    jmp L1745
 L1746:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1747
+L1748:
+    call Lrd_slow
+    jmp L1749
     ALIGN 16
 Lc_4F:
     mov cl, al
@@ -19713,23 +19787,23 @@ Lc_55:
 Lc_56:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1748
-L1749:
+    cmp r14, qword ptr [r15+572600]
+    jae L1750
+L1751:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1750
-L1751:
+    jz L1752
+L1753:
     mov dh, byte ptr [rdi+rsi]
     jmp Lnext
-L1748:
-    call Ltick_slow4
-    jmp L1749
 L1750:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1751
+L1752:
+    call Lrd_slow
+    jmp L1753
     ALIGN 16
 Lc_57:
     mov dh, al
@@ -19761,23 +19835,23 @@ Lc_5D:
 Lc_5E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1752
-L1753:
+    cmp r14, qword ptr [r15+572600]
+    jae L1754
+L1755:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1754
-L1755:
+    jz L1756
+L1757:
     mov dl, byte ptr [rdi+rsi]
     jmp Lnext
-L1752:
-    call Ltick_slow4
-    jmp L1753
 L1754:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1755
+L1756:
+    call Lrd_slow
+    jmp L1757
     ALIGN 16
 Lc_5F:
     mov dl, al
@@ -19809,23 +19883,23 @@ Lc_65:
 Lc_66:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1756
-L1757:
+    cmp r14, qword ptr [r15+572600]
+    jae L1758
+L1759:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1758
-L1759:
+    jz L1760
+L1761:
     mov bh, byte ptr [rdi+rsi]
     jmp Lnext
-L1756:
-    call Ltick_slow4
-    jmp L1757
 L1758:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1759
+L1760:
+    call Lrd_slow
+    jmp L1761
     ALIGN 16
 Lc_67:
     mov bh, al
@@ -19857,23 +19931,23 @@ Lc_6D:
 Lc_6E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1760
-L1761:
+    cmp r14, qword ptr [r15+572600]
+    jae L1762
+L1763:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1762
-L1763:
+    jz L1764
+L1765:
     mov bl, byte ptr [rdi+rsi]
     jmp Lnext
-L1760:
-    call Ltick_slow4
-    jmp L1761
 L1762:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1763
+L1764:
+    call Lrd_slow
+    jmp L1765
     ALIGN 16
 Lc_6F:
     mov bl, al
@@ -19882,134 +19956,134 @@ Lc_6F:
 Lc_70:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1764
-L1765:
+    cmp r14, qword ptr [r15+572600]
+    jae L1766
+L1767:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1766
+    jz L1768
     mov byte ptr [rdi+rsi], ch
-L1767:
+L1769:
     jmp Lnext
-L1764:
-    call Ltick_slow4
-    jmp L1765
 L1766:
+    call Ltick_slow4
+    jmp L1767
+L1768:
     mov byte ptr [rsp+40], ch
     call Lwr_slow
-    jmp L1767
+    jmp L1769
     ALIGN 16
 Lc_71:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1768
-L1769:
+    cmp r14, qword ptr [r15+572600]
+    jae L1770
+L1771:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1770
+    jz L1772
     mov byte ptr [rdi+rsi], cl
-L1771:
+L1773:
     jmp Lnext
-L1768:
-    call Ltick_slow4
-    jmp L1769
 L1770:
+    call Ltick_slow4
+    jmp L1771
+L1772:
     mov byte ptr [rsp+40], cl
     call Lwr_slow
-    jmp L1771
+    jmp L1773
     ALIGN 16
 Lc_72:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1772
-L1773:
+    cmp r14, qword ptr [r15+572600]
+    jae L1774
+L1775:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1774
+    jz L1776
     mov byte ptr [rdi+rsi], dh
-L1775:
+L1777:
     jmp Lnext
-L1772:
-    call Ltick_slow4
-    jmp L1773
 L1774:
+    call Ltick_slow4
+    jmp L1775
+L1776:
     mov byte ptr [rsp+40], dh
     call Lwr_slow
-    jmp L1775
+    jmp L1777
     ALIGN 16
 Lc_73:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1776
-L1777:
+    cmp r14, qword ptr [r15+572600]
+    jae L1778
+L1779:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1778
+    jz L1780
     mov byte ptr [rdi+rsi], dl
-L1779:
+L1781:
     jmp Lnext
-L1776:
-    call Ltick_slow4
-    jmp L1777
 L1778:
+    call Ltick_slow4
+    jmp L1779
+L1780:
     mov byte ptr [rsp+40], dl
     call Lwr_slow
-    jmp L1779
+    jmp L1781
     ALIGN 16
 Lc_74:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1780
-L1781:
+    cmp r14, qword ptr [r15+572600]
+    jae L1782
+L1783:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1782
+    jz L1784
     mov byte ptr [rdi+rsi], bh
-L1783:
+L1785:
     jmp Lnext
-L1780:
-    call Ltick_slow4
-    jmp L1781
 L1782:
+    call Ltick_slow4
+    jmp L1783
+L1784:
     mov byte ptr [rsp+40], bh
     call Lwr_slow
-    jmp L1783
+    jmp L1785
     ALIGN 16
 Lc_75:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1784
-L1785:
+    cmp r14, qword ptr [r15+572600]
+    jae L1786
+L1787:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1786
+    jz L1788
     mov byte ptr [rdi+rsi], bl
-L1787:
+L1789:
     jmp Lnext
-L1784:
-    call Ltick_slow4
-    jmp L1785
 L1786:
+    call Ltick_slow4
+    jmp L1787
+L1788:
     mov byte ptr [rsp+40], bl
     call Lwr_slow
-    jmp L1787
+    jmp L1789
     ALIGN 16
 Lc_76:
     mov byte ptr [r15+24], al
@@ -20025,13 +20099,13 @@ Lc_76:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L1788
+    cmp byte ptr [r15+572675], 0
+    jne L1790
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L1788:
+L1790:
     sub rsp, 32
     mov rcx, r15
     mov edx, 118
@@ -20048,30 +20122,30 @@ L1788:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
     ALIGN 16
 Lc_77:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1789
-L1790:
+    cmp r14, qword ptr [r15+572600]
+    jae L1791
+L1792:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1791
+    jz L1793
     mov byte ptr [rdi+rsi], al
-L1792:
+L1794:
     jmp Lnext
-L1789:
-    call Ltick_slow4
-    jmp L1790
 L1791:
+    call Ltick_slow4
+    jmp L1792
+L1793:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L1792
+    jmp L1794
     ALIGN 16
 Lc_78:
     mov al, ch
@@ -20100,23 +20174,23 @@ Lc_7D:
 Lc_7E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1793
-L1794:
+    cmp r14, qword ptr [r15+572600]
+    jae L1795
+L1796:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1795
-L1796:
+    jz L1797
+L1798:
     mov al, byte ptr [rdi+rsi]
     jmp Lnext
-L1793:
-    call Ltick_slow4
-    jmp L1794
 L1795:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1796
+L1797:
+    call Lrd_slow
+    jmp L1798
     ALIGN 16
 Lc_7F:
     jmp Lnext
@@ -20125,74 +20199,74 @@ Lc_80:
     add al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_81:
     add al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_82:
     add al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_83:
     add al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_84:
     add al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_85:
     add al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_86:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1797
-L1798:
+    cmp r14, qword ptr [r15+572600]
+    jae L1799
+L1800:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1799
-L1800:
+    jz L1801
+L1802:
     movzx r10d, byte ptr [rdi+rsi]
     add al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
-L1797:
-    call Ltick_slow4
-    jmp L1798
 L1799:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1800
+L1801:
+    call Lrd_slow
+    jmp L1802
     ALIGN 16
 Lc_87:
     add al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_88:
@@ -20200,7 +20274,7 @@ Lc_88:
     adc al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_89:
@@ -20208,7 +20282,7 @@ Lc_89:
     adc al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_8A:
@@ -20216,7 +20290,7 @@ Lc_8A:
     adc al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_8B:
@@ -20224,7 +20298,7 @@ Lc_8B:
     adc al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_8C:
@@ -20232,7 +20306,7 @@ Lc_8C:
     adc al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_8D:
@@ -20240,115 +20314,115 @@ Lc_8D:
     adc al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_8E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1801
-L1802:
+    cmp r14, qword ptr [r15+572600]
+    jae L1803
+L1804:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1803
-L1804:
+    jz L1805
+L1806:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     adc al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
-L1801:
-    call Ltick_slow4
-    jmp L1802
 L1803:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1804
+L1805:
+    call Lrd_slow
+    jmp L1806
     ALIGN 16
 Lc_8F:
     bt r8d, 4
     adc al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
     ALIGN 16
 Lc_90:
     sub al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_91:
     sub al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_92:
     sub al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_93:
     sub al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_94:
     sub al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_95:
     sub al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_96:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1805
-L1806:
+    cmp r14, qword ptr [r15+572600]
+    jae L1807
+L1808:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1807
-L1808:
+    jz L1809
+L1810:
     movzx r10d, byte ptr [rdi+rsi]
     sub al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L1805:
-    call Ltick_slow4
-    jmp L1806
 L1807:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1808
+L1809:
+    call Lrd_slow
+    jmp L1810
     ALIGN 16
 Lc_97:
     sub al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_98:
@@ -20356,7 +20430,7 @@ Lc_98:
     sbb al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_99:
@@ -20364,7 +20438,7 @@ Lc_99:
     sbb al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_9A:
@@ -20372,7 +20446,7 @@ Lc_9A:
     sbb al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_9B:
@@ -20380,7 +20454,7 @@ Lc_9B:
     sbb al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_9C:
@@ -20388,7 +20462,7 @@ Lc_9C:
     sbb al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_9D:
@@ -20396,561 +20470,561 @@ Lc_9D:
     sbb al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_9E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1809
-L1810:
+    cmp r14, qword ptr [r15+572600]
+    jae L1811
+L1812:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1811
-L1812:
+    jz L1813
+L1814:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     sbb al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L1809:
-    call Ltick_slow4
-    jmp L1810
 L1811:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1812
+L1813:
+    call Lrd_slow
+    jmp L1814
     ALIGN 16
 Lc_9F:
     bt r8d, 4
     sbb al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_A0:
     and al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A1:
     and al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A2:
     and al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A3:
     and al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A4:
     and al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A5:
     and al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1813
-L1814:
+    cmp r14, qword ptr [r15+572600]
+    jae L1815
+L1816:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1815
-L1816:
+    jz L1817
+L1818:
     movzx r10d, byte ptr [rdi+rsi]
     and al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
-L1813:
-    call Ltick_slow4
-    jmp L1814
 L1815:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1816
+L1817:
+    call Lrd_slow
+    jmp L1818
     ALIGN 16
 Lc_A7:
     and al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
     ALIGN 16
 Lc_A8:
     xor al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_A9:
     xor al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_AA:
     xor al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_AB:
     xor al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_AC:
     xor al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_AD:
     xor al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_AE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1817
-L1818:
+    cmp r14, qword ptr [r15+572600]
+    jae L1819
+L1820:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1819
-L1820:
+    jz L1821
+L1822:
     movzx r10d, byte ptr [rdi+rsi]
     xor al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
-L1817:
-    call Ltick_slow4
-    jmp L1818
 L1819:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1820
+L1821:
+    call Lrd_slow
+    jmp L1822
     ALIGN 16
 Lc_AF:
     xor al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B0:
     or al, ch
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B1:
     or al, cl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B2:
     or al, dh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B3:
     or al, dl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B4:
     or al, bh
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B5:
     or al, bl
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1821
-L1822:
+    cmp r14, qword ptr [r15+572600]
+    jae L1823
+L1824:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1823
-L1824:
+    jz L1825
+L1826:
     movzx r10d, byte ptr [rdi+rsi]
     or al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
-L1821:
-    call Ltick_slow4
-    jmp L1822
 L1823:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1824
+L1825:
+    call Lrd_slow
+    jmp L1826
     ALIGN 16
 Lc_B7:
     or al, al
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lc_B8:
     cmp al, ch
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_B9:
     cmp al, cl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_BA:
     cmp al, dh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_BB:
     cmp al, dl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_BC:
     cmp al, bh
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_BD:
     cmp al, bl
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_BE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1825
-L1826:
+    cmp r14, qword ptr [r15+572600]
+    jae L1827
+L1828:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1827
-L1828:
+    jz L1829
+L1830:
     movzx r10d, byte ptr [rdi+rsi]
     cmp al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L1825:
-    call Ltick_slow4
-    jmp L1826
 L1827:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1828
+L1829:
+    call Lrd_slow
+    jmp L1830
     ALIGN 16
 Lc_BF:
     cmp al, al
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
     ALIGN 16
 Lc_C0:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1829
-L1830:
+    cmp r14, qword ptr [r15+572600]
+    jae L1831
+L1832:
     test r8b, 128
-    jnz L1831
+    jnz L1833
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1832
-L1833:
+    cmp r14, qword ptr [r15+572600]
+    jae L1834
+L1835:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1834
-L1835:
+    jz L1836
+L1837:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1836
-L1837:
+    cmp r14, qword ptr [r15+572600]
+    jae L1838
+L1839:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1838
-L1839:
+    jz L1840
+L1841:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1840
-L1841:
-L1831:
+    cmp r14, qword ptr [r15+572600]
+    jae L1842
+L1843:
+L1833:
     jmp Lnext
-L1829:
+L1831:
     call Ltick_slow4
-    jmp L1830
-L1832:
-    call Ltick_slow4
-    jmp L1833
+    jmp L1832
 L1834:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1835
 L1836:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1837
 L1838:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1839
 L1840:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1841
+L1842:
+    call Ltick_slow4
+    jmp L1843
     ALIGN 16
 Lc_C1:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1842
-L1843:
+    cmp r14, qword ptr [r15+572600]
+    jae L1844
+L1845:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1844
-L1845:
+    jz L1846
+L1847:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1846
-L1847:
+    cmp r14, qword ptr [r15+572600]
+    jae L1848
+L1849:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1848
-L1849:
+    jz L1850
+L1851:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ecx, r11d
     jmp Lnext
-L1842:
-    call Ltick_slow4
-    jmp L1843
 L1844:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1845
 L1846:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1847
 L1848:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1849
+L1850:
+    call Lrd_slow
+    jmp L1851
     ALIGN 16
 Lc_C2:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1850
-L1851:
+    cmp r14, qword ptr [r15+572600]
+    jae L1852
+L1853:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1852
-L1853:
+    jz L1854
+L1855:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1854
-L1855:
+    cmp r14, qword ptr [r15+572600]
+    jae L1856
+L1857:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1856
-L1857:
+    jz L1858
+L1859:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jnz L1858
+    jnz L1860
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1859
+    cmp r14, qword ptr [r15+572600]
+    jae L1861
+L1862:
 L1860:
-L1858:
     jmp Lnext
-L1850:
-    call Ltick_slow4
-    jmp L1851
 L1852:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1853
 L1854:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1855
 L1856:
-    call Lrd_slow
-    jmp L1857
-L1859:
     call Ltick_slow4
-    jmp L1860
+    jmp L1857
+L1858:
+    call Lrd_slow
+    jmp L1859
+L1861:
+    call Ltick_slow4
+    jmp L1862
     ALIGN 16
 Lc_C3:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1861
-L1862:
+    cmp r14, qword ptr [r15+572600]
+    jae L1863
+L1864:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1863
-L1864:
+    jz L1865
+L1866:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1865
-L1866:
+    cmp r14, qword ptr [r15+572600]
+    jae L1867
+L1868:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1867
-L1868:
+    jz L1869
+L1870:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1870
+    cmp r14, qword ptr [r15+572600]
+    jae L1872
+L1873:
 L1871:
-L1869:
     jmp Lnext
-L1861:
-    call Ltick_slow4
-    jmp L1862
 L1863:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1864
 L1865:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1866
 L1867:
-    call Lrd_slow
-    jmp L1868
-L1870:
     call Ltick_slow4
-    jmp L1871
+    jmp L1868
+L1869:
+    call Lrd_slow
+    jmp L1870
+L1872:
+    call Ltick_slow4
+    jmp L1873
     ALIGN 16
 Lc_C4:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1872
-L1873:
+    cmp r14, qword ptr [r15+572600]
+    jae L1874
+L1875:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1874
-L1875:
+    jz L1876
+L1877:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1876
-L1877:
+    cmp r14, qword ptr [r15+572600]
+    jae L1878
+L1879:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1878
-L1879:
+    jz L1880
+L1881:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jnz L1880
+    jnz L1882
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1881
-L1882:
+    cmp r14, qword ptr [r15+572600]
+    jae L1883
+L1884:
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
     dec r9w
@@ -20958,421 +21032,421 @@ L1882:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1883
-L1884:
+    cmp r14, qword ptr [r15+572600]
+    jae L1885
+L1886:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1885
+    jz L1887
     mov byte ptr [rdi+rsi], r10b
-L1886:
+L1888:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1887
-L1888:
+    cmp r14, qword ptr [r15+572600]
+    jae L1889
+L1890:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1889
+    jz L1891
     mov byte ptr [rdi+rsi], r11b
-L1890:
+L1892:
     mov ebp, dword ptr [rsp+48]
-L1880:
+L1882:
     jmp Lnext
-L1872:
-    call Ltick_slow4
-    jmp L1873
 L1874:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1875
 L1876:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1877
 L1878:
-    call Lrd_slow
-    jmp L1879
-L1881:
     call Ltick_slow4
-    jmp L1882
+    jmp L1879
+L1880:
+    call Lrd_slow
+    jmp L1881
 L1883:
     call Ltick_slow4
     jmp L1884
 L1885:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L1886
 L1887:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L1888
 L1889:
+    call Ltick_slow4
+    jmp L1890
+L1891:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L1890
+    jmp L1892
     ALIGN 16
 Lc_C5:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1891
-L1892:
+    cmp r14, qword ptr [r15+572600]
+    jae L1893
+L1894:
     mov r11d, ecx
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1893
-L1894:
+    cmp r14, qword ptr [r15+572600]
+    jae L1895
+L1896:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1895
+    jz L1897
     mov byte ptr [rdi+rsi], r10b
-L1896:
+L1898:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1897
-L1898:
+    cmp r14, qword ptr [r15+572600]
+    jae L1899
+L1900:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1899
+    jz L1901
     mov byte ptr [rdi+rsi], r11b
-L1900:
+L1902:
     jmp Lnext
-L1891:
-    call Ltick_slow4
-    jmp L1892
 L1893:
     call Ltick_slow4
     jmp L1894
 L1895:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L1896
 L1897:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L1898
 L1899:
+    call Ltick_slow4
+    jmp L1900
+L1901:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L1900
+    jmp L1902
     ALIGN 16
 Lc_C6:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1901
-L1902:
+    cmp r14, qword ptr [r15+572600]
+    jae L1903
+L1904:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1903
-L1904:
+    jz L1905
+L1906:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     add al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
-L1901:
-    call Ltick_slow4
-    jmp L1902
 L1903:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1904
+L1905:
+    call Lrd_slow
+    jmp L1906
     ALIGN 16
 Lc_C7:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1905
-L1906:
+    cmp r14, qword ptr [r15+572600]
+    jae L1907
+L1908:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1907
-L1908:
+    cmp r14, qword ptr [r15+572600]
+    jae L1909
+L1910:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1909
+    jz L1911
     mov byte ptr [rdi+rsi], r10b
-L1910:
+L1912:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1911
-L1912:
+    cmp r14, qword ptr [r15+572600]
+    jae L1913
+L1914:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1913
+    jz L1915
     mov byte ptr [rdi+rsi], r11b
-L1914:
+L1916:
     mov ebp, 0
     jmp Lnext
-L1905:
-    call Ltick_slow4
-    jmp L1906
 L1907:
     call Ltick_slow4
     jmp L1908
 L1909:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L1910
 L1911:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L1912
 L1913:
+    call Ltick_slow4
+    jmp L1914
+L1915:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L1914
+    jmp L1916
     ALIGN 16
 Lc_C8:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1915
-L1916:
+    cmp r14, qword ptr [r15+572600]
+    jae L1917
+L1918:
     test r8b, 128
-    jz L1917
+    jz L1919
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1918
-L1919:
+    cmp r14, qword ptr [r15+572600]
+    jae L1920
+L1921:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1920
-L1921:
+    jz L1922
+L1923:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1922
-L1923:
+    cmp r14, qword ptr [r15+572600]
+    jae L1924
+L1925:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1924
-L1925:
+    jz L1926
+L1927:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1926
-L1927:
-L1917:
+    cmp r14, qword ptr [r15+572600]
+    jae L1928
+L1929:
+L1919:
     jmp Lnext
-L1915:
+L1917:
     call Ltick_slow4
-    jmp L1916
-L1918:
-    call Ltick_slow4
-    jmp L1919
+    jmp L1918
 L1920:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1921
 L1922:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1923
 L1924:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1925
 L1926:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1927
+L1928:
+    call Ltick_slow4
+    jmp L1929
     ALIGN 16
 Lc_C9:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1928
-L1929:
+    cmp r14, qword ptr [r15+572600]
+    jae L1930
+L1931:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1930
-L1931:
+    jz L1932
+L1933:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1932
-L1933:
+    cmp r14, qword ptr [r15+572600]
+    jae L1934
+L1935:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1934
-L1935:
+    jz L1936
+L1937:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1936
-L1937:
+    cmp r14, qword ptr [r15+572600]
+    jae L1938
+L1939:
     jmp Lnext
-L1928:
-    call Ltick_slow4
-    jmp L1929
 L1930:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1931
 L1932:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1933
 L1934:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1935
 L1936:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1937
+L1938:
+    call Ltick_slow4
+    jmp L1939
     ALIGN 16
 Lc_CA:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1938
-L1939:
+    cmp r14, qword ptr [r15+572600]
+    jae L1940
+L1941:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1940
-L1941:
+    jz L1942
+L1943:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1942
-L1943:
+    cmp r14, qword ptr [r15+572600]
+    jae L1944
+L1945:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1944
-L1945:
+    jz L1946
+L1947:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jz L1946
+    jz L1948
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1947
+    cmp r14, qword ptr [r15+572600]
+    jae L1949
+L1950:
 L1948:
-L1946:
     jmp Lnext
-L1938:
-    call Ltick_slow4
-    jmp L1939
 L1940:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1941
 L1942:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1943
 L1944:
-    call Lrd_slow
-    jmp L1945
-L1947:
     call Ltick_slow4
-    jmp L1948
+    jmp L1945
+L1946:
+    call Lrd_slow
+    jmp L1947
+L1949:
+    call Ltick_slow4
+    jmp L1950
     ALIGN 16
 Lc_CB:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1949
-L1950:
+    cmp r14, qword ptr [r15+572600]
+    jae L1951
+L1952:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1951
-L1952:
+    jz L1953
+L1954:
     movzx esi, byte ptr [rdi+rsi]
     inc bp
     lea rdi, Ljt_ccb
     movsxd rsi, dword ptr [rdi+rsi*4]
     add rsi, rdi
     jmp rsi
-L1949:
-    call Ltick_slow4
-    jmp L1950
 L1951:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1952
+L1953:
+    call Lrd_slow
+    jmp L1954
     ALIGN 16
 Lc_CC:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1953
-L1954:
+    cmp r14, qword ptr [r15+572600]
+    jae L1955
+L1956:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1955
-L1956:
+    jz L1957
+L1958:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1957
-L1958:
+    cmp r14, qword ptr [r15+572600]
+    jae L1959
+L1960:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1959
-L1960:
+    jz L1961
+L1962:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 128
-    jz L1961
+    jz L1963
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1962
-L1963:
+    cmp r14, qword ptr [r15+572600]
+    jae L1964
+L1965:
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
     dec r9w
@@ -21380,95 +21454,95 @@ L1963:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1964
-L1965:
+    cmp r14, qword ptr [r15+572600]
+    jae L1966
+L1967:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1966
+    jz L1968
     mov byte ptr [rdi+rsi], r10b
-L1967:
+L1969:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1968
-L1969:
+    cmp r14, qword ptr [r15+572600]
+    jae L1970
+L1971:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1970
+    jz L1972
     mov byte ptr [rdi+rsi], r11b
-L1971:
+L1973:
     mov ebp, dword ptr [rsp+48]
-L1961:
+L1963:
     jmp Lnext
-L1953:
-    call Ltick_slow4
-    jmp L1954
 L1955:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1956
 L1957:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1958
 L1959:
-    call Lrd_slow
-    jmp L1960
-L1962:
     call Ltick_slow4
-    jmp L1963
+    jmp L1960
+L1961:
+    call Lrd_slow
+    jmp L1962
 L1964:
     call Ltick_slow4
     jmp L1965
 L1966:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L1967
 L1968:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L1969
 L1970:
+    call Ltick_slow4
+    jmp L1971
+L1972:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L1971
+    jmp L1973
     ALIGN 16
 Lc_CD:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1972
-L1973:
+    cmp r14, qword ptr [r15+572600]
+    jae L1974
+L1975:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1974
-L1975:
+    jz L1976
+L1977:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1976
-L1977:
+    cmp r14, qword ptr [r15+572600]
+    jae L1978
+L1979:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1978
-L1979:
+    jz L1980
+L1981:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1981
-L1982:
+    cmp r14, qword ptr [r15+572600]
+    jae L1983
+L1984:
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
     dec r9w
@@ -21476,301 +21550,301 @@ L1982:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1983
-L1984:
+    cmp r14, qword ptr [r15+572600]
+    jae L1985
+L1986:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1985
+    jz L1987
     mov byte ptr [rdi+rsi], r10b
-L1986:
+L1988:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1987
-L1988:
+    cmp r14, qword ptr [r15+572600]
+    jae L1989
+L1990:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1989
+    jz L1991
     mov byte ptr [rdi+rsi], r11b
-L1990:
+L1992:
     mov ebp, dword ptr [rsp+48]
-L1980:
+L1982:
     jmp Lnext
-L1972:
-    call Ltick_slow4
-    jmp L1973
 L1974:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1975
 L1976:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L1977
 L1978:
-    call Lrd_slow
-    jmp L1979
-L1981:
     call Ltick_slow4
-    jmp L1982
+    jmp L1979
+L1980:
+    call Lrd_slow
+    jmp L1981
 L1983:
     call Ltick_slow4
     jmp L1984
 L1985:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L1986
 L1987:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L1988
 L1989:
+    call Ltick_slow4
+    jmp L1990
+L1991:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L1990
+    jmp L1992
     ALIGN 16
 Lc_CE:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1991
-L1992:
+    cmp r14, qword ptr [r15+572600]
+    jae L1993
+L1994:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L1993
-L1994:
+    jz L1995
+L1996:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     bt r8d, 4
     adc al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572696]
+    movzx r8d, byte ptr [r15+rdi+572712]
     jmp Lnext
-L1991:
-    call Ltick_slow4
-    jmp L1992
 L1993:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L1994
+L1995:
+    call Lrd_slow
+    jmp L1996
     ALIGN 16
 Lc_CF:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1995
-L1996:
+    cmp r14, qword ptr [r15+572600]
+    jae L1997
+L1998:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L1997
-L1998:
+    cmp r14, qword ptr [r15+572600]
+    jae L1999
+L2000:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L1999
+    jz L2001
     mov byte ptr [rdi+rsi], r10b
-L2000:
+L2002:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2001
-L2002:
+    cmp r14, qword ptr [r15+572600]
+    jae L2003
+L2004:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2003
+    jz L2005
     mov byte ptr [rdi+rsi], r11b
-L2004:
+L2006:
     mov ebp, 8
     jmp Lnext
-L1995:
-    call Ltick_slow4
-    jmp L1996
 L1997:
     call Ltick_slow4
     jmp L1998
 L1999:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2000
 L2001:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2002
 L2003:
+    call Ltick_slow4
+    jmp L2004
+L2005:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2004
+    jmp L2006
     ALIGN 16
 Lc_D0:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2005
-L2006:
+    cmp r14, qword ptr [r15+572600]
+    jae L2007
+L2008:
     test r8b, 16
-    jnz L2007
+    jnz L2009
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2008
-L2009:
+    cmp r14, qword ptr [r15+572600]
+    jae L2010
+L2011:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2010
-L2011:
+    jz L2012
+L2013:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2012
-L2013:
+    cmp r14, qword ptr [r15+572600]
+    jae L2014
+L2015:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2014
-L2015:
+    jz L2016
+L2017:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2016
-L2017:
-L2007:
+    cmp r14, qword ptr [r15+572600]
+    jae L2018
+L2019:
+L2009:
     jmp Lnext
-L2005:
+L2007:
     call Ltick_slow4
-    jmp L2006
-L2008:
-    call Ltick_slow4
-    jmp L2009
+    jmp L2008
 L2010:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2011
 L2012:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2013
 L2014:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2015
 L2016:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2017
+L2018:
+    call Ltick_slow4
+    jmp L2019
     ALIGN 16
 Lc_D1:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2018
-L2019:
+    cmp r14, qword ptr [r15+572600]
+    jae L2020
+L2021:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2020
-L2021:
+    jz L2022
+L2023:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2022
-L2023:
+    cmp r14, qword ptr [r15+572600]
+    jae L2024
+L2025:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2024
-L2025:
+    jz L2026
+L2027:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov edx, r11d
     jmp Lnext
-L2018:
-    call Ltick_slow4
-    jmp L2019
 L2020:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2021
 L2022:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2023
 L2024:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2025
+L2026:
+    call Lrd_slow
+    jmp L2027
     ALIGN 16
 Lc_D2:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2026
-L2027:
+    cmp r14, qword ptr [r15+572600]
+    jae L2028
+L2029:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2028
-L2029:
+    jz L2030
+L2031:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2030
-L2031:
+    cmp r14, qword ptr [r15+572600]
+    jae L2032
+L2033:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2032
-L2033:
+    jz L2034
+L2035:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jnz L2034
+    jnz L2036
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2035
+    cmp r14, qword ptr [r15+572600]
+    jae L2037
+L2038:
 L2036:
-L2034:
     jmp Lnext
-L2026:
-    call Ltick_slow4
-    jmp L2027
 L2028:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2029
 L2030:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2031
 L2032:
-    call Lrd_slow
-    jmp L2033
-L2035:
     call Ltick_slow4
-    jmp L2036
+    jmp L2033
+L2034:
+    call Lrd_slow
+    jmp L2035
+L2037:
+    call Ltick_slow4
+    jmp L2038
     ALIGN 16
 Lc_D3:
     jmp Lnext
@@ -21778,38 +21852,38 @@ Lc_D3:
 Lc_D4:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2037
-L2038:
+    cmp r14, qword ptr [r15+572600]
+    jae L2039
+L2040:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2039
-L2040:
+    jz L2041
+L2042:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2041
-L2042:
+    cmp r14, qword ptr [r15+572600]
+    jae L2043
+L2044:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2043
-L2044:
+    jz L2045
+L2046:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jnz L2045
+    jnz L2047
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2046
-L2047:
+    cmp r14, qword ptr [r15+572600]
+    jae L2048
+L2049:
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
     dec r9w
@@ -21817,290 +21891,290 @@ L2047:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2048
-L2049:
+    cmp r14, qword ptr [r15+572600]
+    jae L2050
+L2051:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2050
+    jz L2052
     mov byte ptr [rdi+rsi], r10b
-L2051:
+L2053:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2052
-L2053:
+    cmp r14, qword ptr [r15+572600]
+    jae L2054
+L2055:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2054
+    jz L2056
     mov byte ptr [rdi+rsi], r11b
-L2055:
+L2057:
     mov ebp, dword ptr [rsp+48]
-L2045:
+L2047:
     jmp Lnext
-L2037:
-    call Ltick_slow4
-    jmp L2038
 L2039:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2040
 L2041:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2042
 L2043:
-    call Lrd_slow
-    jmp L2044
-L2046:
     call Ltick_slow4
-    jmp L2047
+    jmp L2044
+L2045:
+    call Lrd_slow
+    jmp L2046
 L2048:
     call Ltick_slow4
     jmp L2049
 L2050:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2051
 L2052:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2053
 L2054:
+    call Ltick_slow4
+    jmp L2055
+L2056:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2055
+    jmp L2057
     ALIGN 16
 Lc_D5:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2056
-L2057:
+    cmp r14, qword ptr [r15+572600]
+    jae L2058
+L2059:
     mov r11d, edx
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2058
-L2059:
+    cmp r14, qword ptr [r15+572600]
+    jae L2060
+L2061:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2060
+    jz L2062
     mov byte ptr [rdi+rsi], r10b
-L2061:
+L2063:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2062
-L2063:
+    cmp r14, qword ptr [r15+572600]
+    jae L2064
+L2065:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2064
+    jz L2066
     mov byte ptr [rdi+rsi], r11b
-L2065:
+L2067:
     jmp Lnext
-L2056:
-    call Ltick_slow4
-    jmp L2057
 L2058:
     call Ltick_slow4
     jmp L2059
 L2060:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2061
 L2062:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2063
 L2064:
+    call Ltick_slow4
+    jmp L2065
+L2066:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2065
+    jmp L2067
     ALIGN 16
 Lc_D6:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2066
-L2067:
+    cmp r14, qword ptr [r15+572600]
+    jae L2068
+L2069:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2068
-L2069:
+    jz L2070
+L2071:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     sub al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L2066:
-    call Ltick_slow4
-    jmp L2067
 L2068:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2069
+L2070:
+    call Lrd_slow
+    jmp L2071
     ALIGN 16
 Lc_D7:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2070
-L2071:
+    cmp r14, qword ptr [r15+572600]
+    jae L2072
+L2073:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2072
-L2073:
+    cmp r14, qword ptr [r15+572600]
+    jae L2074
+L2075:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2074
+    jz L2076
     mov byte ptr [rdi+rsi], r10b
-L2075:
+L2077:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2076
-L2077:
+    cmp r14, qword ptr [r15+572600]
+    jae L2078
+L2079:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2078
+    jz L2080
     mov byte ptr [rdi+rsi], r11b
-L2079:
+L2081:
     mov ebp, 16
     jmp Lnext
-L2070:
-    call Ltick_slow4
-    jmp L2071
 L2072:
     call Ltick_slow4
     jmp L2073
 L2074:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2075
 L2076:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2077
 L2078:
+    call Ltick_slow4
+    jmp L2079
+L2080:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2079
+    jmp L2081
     ALIGN 16
 Lc_D8:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2080
-L2081:
+    cmp r14, qword ptr [r15+572600]
+    jae L2082
+L2083:
     test r8b, 16
-    jz L2082
+    jz L2084
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2083
-L2084:
+    cmp r14, qword ptr [r15+572600]
+    jae L2085
+L2086:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2085
-L2086:
+    jz L2087
+L2088:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2087
-L2088:
+    cmp r14, qword ptr [r15+572600]
+    jae L2089
+L2090:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2089
-L2090:
+    jz L2091
+L2092:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2091
-L2092:
-L2082:
+    cmp r14, qword ptr [r15+572600]
+    jae L2093
+L2094:
+L2084:
     jmp Lnext
-L2080:
+L2082:
     call Ltick_slow4
-    jmp L2081
-L2083:
-    call Ltick_slow4
-    jmp L2084
+    jmp L2083
 L2085:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2086
 L2087:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2088
 L2089:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2090
 L2091:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2092
+L2093:
+    call Ltick_slow4
+    jmp L2094
     ALIGN 16
 Lc_D9:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2093
-L2094:
+    cmp r14, qword ptr [r15+572600]
+    jae L2095
+L2096:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2095
-L2096:
+    jz L2097
+L2098:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2097
-L2098:
+    cmp r14, qword ptr [r15+572600]
+    jae L2099
+L2100:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2099
-L2100:
+    jz L2101
+L2102:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2101
-L2102:
+    cmp r14, qword ptr [r15+572600]
+    jae L2103
+L2104:
     mov byte ptr [r15+24], al
     mov byte ptr [r15+25], r8b
     mov edi, ecx
@@ -22114,13 +22188,13 @@ L2102:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L2103
+    cmp byte ptr [r15+572675], 0
+    jne L2105
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L2103:
+L2105:
     sub rsp, 32
     mov rcx, r15
     mov edx, 217
@@ -22137,77 +22211,77 @@ L2103:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
-L2093:
-    call Ltick_slow4
-    jmp L2094
 L2095:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2096
 L2097:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2098
 L2099:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2100
 L2101:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2102
+L2103:
+    call Ltick_slow4
+    jmp L2104
     ALIGN 16
 Lc_DA:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2104
-L2105:
+    cmp r14, qword ptr [r15+572600]
+    jae L2106
+L2107:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2106
-L2107:
+    jz L2108
+L2109:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2108
-L2109:
+    cmp r14, qword ptr [r15+572600]
+    jae L2110
+L2111:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2110
-L2111:
+    jz L2112
+L2113:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jz L2112
+    jz L2114
     mov ebp, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2113
+    cmp r14, qword ptr [r15+572600]
+    jae L2115
+L2116:
 L2114:
-L2112:
     jmp Lnext
-L2104:
-    call Ltick_slow4
-    jmp L2105
 L2106:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2107
 L2108:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2109
 L2110:
-    call Lrd_slow
-    jmp L2111
-L2113:
     call Ltick_slow4
-    jmp L2114
+    jmp L2111
+L2112:
+    call Lrd_slow
+    jmp L2113
+L2115:
+    call Ltick_slow4
+    jmp L2116
     ALIGN 16
 Lc_DB:
     jmp Lnext
@@ -22215,38 +22289,38 @@ Lc_DB:
 Lc_DC:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2115
-L2116:
+    cmp r14, qword ptr [r15+572600]
+    jae L2117
+L2118:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2117
-L2118:
+    jz L2119
+L2120:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2119
-L2120:
+    cmp r14, qword ptr [r15+572600]
+    jae L2121
+L2122:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2121
-L2122:
+    jz L2123
+L2124:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     test r8b, 16
-    jz L2123
+    jz L2125
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2124
-L2125:
+    cmp r14, qword ptr [r15+572600]
+    jae L2126
+L2127:
     mov dword ptr [rsp+48], r11d
     mov r11d, ebp
     dec r9w
@@ -22254,61 +22328,61 @@ L2125:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2126
-L2127:
+    cmp r14, qword ptr [r15+572600]
+    jae L2128
+L2129:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2128
+    jz L2130
     mov byte ptr [rdi+rsi], r10b
-L2129:
+L2131:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2130
-L2131:
+    cmp r14, qword ptr [r15+572600]
+    jae L2132
+L2133:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2132
+    jz L2134
     mov byte ptr [rdi+rsi], r11b
-L2133:
+L2135:
     mov ebp, dword ptr [rsp+48]
-L2123:
+L2125:
     jmp Lnext
-L2115:
-    call Ltick_slow4
-    jmp L2116
 L2117:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2118
 L2119:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2120
 L2121:
-    call Lrd_slow
-    jmp L2122
-L2124:
     call Ltick_slow4
-    jmp L2125
+    jmp L2122
+L2123:
+    call Lrd_slow
+    jmp L2124
 L2126:
     call Ltick_slow4
     jmp L2127
 L2128:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2129
 L2130:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2131
 L2132:
+    call Ltick_slow4
+    jmp L2133
+L2134:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2133
+    jmp L2135
     ALIGN 16
 Lc_DD:
     jmp Lnext
@@ -22316,208 +22390,208 @@ Lc_DD:
 Lc_DE:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2134
-L2135:
+    cmp r14, qword ptr [r15+572600]
+    jae L2136
+L2137:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2136
-L2137:
+    jz L2138
+L2139:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     bt r8d, 4
     sbb al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L2134:
-    call Ltick_slow4
-    jmp L2135
 L2136:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2137
+L2138:
+    call Lrd_slow
+    jmp L2139
     ALIGN 16
 Lc_DF:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2138
-L2139:
+    cmp r14, qword ptr [r15+572600]
+    jae L2140
+L2141:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2140
-L2141:
+    cmp r14, qword ptr [r15+572600]
+    jae L2142
+L2143:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2142
+    jz L2144
     mov byte ptr [rdi+rsi], r10b
-L2143:
+L2145:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2144
-L2145:
+    cmp r14, qword ptr [r15+572600]
+    jae L2146
+L2147:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2146
+    jz L2148
     mov byte ptr [rdi+rsi], r11b
-L2147:
+L2149:
     mov ebp, 24
     jmp Lnext
-L2138:
-    call Ltick_slow4
-    jmp L2139
 L2140:
     call Ltick_slow4
     jmp L2141
 L2142:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2143
 L2144:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2145
 L2146:
+    call Ltick_slow4
+    jmp L2147
+L2148:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2147
+    jmp L2149
     ALIGN 16
 Lc_E0:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2150
-L2151:
+    cmp r14, qword ptr [r15+572600]
+    jae L2152
+L2153:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2152
-L2153:
+    jz L2154
+L2155:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp r10d, 128
-    jb L2148
+    jb L2150
     cmp r10d, 255
-    je L2148
+    je L2150
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2154
-L2155:
-    mov rdi, qword ptr [r15+572560]
+    cmp r14, qword ptr [r15+572600]
+    jae L2156
+L2157:
+    mov rdi, qword ptr [r15+572576]
     mov byte ptr [rdi+r10+65280], al
-    jmp L2149
-L2148:
+    jmp L2151
+L2150:
     movzx esi, r10b
     or esi, 65280
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2156
-L2157:
+    cmp r14, qword ptr [r15+572600]
+    jae L2158
+L2159:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2158
+    jz L2160
     mov byte ptr [rdi+rsi], al
-L2159:
-L2149:
+L2161:
+L2151:
     jmp Lnext
-L2150:
-    call Ltick_slow4
-    jmp L2151
 L2152:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2153
 L2154:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2155
 L2156:
     call Ltick_slow4
     jmp L2157
 L2158:
+    call Ltick_slow4
+    jmp L2159
+L2160:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L2159
+    jmp L2161
     ALIGN 16
 Lc_E1:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2160
-L2161:
+    cmp r14, qword ptr [r15+572600]
+    jae L2162
+L2163:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2162
-L2163:
+    jz L2164
+L2165:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2164
-L2165:
+    cmp r14, qword ptr [r15+572600]
+    jae L2166
+L2167:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2166
-L2167:
+    jz L2168
+L2169:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
     or r11d, r10d
     mov ebx, r11d
     jmp Lnext
-L2160:
-    call Ltick_slow4
-    jmp L2161
 L2162:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2163
 L2164:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2165
 L2166:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2167
+L2168:
+    call Lrd_slow
+    jmp L2169
     ALIGN 16
 Lc_E2:
     movzx esi, cl
     or esi, 65280
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2168
-L2169:
+    cmp r14, qword ptr [r15+572600]
+    jae L2170
+L2171:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2170
+    jz L2172
     mov byte ptr [rdi+rsi], al
-L2171:
+L2173:
     jmp Lnext
-L2168:
-    call Ltick_slow4
-    jmp L2169
 L2170:
+    call Ltick_slow4
+    jmp L2171
+L2172:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L2171
+    jmp L2173
     ALIGN 16
 Lc_E3:
     jmp Lnext
@@ -22527,148 +22601,148 @@ Lc_E4:
     ALIGN 16
 Lc_E5:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2172
-L2173:
+    cmp r14, qword ptr [r15+572600]
+    jae L2174
+L2175:
     mov r11d, ebx
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2174
-L2175:
+    cmp r14, qword ptr [r15+572600]
+    jae L2176
+L2177:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2176
+    jz L2178
     mov byte ptr [rdi+rsi], r10b
-L2177:
+L2179:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2178
-L2179:
+    cmp r14, qword ptr [r15+572600]
+    jae L2180
+L2181:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2180
+    jz L2182
     mov byte ptr [rdi+rsi], r11b
-L2181:
+L2183:
     jmp Lnext
-L2172:
-    call Ltick_slow4
-    jmp L2173
 L2174:
     call Ltick_slow4
     jmp L2175
 L2176:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2177
 L2178:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2179
 L2180:
+    call Ltick_slow4
+    jmp L2181
+L2182:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2181
+    jmp L2183
     ALIGN 16
 Lc_E6:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2182
-L2183:
+    cmp r14, qword ptr [r15+572600]
+    jae L2184
+L2185:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2184
-L2185:
+    jz L2186
+L2187:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     and al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573976]
+    movzx r8d, byte ptr [r15+rdi+573992]
     jmp Lnext
-L2182:
-    call Ltick_slow4
-    jmp L2183
 L2184:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2185
+L2186:
+    call Lrd_slow
+    jmp L2187
     ALIGN 16
 Lc_E7:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2186
-L2187:
+    cmp r14, qword ptr [r15+572600]
+    jae L2188
+L2189:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2188
-L2189:
+    cmp r14, qword ptr [r15+572600]
+    jae L2190
+L2191:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2190
+    jz L2192
     mov byte ptr [rdi+rsi], r10b
-L2191:
+L2193:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2192
-L2193:
+    cmp r14, qword ptr [r15+572600]
+    jae L2194
+L2195:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2194
+    jz L2196
     mov byte ptr [rdi+rsi], r11b
-L2195:
+L2197:
     mov ebp, 32
     jmp Lnext
-L2186:
-    call Ltick_slow4
-    jmp L2187
 L2188:
     call Ltick_slow4
     jmp L2189
 L2190:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2191
 L2192:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2193
 L2194:
+    call Ltick_slow4
+    jmp L2195
+L2196:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2195
+    jmp L2197
     ALIGN 16
 Lc_E8:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2196
-L2197:
+    cmp r14, qword ptr [r15+572600]
+    jae L2198
+L2199:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2198
-L2199:
+    jz L2200
+L2201:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov edi, r9d
@@ -22690,19 +22764,19 @@ L2199:
     and r10d, 65535
     mov r9d, r10d
     add r14, 8
-    cmp r14, qword ptr [r15+572584]
-    jae L2200
-L2201:
+    cmp r14, qword ptr [r15+572600]
+    jae L2202
+L2203:
     jmp Lnext
-L2196:
-    call Ltick_slow4
-    jmp L2197
 L2198:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2199
 L2200:
-    call Ltick_slow8
+    call Lrd_slow
     jmp L2201
+L2202:
+    call Ltick_slow8
+    jmp L2203
     ALIGN 16
 Lc_E9:
     mov ebp, ebx
@@ -22711,64 +22785,64 @@ Lc_E9:
 Lc_EA:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2202
-L2203:
+    cmp r14, qword ptr [r15+572600]
+    jae L2204
+L2205:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2204
-L2205:
+    jz L2206
+L2207:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2206
-L2207:
+    cmp r14, qword ptr [r15+572600]
+    jae L2208
+L2209:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2208
-L2209:
+    jz L2210
+L2211:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov esi, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2210
-L2211:
+    cmp r14, qword ptr [r15+572600]
+    jae L2212
+L2213:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2212
+    jz L2214
     mov byte ptr [rdi+rsi], al
-L2213:
+L2215:
     jmp Lnext
-L2202:
-    call Ltick_slow4
-    jmp L2203
 L2204:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2205
 L2206:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2207
 L2208:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2209
 L2210:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2211
 L2212:
+    call Ltick_slow4
+    jmp L2213
+L2214:
     mov byte ptr [rsp+40], al
     call Lwr_slow
-    jmp L2213
+    jmp L2215
     ALIGN 16
 Lc_EB:
     jmp Lnext
@@ -22782,164 +22856,164 @@ Lc_ED:
 Lc_EE:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2214
-L2215:
+    cmp r14, qword ptr [r15+572600]
+    jae L2216
+L2217:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2216
-L2217:
+    jz L2218
+L2219:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     xor al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
-L2214:
-    call Ltick_slow4
-    jmp L2215
 L2216:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2217
+L2218:
+    call Lrd_slow
+    jmp L2219
     ALIGN 16
 Lc_EF:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2218
-L2219:
+    cmp r14, qword ptr [r15+572600]
+    jae L2220
+L2221:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2220
-L2221:
+    cmp r14, qword ptr [r15+572600]
+    jae L2222
+L2223:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2222
+    jz L2224
     mov byte ptr [rdi+rsi], r10b
-L2223:
+L2225:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2224
-L2225:
+    cmp r14, qword ptr [r15+572600]
+    jae L2226
+L2227:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2226
+    jz L2228
     mov byte ptr [rdi+rsi], r11b
-L2227:
+L2229:
     mov ebp, 40
     jmp Lnext
-L2218:
-    call Ltick_slow4
-    jmp L2219
 L2220:
     call Ltick_slow4
     jmp L2221
 L2222:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2223
 L2224:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2225
 L2226:
+    call Ltick_slow4
+    jmp L2227
+L2228:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2227
+    jmp L2229
     ALIGN 16
 Lc_F0:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2230
-L2231:
+    cmp r14, qword ptr [r15+572600]
+    jae L2232
+L2233:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2232
-L2233:
+    jz L2234
+L2235:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp r10d, 128
-    jb L2228
+    jb L2230
     cmp r10d, 255
-    je L2228
+    je L2230
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2234
-L2235:
-    mov rdi, qword ptr [r15+572560]
+    cmp r14, qword ptr [r15+572600]
+    jae L2236
+L2237:
+    mov rdi, qword ptr [r15+572576]
     mov al, byte ptr [rdi+r10+65280]
-    jmp L2229
-L2228:
+    jmp L2231
+L2230:
     movzx esi, r10b
     or esi, 65280
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2236
-L2237:
+    cmp r14, qword ptr [r15+572600]
+    jae L2238
+L2239:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2238
-L2239:
+    jz L2240
+L2241:
     mov al, byte ptr [rdi+rsi]
-L2229:
+L2231:
     jmp Lnext
-L2230:
-    call Ltick_slow4
-    jmp L2231
 L2232:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2233
 L2234:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2235
 L2236:
     call Ltick_slow4
     jmp L2237
 L2238:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2239
+L2240:
+    call Lrd_slow
+    jmp L2241
     ALIGN 16
 Lc_F1:
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2240
-L2241:
+    cmp r14, qword ptr [r15+572600]
+    jae L2242
+L2243:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2242
-L2243:
+    jz L2244
+L2245:
     movzx r10d, byte ptr [rdi+rsi]
     inc r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2244
-L2245:
+    cmp r14, qword ptr [r15+572600]
+    jae L2246
+L2247:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2246
-L2247:
+    jz L2248
+L2249:
     movzx r11d, byte ptr [rdi+rsi]
     inc r9w
     shl r11d, 8
@@ -22949,40 +23023,40 @@ L2247:
     mov r8d, r11d
     and r8d, 240
     jmp Lnext
-L2240:
-    call Ltick_slow4
-    jmp L2241
 L2242:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2243
 L2244:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2245
 L2246:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2247
+L2248:
+    call Lrd_slow
+    jmp L2249
     ALIGN 16
 Lc_F2:
     movzx esi, cl
     or esi, 65280
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2248
-L2249:
+    cmp r14, qword ptr [r15+572600]
+    jae L2250
+L2251:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2250
-L2251:
+    jz L2252
+L2253:
     mov al, byte ptr [rdi+rsi]
     jmp Lnext
-L2248:
-    call Ltick_slow4
-    jmp L2249
 L2250:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2251
+L2252:
+    call Lrd_slow
+    jmp L2253
     ALIGN 16
 Lc_F3:
     mov byte ptr [r15+24], al
@@ -22998,13 +23072,13 @@ Lc_F3:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L2252
+    cmp byte ptr [r15+572675], 0
+    jne L2254
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L2252:
+L2254:
     sub rsp, 32
     mov rcx, r15
     mov edx, 243
@@ -23021,7 +23095,7 @@ L2252:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
     ALIGN 16
 Lc_F4:
@@ -23029,9 +23103,9 @@ Lc_F4:
     ALIGN 16
 Lc_F5:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2253
-L2254:
+    cmp r14, qword ptr [r15+572600]
+    jae L2255
+L2256:
     movzx r11d, al
     shl r11d, 8
     or r11d, r8d
@@ -23040,139 +23114,139 @@ L2254:
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2255
-L2256:
+    cmp r14, qword ptr [r15+572600]
+    jae L2257
+L2258:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2257
+    jz L2259
     mov byte ptr [rdi+rsi], r10b
-L2258:
+L2260:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2259
-L2260:
+    cmp r14, qword ptr [r15+572600]
+    jae L2261
+L2262:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2261
+    jz L2263
     mov byte ptr [rdi+rsi], r11b
-L2262:
+L2264:
     jmp Lnext
-L2253:
-    call Ltick_slow4
-    jmp L2254
 L2255:
     call Ltick_slow4
     jmp L2256
 L2257:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2258
 L2259:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2260
 L2261:
+    call Ltick_slow4
+    jmp L2262
+L2263:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2262
+    jmp L2264
     ALIGN 16
 Lc_F6:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2263
-L2264:
+    cmp r14, qword ptr [r15+572600]
+    jae L2265
+L2266:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2265
-L2266:
+    jz L2267
+L2268:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     or al, r10b
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
-L2263:
-    call Ltick_slow4
-    jmp L2264
 L2265:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2266
+L2267:
+    call Lrd_slow
+    jmp L2268
     ALIGN 16
 Lc_F7:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2267
-L2268:
+    cmp r14, qword ptr [r15+572600]
+    jae L2269
+L2270:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2269
-L2270:
+    cmp r14, qword ptr [r15+572600]
+    jae L2271
+L2272:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2271
+    jz L2273
     mov byte ptr [rdi+rsi], r10b
-L2272:
+L2274:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2273
-L2274:
+    cmp r14, qword ptr [r15+572600]
+    jae L2275
+L2276:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2275
+    jz L2277
     mov byte ptr [rdi+rsi], r11b
-L2276:
+L2278:
     mov ebp, 48
     jmp Lnext
-L2267:
-    call Ltick_slow4
-    jmp L2268
 L2269:
     call Ltick_slow4
     jmp L2270
 L2271:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2272
 L2273:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2274
 L2275:
+    call Ltick_slow4
+    jmp L2276
+L2277:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2276
+    jmp L2278
     ALIGN 16
 Lc_F8:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2277
-L2278:
+    cmp r14, qword ptr [r15+572600]
+    jae L2279
+L2280:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2279
-L2280:
+    jz L2281
+L2282:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov edi, r9d
@@ -23194,91 +23268,91 @@ L2280:
     and r10d, 65535
     mov ebx, r10d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2281
-L2282:
-    jmp Lnext
-L2277:
-    call Ltick_slow4
-    jmp L2278
-L2279:
-    call Lrd_slow
-    jmp L2280
-L2281:
-    call Ltick_slow4
-    jmp L2282
-    ALIGN 16
-Lc_F9:
-    mov r9d, ebx
-    add r14, 4
-    cmp r14, qword ptr [r15+572584]
+    cmp r14, qword ptr [r15+572600]
     jae L2283
 L2284:
     jmp Lnext
+L2279:
+    call Ltick_slow4
+    jmp L2280
+L2281:
+    call Lrd_slow
+    jmp L2282
 L2283:
     call Ltick_slow4
     jmp L2284
     ALIGN 16
+Lc_F9:
+    mov r9d, ebx
+    add r14, 4
+    cmp r14, qword ptr [r15+572600]
+    jae L2285
+L2286:
+    jmp Lnext
+L2285:
+    call Ltick_slow4
+    jmp L2286
+    ALIGN 16
 Lc_FA:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2285
-L2286:
+    cmp r14, qword ptr [r15+572600]
+    jae L2287
+L2288:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2287
-L2288:
+    jz L2289
+L2290:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2289
-L2290:
+    cmp r14, qword ptr [r15+572600]
+    jae L2291
+L2292:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2291
-L2292:
+    jz L2293
+L2294:
     movzx r11d, byte ptr [rdi+rsi]
     inc bp
     shl r11d, 8
     or r11d, r10d
     mov esi, r11d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2293
-L2294:
+    cmp r14, qword ptr [r15+572600]
+    jae L2295
+L2296:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2295
-L2296:
+    jz L2297
+L2298:
     mov al, byte ptr [rdi+rsi]
     jmp Lnext
-L2285:
-    call Ltick_slow4
-    jmp L2286
 L2287:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2288
 L2289:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2290
 L2291:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2292
 L2293:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2294
 L2295:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2296
+L2297:
+    call Lrd_slow
+    jmp L2298
     ALIGN 16
 Lc_FB:
     mov byte ptr [r15+24], al
@@ -23294,13 +23368,13 @@ Lc_FB:
     mov word ptr [r15+30], di
     mov word ptr [r15+32], r9w
     mov word ptr [r15+34], bp
-    cmp byte ptr [r15+572659], 0
-    jne L2297
+    cmp byte ptr [r15+572675], 0
+    jne L2299
     mov qword ptr [r15+40], r14
-    movzx edi, word ptr [r15+572656]
+    movzx edi, word ptr [r15+572672]
     add edi, r14d
     mov word ptr [r15+65858], di
-L2297:
+L2299:
     sub rsp, 32
     mov rcx, r15
     mov edx, 251
@@ -23317,7 +23391,7 @@ L2297:
     movzx r9d, word ptr [r15+32]
     movzx ebp, word ptr [r15+34]
     mov r14, qword ptr [r15+40]
-    mov r13, qword ptr [r15+572608]
+    mov r13, qword ptr [r15+572624]
     jmp Lnext
     ALIGN 16
 Lc_FC:
@@ -23329,82 +23403,82 @@ Lc_FD:
 Lc_FE:
     mov esi, ebp
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2298
-L2299:
+    cmp r14, qword ptr [r15+572600]
+    jae L2300
+L2301:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2300
-L2301:
+    jz L2302
+L2303:
     movzx r10d, byte ptr [rdi+rsi]
     inc bp
     cmp al, r10b
     lahf
     movzx edi, ah
-    movzx r8d, byte ptr [r15+rdi+572952]
+    movzx r8d, byte ptr [r15+rdi+572968]
     jmp Lnext
-L2298:
-    call Ltick_slow4
-    jmp L2299
 L2300:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2301
+L2302:
+    call Lrd_slow
+    jmp L2303
     ALIGN 16
 Lc_FF:
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2302
-L2303:
+    cmp r14, qword ptr [r15+572600]
+    jae L2304
+L2305:
     mov r11d, ebp
     dec r9w
     mov esi, r9d
     mov r10d, r11d
     shr r10d, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2304
-L2305:
+    cmp r14, qword ptr [r15+572600]
+    jae L2306
+L2307:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2306
+    jz L2308
     mov byte ptr [rdi+rsi], r10b
-L2307:
+L2309:
     dec r9w
     mov esi, r9d
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2308
-L2309:
+    cmp r14, qword ptr [r15+572600]
+    jae L2310
+L2311:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2310
+    jz L2312
     mov byte ptr [rdi+rsi], r11b
-L2311:
+L2313:
     mov ebp, 56
     jmp Lnext
-L2302:
-    call Ltick_slow4
-    jmp L2303
 L2304:
     call Ltick_slow4
     jmp L2305
 L2306:
-    mov byte ptr [rsp+40], r10b
-    call Lwr_slow
+    call Ltick_slow4
     jmp L2307
 L2308:
-    call Ltick_slow4
+    mov byte ptr [rsp+40], r10b
+    call Lwr_slow
     jmp L2309
 L2310:
+    call Ltick_slow4
+    jmp L2311
+L2312:
     mov byte ptr [rsp+40], r11b
     call Lwr_slow
-    jmp L2311
+    jmp L2313
     ALIGN 16
 Lccb_00:
     rol ch, 1
@@ -23412,7 +23486,7 @@ Lccb_00:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23422,7 +23496,7 @@ Lccb_01:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23432,7 +23506,7 @@ Lccb_02:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23442,7 +23516,7 @@ Lccb_03:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23452,7 +23526,7 @@ Lccb_04:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23462,55 +23536,55 @@ Lccb_05:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_06:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2312
-L2313:
+    cmp r14, qword ptr [r15+572600]
+    jae L2314
+L2315:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2314
-L2315:
+    jz L2316
+L2317:
     movzx r10d, byte ptr [rdi+rsi]
     rol r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2316
-L2317:
+    cmp r14, qword ptr [r15+572600]
+    jae L2318
+L2319:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2318
+    jz L2320
     mov byte ptr [rdi+rsi], r10b
-L2319:
+L2321:
     jmp Lnext
-L2312:
-    call Ltick_slow4
-    jmp L2313
 L2314:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2315
 L2316:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2317
 L2318:
+    call Ltick_slow4
+    jmp L2319
+L2320:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2319
+    jmp L2321
     ALIGN 16
 Lccb_07:
     rol al, 1
@@ -23518,7 +23592,7 @@ Lccb_07:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23528,7 +23602,7 @@ Lccb_08:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23538,7 +23612,7 @@ Lccb_09:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23548,7 +23622,7 @@ Lccb_0A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23558,7 +23632,7 @@ Lccb_0B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23568,7 +23642,7 @@ Lccb_0C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23578,55 +23652,55 @@ Lccb_0D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_0E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2320
-L2321:
+    cmp r14, qword ptr [r15+572600]
+    jae L2322
+L2323:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2322
-L2323:
+    jz L2324
+L2325:
     movzx r10d, byte ptr [rdi+rsi]
     ror r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2324
-L2325:
+    cmp r14, qword ptr [r15+572600]
+    jae L2326
+L2327:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2326
+    jz L2328
     mov byte ptr [rdi+rsi], r10b
-L2327:
+L2329:
     jmp Lnext
-L2320:
-    call Ltick_slow4
-    jmp L2321
 L2322:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2323
 L2324:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2325
 L2326:
+    call Ltick_slow4
+    jmp L2327
+L2328:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2327
+    jmp L2329
     ALIGN 16
 Lccb_0F:
     ror al, 1
@@ -23634,7 +23708,7 @@ Lccb_0F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23645,7 +23719,7 @@ Lccb_10:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23656,7 +23730,7 @@ Lccb_11:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23667,7 +23741,7 @@ Lccb_12:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23678,7 +23752,7 @@ Lccb_13:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23689,7 +23763,7 @@ Lccb_14:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23700,22 +23774,22 @@ Lccb_15:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_16:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2328
-L2329:
+    cmp r14, qword ptr [r15+572600]
+    jae L2330
+L2331:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2330
-L2331:
+    jz L2332
+L2333:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     rcl r10b, 1
@@ -23723,33 +23797,33 @@ L2331:
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2332
-L2333:
+    cmp r14, qword ptr [r15+572600]
+    jae L2334
+L2335:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2334
+    jz L2336
     mov byte ptr [rdi+rsi], r10b
-L2335:
+L2337:
     jmp Lnext
-L2328:
-    call Ltick_slow4
-    jmp L2329
 L2330:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2331
 L2332:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2333
 L2334:
+    call Ltick_slow4
+    jmp L2335
+L2336:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2335
+    jmp L2337
     ALIGN 16
 Lccb_17:
     bt r8d, 4
@@ -23758,7 +23832,7 @@ Lccb_17:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23769,7 +23843,7 @@ Lccb_18:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23780,7 +23854,7 @@ Lccb_19:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23791,7 +23865,7 @@ Lccb_1A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23802,7 +23876,7 @@ Lccb_1B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23813,7 +23887,7 @@ Lccb_1C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23824,22 +23898,22 @@ Lccb_1D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_1E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2336
-L2337:
+    cmp r14, qword ptr [r15+572600]
+    jae L2338
+L2339:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2338
-L2339:
+    jz L2340
+L2341:
     movzx r10d, byte ptr [rdi+rsi]
     bt r8d, 4
     rcr r10b, 1
@@ -23847,33 +23921,33 @@ L2339:
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2340
-L2341:
+    cmp r14, qword ptr [r15+572600]
+    jae L2342
+L2343:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2342
+    jz L2344
     mov byte ptr [rdi+rsi], r10b
-L2343:
+L2345:
     jmp Lnext
-L2336:
-    call Ltick_slow4
-    jmp L2337
 L2338:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2339
 L2340:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2341
 L2342:
+    call Ltick_slow4
+    jmp L2343
+L2344:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2343
+    jmp L2345
     ALIGN 16
 Lccb_1F:
     bt r8d, 4
@@ -23882,7 +23956,7 @@ Lccb_1F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23892,7 +23966,7 @@ Lccb_20:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23902,7 +23976,7 @@ Lccb_21:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23912,7 +23986,7 @@ Lccb_22:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23922,7 +23996,7 @@ Lccb_23:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23932,7 +24006,7 @@ Lccb_24:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -23942,55 +24016,55 @@ Lccb_25:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_26:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2344
-L2345:
+    cmp r14, qword ptr [r15+572600]
+    jae L2346
+L2347:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2346
-L2347:
+    jz L2348
+L2349:
     movzx r10d, byte ptr [rdi+rsi]
     shl r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2348
-L2349:
+    cmp r14, qword ptr [r15+572600]
+    jae L2350
+L2351:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2350
+    jz L2352
     mov byte ptr [rdi+rsi], r10b
-L2351:
+L2353:
     jmp Lnext
-L2344:
-    call Ltick_slow4
-    jmp L2345
 L2346:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2347
 L2348:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2349
 L2350:
+    call Ltick_slow4
+    jmp L2351
+L2352:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2351
+    jmp L2353
     ALIGN 16
 Lccb_27:
     shl al, 1
@@ -23998,7 +24072,7 @@ Lccb_27:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24008,7 +24082,7 @@ Lccb_28:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24018,7 +24092,7 @@ Lccb_29:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24028,7 +24102,7 @@ Lccb_2A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24038,7 +24112,7 @@ Lccb_2B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24048,7 +24122,7 @@ Lccb_2C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24058,55 +24132,55 @@ Lccb_2D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_2E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2352
-L2353:
+    cmp r14, qword ptr [r15+572600]
+    jae L2354
+L2355:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2354
-L2355:
+    jz L2356
+L2357:
     movzx r10d, byte ptr [rdi+rsi]
     sar r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2356
-L2357:
+    cmp r14, qword ptr [r15+572600]
+    jae L2358
+L2359:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2358
+    jz L2360
     mov byte ptr [rdi+rsi], r10b
-L2359:
+L2361:
     jmp Lnext
-L2352:
-    call Ltick_slow4
-    jmp L2353
 L2354:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2355
 L2356:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2357
 L2358:
+    call Ltick_slow4
+    jmp L2359
+L2360:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2359
+    jmp L2361
     ALIGN 16
 Lccb_2F:
     sar al, 1
@@ -24114,92 +24188,92 @@ Lccb_2F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_30:
     rol ch, 4
     movzx edi, ch
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_31:
     rol cl, 4
     movzx edi, cl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_32:
     rol dh, 4
     movzx edi, dh
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_33:
     rol dl, 4
     movzx edi, dl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_34:
     rol bh, 4
     movzx edi, bh
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_35:
     rol bl, 4
     movzx edi, bl
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_36:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2360
-L2361:
+    cmp r14, qword ptr [r15+572600]
+    jae L2362
+L2363:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2362
-L2363:
+    jz L2364
+L2365:
     movzx r10d, byte ptr [rdi+rsi]
     rol r10b, 4
     movzx edi, r10b
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2364
-L2365:
+    cmp r14, qword ptr [r15+572600]
+    jae L2366
+L2367:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2366
+    jz L2368
     mov byte ptr [rdi+rsi], r10b
-L2367:
+L2369:
     jmp Lnext
-L2360:
-    call Ltick_slow4
-    jmp L2361
 L2362:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2363
 L2364:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2365
 L2366:
+    call Ltick_slow4
+    jmp L2367
+L2368:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2367
+    jmp L2369
     ALIGN 16
 Lccb_37:
     rol al, 4
     movzx edi, al
-    movzx r8d, byte ptr [r15+rdi+573720]
+    movzx r8d, byte ptr [r15+rdi+573736]
     jmp Lnext
     ALIGN 16
 Lccb_38:
@@ -24208,7 +24282,7 @@ Lccb_38:
     setc r8b
     shl r8d, 4
     movzx edi, ch
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24218,7 +24292,7 @@ Lccb_39:
     setc r8b
     shl r8d, 4
     movzx edi, cl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24228,7 +24302,7 @@ Lccb_3A:
     setc r8b
     shl r8d, 4
     movzx edi, dh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24238,7 +24312,7 @@ Lccb_3B:
     setc r8b
     shl r8d, 4
     movzx edi, dl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24248,7 +24322,7 @@ Lccb_3C:
     setc r8b
     shl r8d, 4
     movzx edi, bh
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24258,55 +24332,55 @@ Lccb_3D:
     setc r8b
     shl r8d, 4
     movzx edi, bl
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
 Lccb_3E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2368
-L2369:
+    cmp r14, qword ptr [r15+572600]
+    jae L2370
+L2371:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2370
-L2371:
+    jz L2372
+L2373:
     movzx r10d, byte ptr [rdi+rsi]
     shr r10b, 1
     mov r8d, 0
     setc r8b
     shl r8d, 4
     movzx edi, r10b
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2372
-L2373:
+    cmp r14, qword ptr [r15+572600]
+    jae L2374
+L2375:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2374
+    jz L2376
     mov byte ptr [rdi+rsi], r10b
-L2375:
+L2377:
     jmp Lnext
-L2368:
-    call Ltick_slow4
-    jmp L2369
 L2370:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2371
 L2372:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2373
 L2374:
+    call Ltick_slow4
+    jmp L2375
+L2376:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2375
+    jmp L2377
     ALIGN 16
 Lccb_3F:
     shr al, 1
@@ -24314,7 +24388,7 @@ Lccb_3F:
     setc r8b
     shl r8d, 4
     movzx edi, al
-    movzx edi, byte ptr [r15+rdi+573720]
+    movzx edi, byte ptr [r15+rdi+573736]
     or r8d, edi
     jmp Lnext
     ALIGN 16
@@ -24381,15 +24455,15 @@ Lccb_45:
 Lccb_46:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2376
-L2377:
+    cmp r14, qword ptr [r15+572600]
+    jae L2378
+L2379:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2378
-L2379:
+    jz L2380
+L2381:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 1
@@ -24399,12 +24473,12 @@ L2379:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2376:
-    call Ltick_slow4
-    jmp L2377
 L2378:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2379
+L2380:
+    call Lrd_slow
+    jmp L2381
     ALIGN 16
 Lccb_47:
     mov edi, 0
@@ -24479,15 +24553,15 @@ Lccb_4D:
 Lccb_4E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2380
-L2381:
+    cmp r14, qword ptr [r15+572600]
+    jae L2382
+L2383:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2382
-L2383:
+    jz L2384
+L2385:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 2
@@ -24497,12 +24571,12 @@ L2383:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2380:
-    call Ltick_slow4
-    jmp L2381
 L2382:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2383
+L2384:
+    call Lrd_slow
+    jmp L2385
     ALIGN 16
 Lccb_4F:
     mov edi, 0
@@ -24577,15 +24651,15 @@ Lccb_55:
 Lccb_56:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2384
-L2385:
+    cmp r14, qword ptr [r15+572600]
+    jae L2386
+L2387:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2386
-L2387:
+    jz L2388
+L2389:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 4
@@ -24595,12 +24669,12 @@ L2387:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2384:
-    call Ltick_slow4
-    jmp L2385
 L2386:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2387
+L2388:
+    call Lrd_slow
+    jmp L2389
     ALIGN 16
 Lccb_57:
     mov edi, 0
@@ -24675,15 +24749,15 @@ Lccb_5D:
 Lccb_5E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2388
-L2389:
+    cmp r14, qword ptr [r15+572600]
+    jae L2390
+L2391:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2390
-L2391:
+    jz L2392
+L2393:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 8
@@ -24693,12 +24767,12 @@ L2391:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2388:
-    call Ltick_slow4
-    jmp L2389
 L2390:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2391
+L2392:
+    call Lrd_slow
+    jmp L2393
     ALIGN 16
 Lccb_5F:
     mov edi, 0
@@ -24773,15 +24847,15 @@ Lccb_65:
 Lccb_66:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2392
-L2393:
+    cmp r14, qword ptr [r15+572600]
+    jae L2394
+L2395:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2394
-L2395:
+    jz L2396
+L2397:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 16
@@ -24791,12 +24865,12 @@ L2395:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2392:
-    call Ltick_slow4
-    jmp L2393
 L2394:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2395
+L2396:
+    call Lrd_slow
+    jmp L2397
     ALIGN 16
 Lccb_67:
     mov edi, 0
@@ -24871,15 +24945,15 @@ Lccb_6D:
 Lccb_6E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2396
-L2397:
+    cmp r14, qword ptr [r15+572600]
+    jae L2398
+L2399:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2398
-L2399:
+    jz L2400
+L2401:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 32
@@ -24889,12 +24963,12 @@ L2399:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2396:
-    call Ltick_slow4
-    jmp L2397
 L2398:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2399
+L2400:
+    call Lrd_slow
+    jmp L2401
     ALIGN 16
 Lccb_6F:
     mov edi, 0
@@ -24969,15 +25043,15 @@ Lccb_75:
 Lccb_76:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2400
-L2401:
+    cmp r14, qword ptr [r15+572600]
+    jae L2402
+L2403:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2402
-L2403:
+    jz L2404
+L2405:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 64
@@ -24987,12 +25061,12 @@ L2403:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2400:
-    call Ltick_slow4
-    jmp L2401
 L2402:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2403
+L2404:
+    call Lrd_slow
+    jmp L2405
     ALIGN 16
 Lccb_77:
     mov edi, 0
@@ -25067,15 +25141,15 @@ Lccb_7D:
 Lccb_7E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2404
-L2405:
+    cmp r14, qword ptr [r15+572600]
+    jae L2406
+L2407:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2406
-L2407:
+    jz L2408
+L2409:
     movzx r10d, byte ptr [rdi+rsi]
     mov edi, 0
     test r10b, 128
@@ -25085,12 +25159,12 @@ L2407:
     or r8d, 32
     or r8d, edi
     jmp Lnext
-L2404:
-    call Ltick_slow4
-    jmp L2405
 L2406:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2407
+L2408:
+    call Lrd_slow
+    jmp L2409
     ALIGN 16
 Lccb_7F:
     mov edi, 0
@@ -25129,42 +25203,42 @@ Lccb_85:
 Lccb_86:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2408
-L2409:
+    cmp r14, qword ptr [r15+572600]
+    jae L2410
+L2411:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2410
-L2411:
+    jz L2412
+L2413:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 254
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2412
-L2413:
+    cmp r14, qword ptr [r15+572600]
+    jae L2414
+L2415:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2414
+    jz L2416
     mov byte ptr [rdi+rsi], r10b
-L2415:
+L2417:
     jmp Lnext
-L2408:
-    call Ltick_slow4
-    jmp L2409
 L2410:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2411
 L2412:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2413
 L2414:
+    call Ltick_slow4
+    jmp L2415
+L2416:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2415
+    jmp L2417
     ALIGN 16
 Lccb_87:
     and al, 254
@@ -25197,42 +25271,42 @@ Lccb_8D:
 Lccb_8E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2416
-L2417:
+    cmp r14, qword ptr [r15+572600]
+    jae L2418
+L2419:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2418
-L2419:
+    jz L2420
+L2421:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 253
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2420
-L2421:
+    cmp r14, qword ptr [r15+572600]
+    jae L2422
+L2423:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2422
+    jz L2424
     mov byte ptr [rdi+rsi], r10b
-L2423:
+L2425:
     jmp Lnext
-L2416:
-    call Ltick_slow4
-    jmp L2417
 L2418:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2419
 L2420:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2421
 L2422:
+    call Ltick_slow4
+    jmp L2423
+L2424:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2423
+    jmp L2425
     ALIGN 16
 Lccb_8F:
     and al, 253
@@ -25265,42 +25339,42 @@ Lccb_95:
 Lccb_96:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2424
-L2425:
+    cmp r14, qword ptr [r15+572600]
+    jae L2426
+L2427:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2426
-L2427:
+    jz L2428
+L2429:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 251
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2428
-L2429:
+    cmp r14, qword ptr [r15+572600]
+    jae L2430
+L2431:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2430
+    jz L2432
     mov byte ptr [rdi+rsi], r10b
-L2431:
+L2433:
     jmp Lnext
-L2424:
-    call Ltick_slow4
-    jmp L2425
 L2426:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2427
 L2428:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2429
 L2430:
+    call Ltick_slow4
+    jmp L2431
+L2432:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2431
+    jmp L2433
     ALIGN 16
 Lccb_97:
     and al, 251
@@ -25333,42 +25407,42 @@ Lccb_9D:
 Lccb_9E:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2432
-L2433:
+    cmp r14, qword ptr [r15+572600]
+    jae L2434
+L2435:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2434
-L2435:
+    jz L2436
+L2437:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 247
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2436
-L2437:
+    cmp r14, qword ptr [r15+572600]
+    jae L2438
+L2439:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2438
+    jz L2440
     mov byte ptr [rdi+rsi], r10b
-L2439:
+L2441:
     jmp Lnext
-L2432:
-    call Ltick_slow4
-    jmp L2433
 L2434:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2435
 L2436:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2437
 L2438:
+    call Ltick_slow4
+    jmp L2439
+L2440:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2439
+    jmp L2441
     ALIGN 16
 Lccb_9F:
     and al, 247
@@ -25401,42 +25475,42 @@ Lccb_A5:
 Lccb_A6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2440
-L2441:
+    cmp r14, qword ptr [r15+572600]
+    jae L2442
+L2443:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2442
-L2443:
+    jz L2444
+L2445:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 239
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2444
-L2445:
+    cmp r14, qword ptr [r15+572600]
+    jae L2446
+L2447:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2446
+    jz L2448
     mov byte ptr [rdi+rsi], r10b
-L2447:
+L2449:
     jmp Lnext
-L2440:
-    call Ltick_slow4
-    jmp L2441
 L2442:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2443
 L2444:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2445
 L2446:
+    call Ltick_slow4
+    jmp L2447
+L2448:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2447
+    jmp L2449
     ALIGN 16
 Lccb_A7:
     and al, 239
@@ -25469,42 +25543,42 @@ Lccb_AD:
 Lccb_AE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2448
-L2449:
+    cmp r14, qword ptr [r15+572600]
+    jae L2450
+L2451:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2450
-L2451:
+    jz L2452
+L2453:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 223
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2452
-L2453:
+    cmp r14, qword ptr [r15+572600]
+    jae L2454
+L2455:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2454
+    jz L2456
     mov byte ptr [rdi+rsi], r10b
-L2455:
+L2457:
     jmp Lnext
-L2448:
-    call Ltick_slow4
-    jmp L2449
 L2450:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2451
 L2452:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2453
 L2454:
+    call Ltick_slow4
+    jmp L2455
+L2456:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2455
+    jmp L2457
     ALIGN 16
 Lccb_AF:
     and al, 223
@@ -25537,42 +25611,42 @@ Lccb_B5:
 Lccb_B6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2456
-L2457:
+    cmp r14, qword ptr [r15+572600]
+    jae L2458
+L2459:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2458
-L2459:
+    jz L2460
+L2461:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 191
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2460
-L2461:
+    cmp r14, qword ptr [r15+572600]
+    jae L2462
+L2463:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2462
+    jz L2464
     mov byte ptr [rdi+rsi], r10b
-L2463:
+L2465:
     jmp Lnext
-L2456:
-    call Ltick_slow4
-    jmp L2457
 L2458:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2459
 L2460:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2461
 L2462:
+    call Ltick_slow4
+    jmp L2463
+L2464:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2463
+    jmp L2465
     ALIGN 16
 Lccb_B7:
     and al, 191
@@ -25605,42 +25679,42 @@ Lccb_BD:
 Lccb_BE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2464
-L2465:
+    cmp r14, qword ptr [r15+572600]
+    jae L2466
+L2467:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2466
-L2467:
+    jz L2468
+L2469:
     movzx r10d, byte ptr [rdi+rsi]
     and r10b, 127
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2468
-L2469:
+    cmp r14, qword ptr [r15+572600]
+    jae L2470
+L2471:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2470
+    jz L2472
     mov byte ptr [rdi+rsi], r10b
-L2471:
+L2473:
     jmp Lnext
-L2464:
-    call Ltick_slow4
-    jmp L2465
 L2466:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2467
 L2468:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2469
 L2470:
+    call Ltick_slow4
+    jmp L2471
+L2472:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2471
+    jmp L2473
     ALIGN 16
 Lccb_BF:
     and al, 127
@@ -25673,42 +25747,42 @@ Lccb_C5:
 Lccb_C6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2472
-L2473:
+    cmp r14, qword ptr [r15+572600]
+    jae L2474
+L2475:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2474
-L2475:
+    jz L2476
+L2477:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 1
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2476
-L2477:
+    cmp r14, qword ptr [r15+572600]
+    jae L2478
+L2479:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2478
+    jz L2480
     mov byte ptr [rdi+rsi], r10b
-L2479:
+L2481:
     jmp Lnext
-L2472:
-    call Ltick_slow4
-    jmp L2473
 L2474:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2475
 L2476:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2477
 L2478:
+    call Ltick_slow4
+    jmp L2479
+L2480:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2479
+    jmp L2481
     ALIGN 16
 Lccb_C7:
     or al, 1
@@ -25741,42 +25815,42 @@ Lccb_CD:
 Lccb_CE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2480
-L2481:
+    cmp r14, qword ptr [r15+572600]
+    jae L2482
+L2483:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2482
-L2483:
+    jz L2484
+L2485:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 2
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2484
-L2485:
+    cmp r14, qword ptr [r15+572600]
+    jae L2486
+L2487:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2486
+    jz L2488
     mov byte ptr [rdi+rsi], r10b
-L2487:
+L2489:
     jmp Lnext
-L2480:
-    call Ltick_slow4
-    jmp L2481
 L2482:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2483
 L2484:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2485
 L2486:
+    call Ltick_slow4
+    jmp L2487
+L2488:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2487
+    jmp L2489
     ALIGN 16
 Lccb_CF:
     or al, 2
@@ -25809,42 +25883,42 @@ Lccb_D5:
 Lccb_D6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2488
-L2489:
+    cmp r14, qword ptr [r15+572600]
+    jae L2490
+L2491:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2490
-L2491:
+    jz L2492
+L2493:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 4
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2492
-L2493:
+    cmp r14, qword ptr [r15+572600]
+    jae L2494
+L2495:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2494
+    jz L2496
     mov byte ptr [rdi+rsi], r10b
-L2495:
+L2497:
     jmp Lnext
-L2488:
-    call Ltick_slow4
-    jmp L2489
 L2490:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2491
 L2492:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2493
 L2494:
+    call Ltick_slow4
+    jmp L2495
+L2496:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2495
+    jmp L2497
     ALIGN 16
 Lccb_D7:
     or al, 4
@@ -25877,42 +25951,42 @@ Lccb_DD:
 Lccb_DE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2496
-L2497:
+    cmp r14, qword ptr [r15+572600]
+    jae L2498
+L2499:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2498
-L2499:
+    jz L2500
+L2501:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 8
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2500
-L2501:
+    cmp r14, qword ptr [r15+572600]
+    jae L2502
+L2503:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2502
+    jz L2504
     mov byte ptr [rdi+rsi], r10b
-L2503:
+L2505:
     jmp Lnext
-L2496:
-    call Ltick_slow4
-    jmp L2497
 L2498:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2499
 L2500:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2501
 L2502:
+    call Ltick_slow4
+    jmp L2503
+L2504:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2503
+    jmp L2505
     ALIGN 16
 Lccb_DF:
     or al, 8
@@ -25945,42 +26019,42 @@ Lccb_E5:
 Lccb_E6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2504
-L2505:
+    cmp r14, qword ptr [r15+572600]
+    jae L2506
+L2507:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2506
-L2507:
+    jz L2508
+L2509:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 16
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2508
-L2509:
+    cmp r14, qword ptr [r15+572600]
+    jae L2510
+L2511:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2510
+    jz L2512
     mov byte ptr [rdi+rsi], r10b
-L2511:
+L2513:
     jmp Lnext
-L2504:
-    call Ltick_slow4
-    jmp L2505
 L2506:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2507
 L2508:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2509
 L2510:
+    call Ltick_slow4
+    jmp L2511
+L2512:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2511
+    jmp L2513
     ALIGN 16
 Lccb_E7:
     or al, 16
@@ -26013,42 +26087,42 @@ Lccb_ED:
 Lccb_EE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2512
-L2513:
+    cmp r14, qword ptr [r15+572600]
+    jae L2514
+L2515:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2514
-L2515:
+    jz L2516
+L2517:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 32
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2516
-L2517:
+    cmp r14, qword ptr [r15+572600]
+    jae L2518
+L2519:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2518
+    jz L2520
     mov byte ptr [rdi+rsi], r10b
-L2519:
+L2521:
     jmp Lnext
-L2512:
-    call Ltick_slow4
-    jmp L2513
 L2514:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2515
 L2516:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2517
 L2518:
+    call Ltick_slow4
+    jmp L2519
+L2520:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2519
+    jmp L2521
     ALIGN 16
 Lccb_EF:
     or al, 32
@@ -26081,42 +26155,42 @@ Lccb_F5:
 Lccb_F6:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2520
-L2521:
+    cmp r14, qword ptr [r15+572600]
+    jae L2522
+L2523:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2522
-L2523:
+    jz L2524
+L2525:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 64
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2524
-L2525:
+    cmp r14, qword ptr [r15+572600]
+    jae L2526
+L2527:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2526
+    jz L2528
     mov byte ptr [rdi+rsi], r10b
-L2527:
+L2529:
     jmp Lnext
-L2520:
-    call Ltick_slow4
-    jmp L2521
 L2522:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2523
 L2524:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2525
 L2526:
+    call Ltick_slow4
+    jmp L2527
+L2528:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2527
+    jmp L2529
     ALIGN 16
 Lccb_F7:
     or al, 64
@@ -26149,42 +26223,42 @@ Lccb_FD:
 Lccb_FE:
     mov esi, ebx
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2528
-L2529:
+    cmp r14, qword ptr [r15+572600]
+    jae L2530
+L2531:
     mov edi, esi
     shr edi, 12
-    mov rdi, qword ptr [r15+rdi*8+572288]
+    mov rdi, qword ptr [r15+rdi*8+572304]
     test rdi, rdi
-    jz L2530
-L2531:
+    jz L2532
+L2533:
     movzx r10d, byte ptr [rdi+rsi]
     or r10b, 128
     add r14, 4
-    cmp r14, qword ptr [r15+572584]
-    jae L2532
-L2533:
+    cmp r14, qword ptr [r15+572600]
+    jae L2534
+L2535:
     mov edi, esi
     shr edi, 8
-    mov rdi, qword ptr [r15+rdi*8+574232]
+    mov rdi, qword ptr [r15+rdi*8+574248]
     test rdi, rdi
-    jz L2534
+    jz L2536
     mov byte ptr [rdi+rsi], r10b
-L2535:
+L2537:
     jmp Lnext
-L2528:
-    call Ltick_slow4
-    jmp L2529
 L2530:
-    call Lrd_slow
+    call Ltick_slow4
     jmp L2531
 L2532:
-    call Ltick_slow4
+    call Lrd_slow
     jmp L2533
 L2534:
+    call Ltick_slow4
+    jmp L2535
+L2536:
     mov byte ptr [rsp+40], r10b
     call Lwr_slow
-    jmp L2535
+    jmp L2537
     ALIGN 16
 Lccb_FF:
     or al, 128

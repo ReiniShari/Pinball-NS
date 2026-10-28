@@ -75,7 +75,7 @@ void gbc_apu_init(GBC *g, uint32_t sample_rate)
     a->regs[0x14] = 0x77;   /* NR50 */
     a->regs[0x15] = 0xF3;   /* NR51 */
     a->ch1.timer = a->ch2.timer = a->ch3.timer = a->ch4.timer = BIG;
-    a->last = g->s.cycles;
+    a->last = gbc_sound_time(&g->s);
 }
 
 /* A sample out of the box filter: the high-pass filter, 16 bits, into the ring. Both channels
@@ -319,7 +319,7 @@ static void noise_run(GBCApu *a, uint64_t now)
 void gbc_apu_run(GBC *g)
 {
     GBCApu *a = &g->s.apu;
-    uint64_t now = g->s.cycles;
+    uint64_t now = gbc_sound_time(&g->s);
     ASTAT(gbc_stat_apu_runs++);
     while (a->last < now) {
         if (a->power && a->ch4.on) {

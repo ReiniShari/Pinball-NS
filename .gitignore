@@ -7,7 +7,10 @@ build/
 # the builds (published as releases), the signing key of the APK (kept by its owner: the same key
 # signs every update), the working notes and pictures of the project
 *.apk
+*.ipa
 *.zip
+*.tar.gz
+*.pdb
 *.keystore
 *.bundle
 *.mp4
@@ -19,3 +22,6 @@ Buglist*.txt
 CLAUDE.md
 conversation.md
 docs/
+# the files of Pokemon Pinball Generations (its ROM, its patch, its disassembly): not ours to publish
+Pok*mon Pinball Generations/
+*.ips

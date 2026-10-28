@@ -159,7 +159,16 @@ typedef struct {
     uint64_t frame_count;
     uint64_t lcd_off_since;
     uint32_t rumble_frames;    /* frames with the rumble motor on (consumed by the front-end) */
+    /* CGB double speed (KEY1, then STOP): the CPU and its timer run twice as fast, the video and
+     * the sound keep their time. `cycles` counts the CPU's cycles (the video's events are twice as
+     * many cycles apart in double speed); the sound's time is ds_m0 + ((cycles - ds_c0) >> ds),
+     * (ds_c0, ds_m0) taken at the last switch. */
+    uint8_t ds;
+    uint64_t ds_c0, ds_m0;
 } GBCState;
+
+/* the time of the sound (cycles at the single speed) */
+static inline uint64_t gbc_sound_time(const GBCState *s) { return s->ds_m0 + ((s->cycles - s->ds_c0) >> s->ds); }
 
 typedef struct {
     int bank;                  /* -1: any bank (or address in bank 0) */
@@ -329,7 +338,8 @@ void     gbc_write(GBC *g, uint16_t addr, uint8_t v);/* no timing side effects *
 bool     gbc_call(GBC *g, uint16_t addr);
 bool     gbc_call_orig(GBC *g, uint16_t addr);      /* same, skipping a hook at addr once */
 bool     gbc_call_frozen(GBC *g, uint16_t addr, bool orig, long budget); /* run without time */
-bool     gbc_farcall(GBC *g, uint8_t bank, uint16_t addr);  /* call through the game's BankSwitch */
+/* a call through the game's BankSwitch (its address: the ROM's, US 0x054F) */
+bool     gbc_farcall(GBC *g, uint16_t bankswitch, uint8_t bank, uint16_t addr);
 void     gbc_ret(GBC *g);                           /* perform RET (used by hooks)       */
 void     gbc_push(GBC *g, uint16_t v);
 uint16_t gbc_pop(GBC *g);
@@ -350,6 +360,7 @@ void    gbc_exec_prepare(GBC *g);
 void    gbc_exec_prepare_time(GBC *g);
 void    gbc_exec_tables(GBC *g);
 void    gbc_tick(GBC *g, int t);                    /* t cycles pass (the reference timing) */
+void    gbc_speed_switch(GBC *g);                   /* STOP with KEY1 bit 0 set */
 /* called by the assembly versions, the machine state written back (they rebuild GBC.fast) */
 void    gbc_asm_tick(GBC *g, int t);
 void    gbc_asm_write(GBC *g, uint16_t addr, uint8_t v);

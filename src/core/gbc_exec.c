@@ -81,7 +81,7 @@ void gbc_exec_prepare_time(GBC *g)
     /* the assembly version: what makes it hand the next step to the C one, and when it must
      * look before each step (x->limit) */
     bool frame = x->mode == GBC_EXEC_FRAME;
-    x->frame_end = frame && !(s->io[0x40] & 0x80) ? x->start + GBC_FRAME_CYCLES : NEVER;
+    x->frame_end = frame && !(s->io[0x40] & 0x80) ? x->start + ((uint64_t)GBC_FRAME_CYCLES << s->ds) : NEVER;
     x->special = s->halted || s->ei_pending || s->halt_bug || (s->ime && (s->ie & s->ifl & 0x1F) && !g->frozen) ||
                  g->trace_fn || (frame && (g->frame_done || g->frozen));
     x->limit = x->special ? 0 : x->dl24 < x->frame_end ? x->dl24 : x->frame_end;
@@ -266,7 +266,8 @@ static uint64_t loop_room(GBC *g, uint32_t pc, const uint8_t *pat, int n, int st
     uint64_t k = UINT64_MAX / 128;
     if (!g->frozen) {
         uint64_t end = x->deadline;
-        if (mode == GBC_EXEC_FRAME && !(g->s.io[0x40] & 0x80) && start + GBC_FRAME_CYCLES < end) end = start + GBC_FRAME_CYCLES;
+        uint64_t fc = (uint64_t)GBC_FRAME_CYCLES << g->s.ds;
+        if (mode == GBC_EXEC_FRAME && !(g->s.io[0x40] & 0x80) && start + fc < end) end = start + fc;
         if (end <= cyc + (uint64_t)cycles) return 0;
         k = (end - cyc - 1) / (uint64_t)cycles;
     } else if (mode == GBC_EXEC_FRAME) {
@@ -395,7 +396,8 @@ int gbc_exec_c(GBC *g, int mode, uint16_t stop_pc, uint16_t stop_sp, int64_t *bu
                         total = 1 + extra;
                     } else if (!(s->io[0x40] & 0x80)) {
                         /* the frame ends with the first step at 70224 cycles or more */
-                        uint64_t m = cyc - start >= GBC_FRAME_CYCLES ? 1 : (start + GBC_FRAME_CYCLES - cyc + 3) / 4;
+                        uint64_t fc = (uint64_t)GBC_FRAME_CYCLES << s->ds;
+                        uint64_t m = cyc - start >= fc ? 1 : (start + fc - cyc + 3) / 4;
                         if (m < total) total = m;
                     }
                     cyc += 4 * total;
@@ -501,7 +503,10 @@ int gbc_exec_c(GBC *g, int mode, uint16_t stop_pc, uint16_t stop_sp, int64_t *bu
             SETHL(r);
             TICK(4);
         } break;
-        case 0x10: { uint8_t v; FETCH8(v); (void)v; } break;            /* STOP: no speed switch in this game */
+        case 0x10: {                                                    /* STOP: the speed switch only */
+            uint8_t v; FETCH8(v); (void)v;
+            if (s->io[0x4D] & 1) { FLUSH(); gbc_speed_switch(g); RELOAD(); }
+        } break;
         case 0x18: { uint8_t v; FETCH8(v); pc = (uint16_t)(pc + (int8_t)v); TICK(4); } break;
         case 0x20: case 0x28: case 0x30: case 0x38: {
             uint8_t v; FETCH8(v);
@@ -618,7 +623,7 @@ int gbc_exec_c(GBC *g, int mode, uint16_t stop_pc, uint16_t stop_sp, int64_t *bu
         }
 
     step_end:
-        if (mode == GBC_EXEC_FRAME && !(s->io[0x40] & 0x80) && cyc - start >= GBC_FRAME_CYCLES) break;
+        if (mode == GBC_EXEC_FRAME && !(s->io[0x40] & 0x80) && cyc - start >= ((uint64_t)GBC_FRAME_CYCLES << s->ds)) break;
         if (one) { result = GBC_EXEC_MORE; break; }
     }
     FLUSH();
@@ -651,6 +656,9 @@ void gbc_asm_op(GBC *g, int op)
         break;
     case 0xF3: s->ime = false; s->ei_pending = false; break;     /* DI */
     case 0xFB: s->ei_pending = true; break;                       /* EI */
+    case 0x10:                                  /* STOP */
+        if (s->io[0x4D] & 1) gbc_speed_switch(g);
+        break;
     case 0xD9:                                  /* RETI, after the return */
         s->ime = true;
         if (g->reti_fn) g->reti_fn(g, g->irq_user);

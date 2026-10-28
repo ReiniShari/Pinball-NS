@@ -9,6 +9,8 @@
 #
 # On Windows without mingw-w64 / make: tools\build_msvc.bat (Visual Studio C compiler) builds
 # the tools (and refreshtest, the refreshes of the PC's display) and PinballNS.exe.
+# The other versions have their own scripts: platform/linux/build.sh, platform/macos/build_mac.sh,
+# platform/ios/build_ipa.sh.
 
 CC      ?= gcc
 CFLAGS  ?= -O2 -std=c11 -Wall -Wextra -Wno-unused-function
@@ -26,7 +28,7 @@ CFLAGS += -DPB_ASM
 endif
 endif
 GAME   = src/game/pinball.c
-MOBILE = platform/mobile/app.c platform/mobile/ui.c platform/mobile/design.c
+MOBILE = platform/mobile/app.c platform/mobile/ui.c platform/mobile/design.c platform/mobile/screen.c
 HDRS   = $(wildcard src/core/*.h src/game/*.h src/front/*.h platform/mobile/*.h)
 
 all: tools windows
@@ -74,10 +76,12 @@ build/pinball.ico: build/ndicon
 
 windows: build/PinballNS.exe
 
-build/PinballNS.exe: platform/windows/main_win32.c platform/windows/pinball.rc platform/windows/pinball.manifest build/pinball.ico $(GAME) $(CORE) $(HDRS)
+DESK = platform/desktop/desk.c platform/mobile/ui.c platform/mobile/design.c platform/mobile/screen.c
+
+build/PinballNS.exe: platform/windows/main_win32.c platform/windows/pinball.rc platform/windows/pinball.manifest build/pinball.ico $(DESK) $(GAME) $(CORE) $(HDRS) platform/desktop/desk.h
 	$(WINDRES) platform/windows/pinball.rc -O coff -o build/pinball_res.o
-	$(WINCC) -O2 -std=c99 -Wall -Wextra -municode -mwindows -static-libgcc -o $@ \
-	    platform/windows/main_win32.c $(GAME) $(CORE) build/pinball_res.o \
+	$(WINCC) -O2 -std=c11 -Wall -Wextra -Wno-unused-function -DUNICODE -D_UNICODE -municode -mwindows -static-libgcc -o $@ \
+	    platform/windows/main_win32.c $(DESK) $(GAME) $(CORE) build/pinball_res.o \
 	    -lgdi32 -lwinmm -lcomdlg32 -lshell32 -luser32 -lm
 
 android: build/ndicon

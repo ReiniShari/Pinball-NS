@@ -30,16 +30,17 @@
  * shared by both halves, like timers and counters, must only advance once) and except
  * for the ball itself, which belongs to the physics of its half.
  *
- * Everything here is driven through hooks on the original routines (addresses of the
- * US ROM, see pinball_us.h); the ROM itself is never modified.
+ * Everything here is driven through hooks on the original routines (addresses of the ROM
+ * played: the US ROM or Pokemon Pinball Generations, see pinball_rom.h); the ROM itself is never
+ * modified.
  */
 #include "pinball.h"
-#include "pinball_us.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 
+#define PBR (pb->rom)          /* the addresses of the ROM played (pinball_rom.h) */
 #define PB_MAGIC 0x50424C31u   /* "PBL1" */
 #define BUDGET   4000000L      /* safety limit for out-of-time calls (instructions) */
 #define REFRESH_COOLDOWN 20
@@ -47,10 +48,137 @@
 #define W(a) (pb->g.s.wram[(a) - 0xC000])   /* WRAM C000-DFFF (bank 1 at D000) */
 #define H(a) (pb->g.s.hram[(a) - 0xFF80])
 
-/* WRAM classes for merging the other half's work back into the game state */
-enum { M_SHARED = 0, M_LOCAL = 1, M_BALL = 2 };
-static uint8_t wclass[0x2000];
-static bool wclass_ready;
+/* ------------------------------------------------------------------ the ROMs */
+
+/* Game state the graphics of a half depend on and that events in the other half can change (from
+ * the _LoadStageData* loaders). When the ball's half changes one of these, the other half redraws
+ * its state-dependent graphics, as the game does on entering it. The loaders of the tables of
+ * Generations read the same variables as the Red and Blue ones. */
+#define WATCH_TOP_OF(BallType, StageCollisionState, StaryuState, InSpecialMode, SpecialModeState, SpecialMode, \
+                     EvolutionObjectsDisabled, NumEvolutionTrinkets, SlotIsOpen, OpenedSlotBy4CAVELights, \
+                     OpenedSlotBy3Pokeballs, PikachuSaverCharge, BallUpgradeTriggerStates, NumBellsproutEntries, \
+                     BlueForceFieldDirection, RedStageStructureBackup) \
+    { BallType, StageCollisionState, StaryuState, InSpecialMode, SpecialModeState, SpecialMode, EvolutionObjectsDisabled, \
+      NumEvolutionTrinkets, SlotIsOpen, OpenedSlotBy4CAVELights, OpenedSlotBy3Pokeballs, PikachuSaverCharge, \
+      BallUpgradeTriggerStates, BallUpgradeTriggerStates + 1, BallUpgradeTriggerStates + 2, NumBellsproutEntries, \
+      BlueForceFieldDirection, RedStageStructureBackup }, 18
+#define WATCH_BOTTOM_OF(BallType, StageCollisionState, StaryuState, InSpecialMode, SpecialModeState, SpecialMode, \
+                        EvolutionObjectsDisabled, NumEvolutionTrinkets, SlotIsOpen, OpenedSlotBy4CAVELights, \
+                        OpenedSlotBy3Pokeballs, NextBonusStage, ExtraBalls, LeftMapMoveCounter, RightMapMoveCounter, \
+                        IndicatorStates, CurrentMap, MapMoveDirection, RareMonsFlag, NumMonHits, CapturingMon, \
+                        BonusMultiplierTens, BonusMultiplierOnes, BlueForceFieldDirection) \
+    { BallType, StageCollisionState, StaryuState, InSpecialMode, SpecialModeState, SpecialMode, EvolutionObjectsDisabled, \
+      NumEvolutionTrinkets, SlotIsOpen, OpenedSlotBy4CAVELights, OpenedSlotBy3Pokeballs, NextBonusStage, ExtraBalls, \
+      LeftMapMoveCounter, RightMapMoveCounter, \
+      IndicatorStates + 0, IndicatorStates + 1, IndicatorStates + 2, IndicatorStates + 3, IndicatorStates + 4, \
+      IndicatorStates + 5, IndicatorStates + 6, IndicatorStates + 7, IndicatorStates + 8, IndicatorStates + 9, \
+      IndicatorStates + 10, IndicatorStates + 11, IndicatorStates + 12, IndicatorStates + 13, IndicatorStates + 14, \
+      IndicatorStates + 15, IndicatorStates + 16, IndicatorStates + 17, IndicatorStates + 18, \
+      CurrentMap, MapMoveDirection, RareMonsFlag, NumMonHits, CapturingMon, BonusMultiplierTens, BonusMultiplierOnes, \
+      BlueForceFieldDirection }, 42
+
+/*
+ * What the ball touched this frame, found by the collision checks of the ball's half (in its
+ * coordinates, with its own lists of objects) and read by the object logic: two bytes each
+ * (index of the object hit, its id), as HandleGameObjectCollision writes them. Some are read
+ * by the object logic of both halves with a meaning that depends on the half: the point index
+ * of the evolution trinkets is a trinket of the top half for one, of the bottom half for the
+ * other. The other half's run must see "nothing touched", as in the original where the half
+ * without the ball did not run at all: otherwise it collected a trinket the ball never touched
+ * and opened the slot with 2 trinkets, the slot halo drawn with the trinkets' tiles (Bug 1.3_2).
+ * US: wWhichVoltorb / wWhichShellder, wWhichBumper, wPinballLaunchCollision, wWhichDiglett /
+ * wWhichPsyduckPoliwag, wBellsproutCollision, wStaryuCollision, wSpinnerCollision, wWhichCAVELight,
+ * wWhichPikachu, wWhichBoardTrigger, wWildMonCollision, wWhichPinballUpgradeTrigger,
+ * wDittoSlotCollision, wSlotCollision, wWhichBonusMultiplierRailing, wSlowpokeCollision,
+ * wCloysterCollision.
+ *
+ * Classes of the work RAM for merging the other half's work back into the game state, in this order
+ * (a later range wins): per half (LOCAL) the collision map, the graphics queue, the sprites, the
+ * palettes and fade buffers, wCurrentStage, the collision map pointers and wd7f2, the queue's indices,
+ * wSpriteBufferSize, the stack, the audio engine, audio control / rumble / joypad / RNG, the score
+ * queue and score, the bottom message text and buffer, the billboard buffers (see run_other_half), the
+ * scrolling and stationary texts; to the ball's half (BALL) its position and velocity, the special
+ * modes (catch 'em, evolution, map move: their state machine is in the object logic of both halves,
+ * so it runs here in the other half too; in the original only the ball's half ran it, and some steps
+ * take a "the other half will be reloaded" path when they run in the half without the billboard:
+ * merged, such a step skipped the drawing of the billboard in the ball's half, grey picture over the
+ * Pokemon, Bug 1.2_1; the other half still draws from it), the capture, wPinballIsVisible, the tilt
+ * offsets and wSCX, the flipper collision and forces, the collision scratch.
+ */
+static const PbRom ROMS[2] = {
+    {
+        "Pokemon Pinball", "9402014d14969432142abfde728c6f1a10ee4dac", PB_ROM_ORIGINAL,
+        0x054F, 0x0B66, 0x0C2D, 0x0CEE, 0x0D11, 0x0D9C, 0x10C5, 0x113A, 0x114B, 0x1162, 0x112F, 0x281C,
+        0x04AF, 0x0490, 0x0468, 0x0472, 0x0E62, 0x0E67, 0x057E, 0x0585, 0x075A, 0x067E,
+        3, 0x5943, 2, 0x44B7, 3, 0x5C49, 3, 0x6118, 3, 0x6578, 3, 0x66C2, 3, 0x6CE9, 3, 0x6D5E, 5, 0x75A4, 4, 0x4496,
+        0x14, 0x4000, 0x4075, 0x5F56, 0x5FA5, 0x403F, 0x4AB3,
+        0xD47E, 0xD498, 0xD49B, 0xD4AA, 0xD4AC, 0xD4AE, 0xD4AF, 0xD4B3, 0xD4B5, 0xD4BB,
+        0xD4F0, 0xD4F2, 0xD502, 0xD517, 0xD52F, 0xD548, 0xD54A, 0xD54B, 0xD54D,
+        0xD550, 0xD551, 0xD552, 0xD554, 0xD55A, 0xD55B, 0xD578, 0xD579,
+        0xD5BB, 0xD5BF, 0xD5C0, 0xD5C6, 0xD5CA, 0xD5CB, 0xD5F3, 0xD5F9,
+        0xD604, 0xD608, 0xD609, 0xD60C, 0xD60D, 0xD62A, 0xD63E,
+        0xD79F, 0xD7A0, 0xD7AB, 0xD7AC, 0xD7AD, 0xD7F2, 0xD7FA, 0xD7FB, 0xD7FC, 0xD802, 0xD84A,
+        0xD8F1, 0xD8F2, 0xD948, 0xD495, 0xD497, 0xD460, 0xD300, 0xD46A, 0xD913, 0, 0x0244,
+        { 0, 0, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+        { 0, 0, 0, 0, 0, 0, PB_BONUS_GENGAR, PB_BONUS_GENGAR, PB_BONUS_MEWTWO, PB_BONUS_MEWTWO, PB_BONUS_MEOWTH, PB_BONUS_MEOWTH,
+          PB_BONUS_DIGLETT, PB_BONUS_DIGLETT, PB_BONUS_SEEL, PB_BONUS_SEEL },
+        6, 15,
+        { { 0xC700, 0xCA00, M_LOCAL }, { 0xCA00, 0xD000, M_LOCAL }, { 0xD000, 0xD0A0, M_LOCAL }, { 0xD200, 0xD300, M_LOCAL },
+          { 0xD4AC, 0xD4AD, M_LOCAL }, { 0xD7EC, 0xD7F3, M_LOCAL }, { 0xD7FA, 0xD7FD, M_LOCAL }, { 0xD802, 0xD803, M_LOCAL },
+          { 0xDF00, 0xE000, M_LOCAL }, { 0xDD00, 0xDEB0, M_LOCAL }, { 0xD800, 0xD860, M_LOCAL }, { 0xD400, 0xD47E, M_LOCAL },
+          { 0xC500, 0xC700, M_LOCAL }, { 0xC000, 0xC200, M_LOCAL }, { 0xD5CA, 0xD5F3, M_LOCAL },
+          { 0xD4B3, 0xD4BF, M_BALL }, { 0xD54B, 0xD5CA, M_BALL }, { 0xD5F3, 0xD5F9, M_BALL }, { 0xD548, 0xD549, M_BALL },
+          { 0xD79F, 0xD7AD, M_BALL }, { 0xD7B8, 0xD7BE, M_BALL }, { 0xD7C3, 0xD7EC, M_BALL }, { 0xD7F3, 0xD7F9, M_BALL } },
+        WATCH_TOP_OF(0xD47E, 0xD4AF, 0xD502, 0xD54B, 0xD54D, 0xD550, 0xD551, 0xD554, 0xD604, 0xD608, 0xD609, 0xD517,
+                     0xD5F9, 0xD62A, 0xD63E, 0xD7AD),
+        WATCH_BOTTOM_OF(0xD47E, 0xD4AF, 0xD502, 0xD54B, 0xD54D, 0xD550, 0xD551, 0xD554, 0xD604, 0xD608, 0xD609, 0xD498,
+                        0xD49B, 0xD4F0, 0xD4F2, 0xD52F, 0xD54A, 0xD55A, 0xD55B, 0xD5C0, 0xD5F3, 0xD60C, 0xD60D, 0xD63E),
+        { 0xD4CB, 0xD4D8, 0xD4DC, 0xD4ED, 0xD4FB, 0xD500, 0xD507, 0xD50D, 0xD515, 0xD51F, 0xD5C7, 0xD5F7, 0xD5FE, 0xD601,
+          0xD60A, 0xD630, 0xD635 },
+    },
+    {
+        "Pokemon Pinball Generations", "9407074cc9b5a93d731a07e2d24b9ca06ecf17d7", PB_ROM_GENERATIONS,
+        0x054E, 0x0B61, 0x0C28, 0x0CE9, 0x0D0C, 0x0D97, 0x10C0, 0x1135, 0x1146, 0x115D, 0x112A, 0x27CB,
+        0x04AE, 0x048F, 0x0467, 0x0471, 0x0E5D, 0x0E62, 0x057D, 0x0584, 0x0755, 0x067D,
+        3, 0x40F3, 2, 0x44FF, 3, 0x4405, 3, 0x4BE9, 3, 0x5049, 3, 0x5235, 3, 0x58FA, 3, 0x597B, 5, 0x731D, 4, 0x4537,
+        0x14, 0x4000, 0x4075, 0x5F59, 0x5FAB, 0x4057, 0x4F34,
+        0xD47E, 0xD498, 0xD49B, 0xD4AA, 0xD4AC, 0xD4AE, 0xD4AF, 0xD4B3, 0xD4B5, 0xD4BB,
+        0xD4F0, 0xD4F2, 0xD502, 0xD517, 0xD52F, 0xD548, 0xD54A, 0xD54B, 0xD54D,
+        0xD550, 0xD551, 0xD552, 0xD555, 0xD55B, 0xD55C, 0xD579, 0xD57A,
+        0xD5BD, 0xD5C1, 0xD5C2, 0xD5C8, 0xD5CC, 0xD5CD, 0xD5F5, 0xD5FB,
+        0xD606, 0xD60A, 0xD60B, 0xD60E, 0xD60F, 0xD62C, 0xD640,
+        0xD7A1, 0xD7A2, 0xD7AD, 0xD7AE, 0xD7AF, 0xD7F5, 0xD7FD, 0xD7FE, 0xD7FF, 0xD805, 0xD84D,
+        0xD8F4, 0xD8F5, 0xD94B, 0xD495, 0xD497, 0xD460, 0xD300, 0xD46A, 0xD916, 0xDC11, 0x0410,
+        { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PB_BONUS_GENGAR, PB_BONUS_GENGAR, PB_BONUS_MEWTWO, PB_BONUS_MEWTWO,
+          PB_BONUS_MEOWTH, PB_BONUS_MEOWTH, PB_BONUS_DIGLETT, PB_BONUS_DIGLETT, PB_BONUS_SEEL, PB_BONUS_SEEL },
+        12, 21,
+        { { 0xC700, 0xCA00, M_LOCAL }, { 0xCA00, 0xD000, M_LOCAL }, { 0xD000, 0xD0A0, M_LOCAL }, { 0xD200, 0xD300, M_LOCAL },
+          { 0xD4AC, 0xD4AD, M_LOCAL }, { 0xD7EF, 0xD7F6, M_LOCAL }, { 0xD7FD, 0xD800, M_LOCAL }, { 0xD805, 0xD806, M_LOCAL },
+          { 0xDF00, 0xE000, M_LOCAL }, { 0xDD00, 0xDEB0, M_LOCAL }, { 0xD803, 0xD863, M_LOCAL }, { 0xD400, 0xD47E, M_LOCAL },
+          { 0xC500, 0xC700, M_LOCAL }, { 0xC000, 0xC200, M_LOCAL }, { 0xD5CC, 0xD5F5, M_LOCAL },
+          { 0xD4B3, 0xD4BF, M_BALL }, { 0xD54B, 0xD5CC, M_BALL }, { 0xD5F5, 0xD5FB, M_BALL }, { 0xD548, 0xD549, M_BALL },
+          { 0xD7A1, 0xD7AF, M_BALL }, { 0xD7BA, 0xD7C0, M_BALL }, { 0xD7C6, 0xD7EF, M_BALL }, { 0xD7F6, 0xD7FC, M_BALL } },
+        WATCH_TOP_OF(0xD47E, 0xD4AF, 0xD502, 0xD54B, 0xD54D, 0xD550, 0xD551, 0xD555, 0xD606, 0xD60A, 0xD60B, 0xD517,
+                     0xD5FB, 0xD62C, 0xD640, 0xD7AF),
+        WATCH_BOTTOM_OF(0xD47E, 0xD4AF, 0xD502, 0xD54B, 0xD54D, 0xD550, 0xD551, 0xD555, 0xD606, 0xD60A, 0xD60B, 0xD498,
+                        0xD49B, 0xD4F0, 0xD4F2, 0xD52F, 0xD54A, 0xD55B, 0xD55C, 0xD5C2, 0xD5F5, 0xD60E, 0xD60F, 0xD640),
+        { 0xD4CB, 0xD4D8, 0xD4DC, 0xD4ED, 0xD4FB, 0xD500, 0xD507, 0xD50D, 0xD515, 0xD51F, 0xD5C9, 0xD5F9, 0xD600, 0xD603,
+          0xD60C, 0xD632, 0xD637 },
+    },
+};
+
+const PbRom *pb_rom_known(int i) { return i >= 0 && i < 2 ? &ROMS[i] : NULL; }
+
+const PbRom *pb_rom_profile(const char sha1_hex[41])
+{
+    for (int i = 0; i < 2; i++) if (!strcmp(sha1_hex, ROMS[i].sha1)) return &ROMS[i];
+    return NULL;
+}
+
+/* WRAM classes of each ROM for merging the other half's work back into the game state */
+static uint8_t wclass_of[2][0x2000];
+static bool wclass_ready[2];
 
 /* 16 bytes equal: one comparison of 16 bytes (SSE2 on x86-64, NEON on ARM64) */
 #if defined(_M_X64) || defined(__x86_64__) || defined(__SSE2__)
@@ -144,115 +272,38 @@ static void state_copy_ex(GBCState *dst, const GBCState *src, bool pages)
 static void state_copy(GBCState *dst, const GBCState *src) { state_copy_ex(dst, src, true); }
 
 
-static const uint8_t STAGE_UP[16]   = { 0xFF, 0, 0xFF, 2, 0xFF, 4, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-static const uint8_t STAGE_DOWN[16] = { 1, 0xFF, 3, 0xFF, 5, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-
-/* Game state the graphics of a half depend on and that events in the other half can
- * change (from the _LoadStageData* loaders). When the ball's half changes one of these,
- * the other half redraws its state-dependent graphics, as the game does on entering it. */
-static const uint16_t WATCH_TOP[] = {
-    W_BallType, W_StageCollisionState, W_StaryuState, W_InSpecialMode, W_SpecialModeState,
-    W_SpecialMode, W_EvolutionObjectsDisabled, W_NumEvolutionTrinkets, W_SlotIsOpen,
-    W_OpenedSlotBy4CAVELights, W_OpenedSlotBy3Pokeballs, W_PikachuSaverCharge,
-    W_BallUpgradeTriggerStates, W_BallUpgradeTriggerStates + 1, W_BallUpgradeTriggerStates + 2,
-    W_NumBellsproutEntries, W_BlueForceFieldDirection, W_RedStageStructureBackup,
-};
-static const uint16_t WATCH_BOTTOM[] = {
-    W_BallType, W_StageCollisionState, W_StaryuState, W_InSpecialMode, W_SpecialModeState,
-    W_SpecialMode, W_EvolutionObjectsDisabled, W_NumEvolutionTrinkets, W_SlotIsOpen,
-    W_OpenedSlotBy4CAVELights, W_OpenedSlotBy3Pokeballs, W_NextBonusStage, W_ExtraBalls,
-    W_LeftMapMoveCounter, W_RightMapMoveCounter,
-    W_IndicatorStates + 0, W_IndicatorStates + 1, W_IndicatorStates + 2, W_IndicatorStates + 3,
-    W_IndicatorStates + 4, W_IndicatorStates + 5, W_IndicatorStates + 6, W_IndicatorStates + 7,
-    W_IndicatorStates + 8, W_IndicatorStates + 9, W_IndicatorStates + 10, W_IndicatorStates + 11,
-    W_IndicatorStates + 12, W_IndicatorStates + 13, W_IndicatorStates + 14, W_IndicatorStates + 15,
-    W_IndicatorStates + 16, W_IndicatorStates + 17, W_IndicatorStates + 18,
-    W_CurrentMap, W_MapMoveDirection, W_RareMonsFlag, W_NumMonHits, W_CapturingMon,
-    W_BonusMultiplierTens, W_BonusMultiplierOnes, W_BlueForceFieldDirection,
-};
-#define NWATCH_TOP    (int)(sizeof WATCH_TOP / sizeof WATCH_TOP[0])
-#define NWATCH_BOTTOM (int)(sizeof WATCH_BOTTOM / sizeof WATCH_BOTTOM[0])
-
-/* What the ball touched this frame, found by the collision checks of the ball's half (in its
- * coordinates, with its own lists of objects) and read by the object logic: two bytes each
- * (index of the object hit, its id), as HandleGameObjectCollision writes them. Some are read
- * by the object logic of both halves with a meaning that depends on the half: the point index
- * of the evolution trinkets is a trinket of the top half for one, of the bottom half for the
- * other. The other half's run must see "nothing touched", as in the original where the half
- * without the ball did not run at all: otherwise it collected a trinket the ball never touched
- * and opened the slot with 2 trinkets, the slot halo drawn with the trinkets' tiles (Bug 1.3_2). */
-static const uint16_t BALL_HITS[] = {
-    0xD4CB,   /* wWhichVoltorb / wWhichShellder            */
-    0xD4D8,   /* wWhichBumper                              */
-    0xD4DC,   /* wPinballLaunchCollision                   */
-    0xD4ED,   /* wWhichDiglett / wWhichPsyduckPoliwag      */
-    0xD4FB,   /* wBellsproutCollision                      */
-    0xD500,   /* wStaryuCollision                          */
-    0xD507,   /* wSpinnerCollision                         */
-    0xD50D,   /* wWhichCAVELight                           */
-    0xD515,   /* wWhichPikachu                             */
-    0xD51F,   /* wWhichBoardTrigger                        */
-    0xD5C7,   /* wWildMonCollision                         */
-    0xD5F7,   /* wWhichPinballUpgradeTrigger               */
-    0xD5FE,   /* wDittoSlotCollision                       */
-    0xD601,   /* wSlotCollision                            */
-    0xD60A,   /* wWhichBonusMultiplierRailing              */
-    0xD630,   /* wSlowpokeCollision                        */
-    0xD635,   /* wCloysterCollision                        */
-};
-#define NBALL_HITS (int)(sizeof BALL_HITS / sizeof BALL_HITS[0])
-
-static void mark(uint16_t a, uint16_t b, uint8_t cls)
+/* the work RAM classes of the ROM played (its ranges, what the ball touched, the evolution trinkets) */
+#undef PBR
+#define PBR rom
+static const uint8_t *wclass_init(const PbRom *rom)
 {
-    for (uint32_t i = a; i < b; i++) wclass[i - 0xC000] = cls;
+    uint8_t *wc = wclass_of[rom->id];
+    if (wclass_ready[rom->id]) return wc;
+    memset(wc, M_SHARED, 0x2000);
+    for (int k = 0; k < PB_WCLASS_RANGES; k++)
+        for (uint32_t i = rom->wclass[k].a; i < rom->wclass[k].b; i++) wc[i - 0xC000] = rom->wclass[k].cls;
+    for (int i = 0; i < PB_BALL_HITS; i++) wc[rom->ball_hits[i] - 0xC000] = wc[rom->ball_hits[i] + 1 - 0xC000] = M_BALL;
+    wc[W_CollidedPointIndex - 0xC000] = M_BALL;                  /* evolution trinkets (see the hits) */
+    wclass_ready[rom->id] = true;
+    return wc;
 }
+#undef PBR
+#define PBR (pb->rom)
 
-static void init_wclass(void)
-{
-    if (wclass_ready) return;
-    memset(wclass, M_SHARED, sizeof wclass);
-    mark(0xC700, 0xCA00, M_LOCAL);    /* wStageCollisionMap (per half)            */
-    mark(0xCA00, 0xD000, M_LOCAL);    /* graphics queue (handled separately)      */
-    mark(0xD000, 0xD0A0, M_LOCAL);    /* wSpriteBuffer                            */
-    mark(0xD200, 0xD300, M_LOCAL);    /* palette data + fade buffers (per page)   */
-    mark(0xD4AC, 0xD4AD, M_LOCAL);    /* wCurrentStage                            */
-    mark(0xD7EC, 0xD7F3, M_LOCAL);    /* collision map pointers, wd7f2            */
-    mark(0xD7FA, 0xD7FD, M_LOCAL);    /* graphics queue indices                   */
-    mark(0xD802, 0xD803, M_LOCAL);    /* wSpriteBufferSize                        */
-    mark(0xDF00, 0xE000, M_LOCAL);    /* stack                                    */
-    mark(0xDD00, 0xDEB0, M_LOCAL);    /* audio engine                             */
-    mark(0xD800, 0xD860, M_LOCAL);    /* audio control, rumble, joypad, RNG        */
-    mark(0xD400, 0xD47E, M_LOCAL);    /* score queue, score                        */
-    mark(0xC500, 0xC700, M_LOCAL);    /* bottom message text and buffer           */
-    mark(W_QueueBuffers, W_QueueBuffers + W_QueueBuffersSize, M_LOCAL);   /* billboard buffers (see run_other_half) */
-    mark(0xD5CA, 0xD5F3, M_LOCAL);    /* scrolling / stationary texts              */
-    mark(0xD4B3, 0xD4BF, M_BALL);     /* ball position and velocity               */
-    /* Special modes (catch 'em, evolution, map move): their state machine is in the object
-     * logic of both halves, so it runs here in the other half too. In the original only the
-     * ball's half ran it, and some steps take a "the other half will be reloaded" path when
-     * they run in the half without the billboard: merged, such a step skipped the drawing of
-     * the billboard in the ball's half (grey picture over the Pokemon, Bug 1.2_1). The ball's
-     * half owns this state, as in the original; the other half still draws from it. */
-    mark(0xD54B, 0xD5CA, M_BALL);     /* mode, state, evolution, timer, billboard, wild mon */
-    mark(0xD5F3, 0xD5F9, M_BALL);     /* capture                                  */
-    mark(0xD548, 0xD549, M_BALL);     /* wPinballIsVisible                        */
-    mark(0xD79F, 0xD7AD, M_BALL);     /* tilt offsets, wSCX                       */
-    mark(0xD7B8, 0xD7BE, M_BALL);     /* flipper collision and forces             */
-    mark(0xD7C3, 0xD7EC, M_BALL);     /* collision scratch                        */
-    mark(0xD7F3, 0xD7F9, M_BALL);
-    for (int i = 0; i < NBALL_HITS; i++) mark(BALL_HITS[i], (uint16_t)(BALL_HITS[i] + 2), M_BALL);
-    mark(W_CollidedPointIndex, W_CollidedPointIndex + 1, M_BALL);   /* evolution trinkets (see BALL_HITS) */
-    wclass_ready = true;
-}
-
-static inline bool is_field(uint8_t s) { return s == 0 || s == 1 || s == 4 || s == 5; }
-static inline bool is_top(uint8_t s) { return s == 0 || s == 4; }
+/* the stages of the tables: the top half of a table is even, its bottom half odd (both ROMs) */
+static inline bool is_field(const Pinball *pb, uint8_t s) { return s < 32 && PBR->table[s] >= 0; }
+static inline bool is_top(const Pinball *pb, uint8_t s) { return is_field(pb, s) && !(s & 1); }
+/* the half above (below) a half of a table; 0xFF: none (the ball goes out of the table) */
+static inline uint8_t stage_up(const Pinball *pb, uint8_t s) { return is_field(pb, s) && (s & 1) ? (uint8_t)(s - 1) : 0xFF; }
+static inline uint8_t stage_down(const Pinball *pb, uint8_t s) { return is_top(pb, s) ? (uint8_t)(s + 1) : 0xFF; }
+/* the top half of a table built like the Red one: its structures follow wRedStageStructureBackup */
+static inline bool red_top(const Pinball *pb, uint8_t s) { return is_top(pb, s) && PB_TABLE_RED_LIKE(PBR->table[s]); }
 
 /* ------------------------------------------------------------------ video pages */
 
 static int page_of_stage(Pinball *pb, uint8_t stage)
 {
-    return (pb->st.unified && is_top(stage)) ? PB_PAGE_TOP : PB_PAGE_MAIN;
+    return (pb->st.unified && is_top(pb, stage)) ? PB_PAGE_TOP : PB_PAGE_MAIN;
 }
 
 static void update_page(Pinball *pb)
@@ -292,7 +343,7 @@ static bool bonus_stage(Pinball *pb)
     return false;
 #endif
     uint8_t st = W(W_CurrentStage);
-    return W(W_CurrentScreen) == SCREEN_PINBALL_GAME && st >= 6 && st <= 15;
+    return W(W_CurrentScreen) == SCREEN_PINBALL_GAME && st >= PBR->first_bonus && st <= PBR->last_bonus;
 }
 
 static void set_bands(Pinball *pb)
@@ -442,8 +493,8 @@ static bool load_half(Pinball *pb)
 static void ball_to_half(Pinball *pb, uint8_t from, uint8_t to)
 {
     int y = W(W_BallYPos + 1);
-    int yfull = y + (is_top(from) ? 0 : 0x88);
-    int yt = yfull - (is_top(to) ? 0 : 0x88);
+    int yfull = y + (is_top(pb, from) ? 0 : 0x88);
+    int yt = yfull - (is_top(pb, to) ? 0 : 0x88);
     if (yt < 0 || yt > 0xFF) {
         W(W_PinballIsVisible) = 0;
         yt = 0;
@@ -453,15 +504,15 @@ static void ball_to_half(Pinball *pb, uint8_t from, uint8_t to)
 
 static void watch_snapshot(Pinball *pb, int page)
 {
-    const uint16_t *list = page == PB_PAGE_TOP ? WATCH_TOP : WATCH_BOTTOM;
-    int n = page == PB_PAGE_TOP ? NWATCH_TOP : NWATCH_BOTTOM;
+    const uint16_t *list = page == PB_PAGE_TOP ? PBR->watch_top : PBR->watch_bottom;
+    int n = page == PB_PAGE_TOP ? PBR->nwatch_top : PBR->nwatch_bottom;
     for (int i = 0; i < n; i++) pb->st.watch_last[page][i] = W(list[i]);
 }
 
 static bool watch_changed(Pinball *pb, int page)
 {
-    const uint16_t *list = page == PB_PAGE_TOP ? WATCH_TOP : WATCH_BOTTOM;
-    int n = page == PB_PAGE_TOP ? NWATCH_TOP : NWATCH_BOTTOM;
+    const uint16_t *list = page == PB_PAGE_TOP ? PBR->watch_top : PBR->watch_bottom;
+    int n = page == PB_PAGE_TOP ? PBR->nwatch_top : PBR->nwatch_bottom;
     for (int i = 0; i < n; i++)
         if (pb->st.watch_last[page][i] != W(list[i])) return true;
     return false;
@@ -477,8 +528,8 @@ static bool watch_changed(Pinball *pb, int page)
 static void watch_moved(Pinball *pb, int page)
 {
 #ifndef PB_LEGACY
-    const uint16_t *list = page == PB_PAGE_TOP ? WATCH_TOP : WATCH_BOTTOM;
-    int n = page == PB_PAGE_TOP ? NWATCH_TOP : NWATCH_BOTTOM;
+    const uint16_t *list = page == PB_PAGE_TOP ? PBR->watch_top : PBR->watch_bottom;
+    int n = page == PB_PAGE_TOP ? PBR->nwatch_top : PBR->nwatch_bottom;
     bool known = pb->watch_prev_page == page;
     for (int i = 0; i < n; i++) {
         uint8_t v = W(list[i]);
@@ -496,8 +547,8 @@ static void watch_moved(Pinball *pb, int page)
  * trinket collected, a mode starting or ending. They are rare. */
 static bool watch_urgent(Pinball *pb, int page)
 {
-    const uint16_t *list = page == PB_PAGE_TOP ? WATCH_TOP : WATCH_BOTTOM;
-    int n = page == PB_PAGE_TOP ? NWATCH_TOP : NWATCH_BOTTOM;
+    const uint16_t *list = page == PB_PAGE_TOP ? PBR->watch_top : PBR->watch_bottom;
+    int n = page == PB_PAGE_TOP ? PBR->nwatch_top : PBR->nwatch_bottom;
     for (int i = 0; i < n; i++)
         if ((list[i] == W_SlotIsOpen || list[i] == W_NumEvolutionTrinkets || list[i] == W_InSpecialMode) &&
             pb->st.watch_last[page][i] != W(list[i])) return true;
@@ -534,8 +585,8 @@ static void run_other_half(Pinball *pb, const GBCState *base, uint8_t R, uint8_t
     W(W_CurrentStage) = O;
     update_page(pb);
     ball_to_half(pb, R, O);
-    if (kind == RUN_RESOLVE) {                  /* the ball touched nothing in this half (see BALL_HITS) */
-        for (int i = 0; i < NBALL_HITS; i++) W(BALL_HITS[i]) = W(BALL_HITS[i] + 1) = 0;
+    if (kind == RUN_RESOLVE) {                  /* the ball touched nothing in this half (see ROMS: ball_hits) */
+        for (int i = 0; i < PB_BALL_HITS; i++) W(PBR->ball_hits[i]) = W(PBR->ball_hits[i] + 1) = 0;
         W(W_CollidedPointIndex) = 0;
     }
 
@@ -546,7 +597,7 @@ static void run_other_half(Pinball *pb, const GBCState *base, uint8_t R, uint8_t
      * the old structures (the large Ditto): the top half is drawn with the structures the
      * mode asked for, as the original shows them once the ball is there. Drawing only: the
      * game state is not changed. */
-    if (kind != RUN_RESOLVE && O == STAGE_RED_FIELD_TOP && !(W(W_RedStageStructureBackup) & 0x80))
+    if (kind != RUN_RESOLVE && red_top(pb, O) && !(W(W_RedStageStructureBackup) & 0x80))
         W(W_StageCollisionState) = (uint8_t)((W(W_StageCollisionState) & 1) | W(W_RedStageStructureBackup));
 
     bool ok;
@@ -610,7 +661,7 @@ static void run_other_half(Pinball *pb, const GBCState *base, uint8_t R, uint8_t
         pb->st.stats_buffers++;
     }
     if (kind != RUN_REDRAW) {
-        const uint8_t *b0 = base->wram, *br = after_r->wram, *bo = after_o->wram;
+        const uint8_t *b0 = base->wram, *br = after_r->wram, *bo = after_o->wram, *wclass = wclass_init(PBR);
         uint8_t *dst = g->s.wram;
         /* most of the memory is not changed by the other half: 16 bytes compared at a time,
          * byte by byte only where it changed something */
@@ -689,7 +740,7 @@ static bool hk_resolve(GBC *g, void *u)
     Pinball *pb = (Pinball *)u;
     uint8_t R = W(W_CurrentStage);
     pb->st.resolve_pending = false;
-    if (!pb->st.unified || !is_field(R)) return false;
+    if (!pb->st.unified || !is_field(pb, R)) return false;
     /* the base of run_other_half: only its work and high RAM are read */
     memcpy(pb->snap_r->wram, g->s.wram, sizeof g->s.wram);
     memcpy(pb->snap_r->hram, g->s.hram, sizeof g->s.hram);
@@ -708,10 +759,10 @@ static bool hk_resolve_done(GBC *g, void *u)
     if (!pb->st.unified || R != pb->st.resolve_stage) return false;
     if (g->s.frame_count - pb->st.resolve_frame <= 1)          /* not after a long sequence */
         run_other_half(pb, pb->snap_r, R, R ^ 1, RUN_RESOLVE);
-    if (is_top(R)) {                                          /* flippers move whatever the ball does */
+    if (is_top(pb, R)) {                                          /* flippers move whatever the ball does */
         state_copy(pb->snap_c, &g->s);
         g->call_in_frame = pb->antilag;
-        bool ok = gbc_farcall(g, B_UpdateFlipperStates, R_UpdateFlipperStates);
+        bool ok = gbc_farcall(g, R_BankSwitch, B_UpdateFlipperStates, R_UpdateFlipperStates);
         g->call_in_frame = false;
         if (!ok) call_failed(pb, pb->snap_c, "flippers");
     }
@@ -722,7 +773,7 @@ static bool hk_draw(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
     uint8_t R = W(W_CurrentStage);
-    if (!pb->st.unified || !is_field(R)) return false;
+    if (!pb->st.unified || !is_field(pb, R)) return false;
     state_copy(pb->snap_a, &g->s);
     pb->oam_drawing = true;
     g->call_in_frame = pb->antilag;                          /* a late frame: see pb_set_antilag */
@@ -757,14 +808,14 @@ static bool hk_transition(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
     uint8_t st = W(W_CurrentStage);
-    if (!pb->st.unified || !is_field(st)) return false;
+    if (!pb->st.unified || !is_field(pb, st)) return false;
     camera(pb);
     uint8_t t = (uint8_t)(W(W_BallYPos + 1) + 0x10);
     uint8_t target = 0;
     int dy = 0;
     bool move = false;
-    if (t < 0x18) { target = STAGE_UP[st & 15]; dy = 0x88; move = true; }
-    else if (t >= 0xB8) { target = STAGE_DOWN[st & 15]; dy = -0x88; move = true; }
+    if (t < 0x18) { target = stage_up(pb, st); dy = 0x88; move = true; }
+    else if (t >= 0xB8) { target = stage_down(pb, st); dy = -0x88; move = true; }
     if (move && target == 0xFF) {
         /* ball lost: "callba HandleBallLoss" as a tail call (it may run for several frames) */
         W(W_MoveToNextScreenState) = 1;
@@ -783,7 +834,7 @@ static bool hk_transition(GBC *g, void *u)
 static bool hk_scroll(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
-    if (!pb->st.unified || !is_field(W(W_CurrentStage))) return false;
+    if (!pb->st.unified || !is_field(pb, W(W_CurrentStage))) return false;
     camera(pb);
     gbc_ret(g);
     return true;
@@ -797,7 +848,7 @@ static bool hk_load_stage(GBC *g, void *u)
     /* tools only: the original game, without the unified field (comparisons) */
     if (true) {
 #else
-    if (!is_field(R) || W(W_CurrentScreen) != SCREEN_PINBALL_GAME) {
+    if (!is_field(pb, R) || W(W_CurrentScreen) != SCREEN_PINBALL_GAME) {
 #endif
         set_unified(pb, false);
         return false;
@@ -814,7 +865,7 @@ static bool hk_load_stage(GBC *g, void *u)
      * (2.5: loaded with the old ones on the return from a bonus stage, and nothing redrew it: the
      * bottom of Ditto stayed in another state until the ball went up). Drawing only: the state of
      * the game comes back below. */
-    if (O == STAGE_RED_FIELD_TOP && !(W(W_RedStageStructureBackup) & 0x80))
+    if (red_top(pb, O) && !(W(W_RedStageStructureBackup) & 0x80))
         W(W_StageCollisionState) = (uint8_t)((W(W_StageCollisionState) & 1) | W(W_RedStageStructureBackup));
 #endif
     uint8_t s0 = W(W_d7fb);
@@ -837,7 +888,7 @@ static bool hk_load_stage(GBC *g, void *u)
 static bool hk_timer(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
-    if (!pb->st.unified || is_top(W(W_CurrentStage))) return false;
+    if (!pb->st.unified || is_top(pb, W(W_CurrentStage))) return false;
     gbc_ret(g);                      /* the timer is shown once, at the top of the table */
     return true;
 }
@@ -852,7 +903,7 @@ static bool hk_timer(GBC *g, void *u)
 static bool hk_capture_anim(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
-    if (!pb->st.unified || !is_top(W(W_CurrentStage))) return false;
+    if (!pb->st.unified || !is_top(pb, W(W_CurrentStage))) return false;
     if (pb->other_run) { gbc_ret(g); return true; }
     state_copy(pb->snap_c, &g->s);
     push_page(pb, PB_PAGE_MAIN);
@@ -865,10 +916,8 @@ static bool hk_capture_anim(GBC *g, void *u)
     return true;
 }
 
-/* the game waits for the next frame (0468: clears hFFB2, then loops at 0472 until the VBlank
- * interrupt sets it): where its program is when it has done the work of a frame */
-#define R_WaitFrame      0x0468
-#define R_WaitFrameLoop  0x0472
+/* the game waits for the next frame (R_WaitFrame, US 0468: clears hFFB2, then loops at R_WaitFrameLoop,
+ * 0472, until the VBlank interrupt sets it): where its program is when it has done the work of a frame */
 #define LATE_BUDGET      40000                  /* instructions: two frames' worth at most */
 
 static bool hk_wait(GBC *g, void *u)
@@ -878,14 +927,13 @@ static bool hk_wait(GBC *g, void *u)
     return false;
 }
 
-/* Sound effects (PlaySoundEffect, 04AF: E the effect, D its priority). The memory of the sound
+/* Sound effects (PlaySoundEffect, US 04AF: E the effect, D its priority). The memory of the sound
  * engine is the ball's half's (class LOCAL): an effect asked for only by the logic of the other
  * half, run out of time (its objects, its sprites), would be lost. They are noted, and played at
  * the end of the frame (sfx_other_play) unless the ball's half asked for the same one meanwhile.
  * Measured (pbrun -sfx): the special modes run in both halves and ask for theirs twice; the
  * redraw of the other half (LoadStageData) asks for the effect 07, which the original only plays
  * when the ball enters the half (enter_half: kept), and which is not played here. */
-#define R_PlaySoundEffect 0x04AF
 static bool hk_sfx(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
@@ -931,11 +979,68 @@ static void sfx_other_play(Pinball *pb)
     }
 }
 
+/* ------------------------------------------------------------------ double speed (original ROM) */
+
+/* what Pokemon Pinball Generations changes for its double speed, at their addresses in the US ROM */
+#define US_TIMER_RELOAD  0x038E          /* "ldh [rTMA], a" in the VBlank handler (a = $BC: 60 Hz, single speed) */
+#define US_ROULETTE_BC   0x6EEF          /* bank 3: "ld bc, $0200", a delay of the slot's roulette */
+#define US_PCM_PLAY      0x5F56          /* bank $14: PlayPikachuPCM, a sample written at the CPU's pace */
+#define US_PCM_RETURN    0x4054          /* bank $14: after its call in PlayPikachuSoundClip */
+#define TMA_SINGLE       0xBC            /* 4096 Hz / 68: 60 Hz */
+#define TMA_DOUBLE       0x78            /* 8192 Hz / 136: 60 Hz (Generations' value) */
+
+static void set_speed(Pinball *pb, bool dbl)
+{
+    GBC *g = &pb->g;
+    if ((g->s.ds != 0) == dbl) return;
+    gbc_speed_switch(g);
+    /* a timer already counting (the sound updated by it): its period kept */
+    if (dbl && g->s.tma == TMA_SINGLE) g->s.tma = TMA_DOUBLE;
+    else if (!dbl && g->s.tma == TMA_DOUBLE) g->s.tma = TMA_SINGLE;
+}
+
+/* between two frames: the double speed on the pinball screen, but for Pikachu's voice */
+static void speed_policy(Pinball *pb)
+{
+    if (pb->rom->id != PB_ROM_ORIGINAL) return;
+    set_speed(pb, pb->double_speed && W(W_CurrentScreen) == SCREEN_PINBALL_GAME && !pb->st.pcm_normal);
+}
+
+static bool hk_timer_reload(GBC *g, void *u)
+{
+    (void)u;
+    if (g->s.ds && g->s.a == TMA_SINGLE) g->s.a = TMA_DOUBLE;
+    return false;
+}
+
+static bool hk_roulette(GBC *g, void *u)
+{
+    (void)u;
+    if (!g->s.ds) return false;
+    g->s.b = 0x04;                       /* ld bc, $0400 (Generations) */
+    g->s.c = 0x00;
+    g->s.pc = (uint16_t)(US_ROULETTE_BC + 3);
+    return true;
+}
+
+static bool hk_pcm(GBC *g, void *u)
+{
+    Pinball *pb = (Pinball *)u;
+    if (g->s.ds) { set_speed(pb, false); pb->st.pcm_normal = true; }
+    return false;
+}
+
+static bool hk_pcm_done(GBC *g, void *u)
+{
+    Pinball *pb = (Pinball *)u;
+    (void)g;
+    if (pb->st.pcm_normal) { pb->st.pcm_normal = false; speed_policy(pb); }
+    return false;
+}
+
 /* the Pokemon cries (14:4000, with the interrupts off: it waits for line 0 four times, then plays
- * the cry by writing the volume of the wave channel at a rate timed by the CPU, 14:5F56): never
- * out of time, where it would play nothing. A late frame being finished stops at its entry. */
-#define B_PlayCry 0x14
-#define R_PlayCry 0x4000
+ * the cry by writing the volume of the wave channel at a rate timed by the CPU, R_CryPlayer, US 14:5F56):
+ * never out of time, where it would play nothing. A late frame being finished stops at its entry. */
 static bool hk_cry(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
@@ -947,14 +1052,12 @@ static bool hk_cry(GBC *g, void *u)
     return false;
 }
 
-/* The copy to the video memory with the screen on (0735: the letters of the messages of the status
+/* The copy to the video memory with the screen on (US 0735: the letters of the messages of the status
  * bar...) waits for a horizontal blank of the lines 64-127 for every 4 bytes: a few hundred bytes
  * take several frames, which the game skipped (the ball slowed down when a message came), and more
  * instructions than a late frame finished out of time is given (LATE_BUDGET). Out of time (a late
  * frame finished, a routine of a hook frozen at the end of the frame: the capture animation, ball up),
  * its loop goes on as the copy with the screen off (0666, the same registers and stack): at once. */
-#define R_CopyScreenOnLoop  0x075A
-#define R_CopyScreenOffLoop 0x067E
 static bool hk_copy_screen_on(GBC *g, void *u)
 {
     Pinball *pb = (Pinball *)u;
@@ -1280,7 +1383,7 @@ static void on_dma(GBC *g, uint8_t src_hi, void *u)
  */
 static void status_bar_tiles(Pinball *pb)
 {
-    if (!pb->st.unified || !is_field(W(W_CurrentStage)) || W(W_BottomTextEnabled) || !W(W_DrawBottomMessageBox)) return;
+    if (!pb->st.unified || !is_field(pb, W(W_CurrentStage)) || W(W_BottomTextEnabled) || !W(W_DrawBottomMessageBox)) return;
     if (pb->g.rom_size < ROM_AsteriskGlyph + 16) return;
     uint8_t *t = &pb->g.s.page[PB_PAGE_MAIN].vram[0][0x0870];          /* tile $87 */
     if (!memcmp(t, pb->g.rom + ROM_AsteriskGlyph, 16)) memcpy(t, pb->g.rom + ROM_StatusBarSymbols + 0x70, 16);
@@ -1293,15 +1396,16 @@ int pb_init(Pinball *pb, const uint8_t *rom, size_t size, uint32_t sample_rate)
     memset(pb, 0, sizeof(*pb));
     pb->watch_prev_page = -1;
     pb->oam_buf_stage = pb->oam_other_stage = 0xFF;
-    init_wclass();
     char sha[41];
     pb_sha1_hex(rom, size, sha);
-    if (strcmp(sha, PB_ROM_SHA1) != 0) {
+    pb->rom = pb_rom_profile(sha);
+    if (!pb->rom) {
         snprintf(pb->error, sizeof pb->error,
-                 "ROM non reconnue (SHA-1 %s). Il faut Pokemon Pinball version US/Australie, SHA-1 %s.",
-                 sha, PB_ROM_SHA1);
+                 "ROM not recognised (SHA-1 %s): Pokemon Pinball, US version (SHA-1 %s), or Pokemon Pinball "
+                 "Generations 1.6 (SHA-1 %s).", sha, ROMS[0].sha1, ROMS[1].sha1);
         return -1;
     }
+    wclass_init(PBR);
     pb->snap_a = (GBCState *)malloc(sizeof(GBCState));
     pb->snap_b = (GBCState *)malloc(sizeof(GBCState));
     pb->snap_c = (GBCState *)malloc(sizeof(GBCState));
@@ -1318,7 +1422,7 @@ int pb_init(Pinball *pb, const uint8_t *rom, size_t size, uint32_t sample_rate)
     }
     pb->st.magic = PB_MAGIC;
     gbc_add_hook(g, 0, R_ResolveGameObjectCollisions, hk_resolve, pb);
-    gbc_add_hook(g, 3, 0x5943, hk_resolve_done, pb);          /* return site in HandleBallPhysics */
+    gbc_add_hook(g, B_HandleBallPhysics, R_ResolveDone, hk_resolve_done, pb);   /* return site in HandleBallPhysics */
     gbc_add_hook(g, B_DrawSpritesForStage, R_DrawSpritesForStage, hk_draw, pb);
     gbc_add_hook(g, B_CheckStageTransition, R_CheckStageTransition, hk_transition, pb);
     gbc_add_hook(g, 0, R_WaitFrame, hk_wait, pb);
@@ -1335,10 +1439,16 @@ int pb_init(Pinball *pb, const uint8_t *rom, size_t size, uint32_t sample_rate)
     gbc_add_hook(g, 0, R_FadeOut_GameboyColor, hk_fade_out, pb);
     gbc_add_hook(g, 0, R_FadeInStep, hk_fade_in_step, pb);
     gbc_add_hook(g, 0, R_FadeOutStep, hk_fade_out_step, pb);
-    gbc_add_hook(g, 0, 0x0D9C, hk_faded_set, pb);             /* "ret" of SetFadedPalettes */
+    gbc_add_hook(g, 0, R_SetFadedPalettesRet, hk_faded_set, pb);
 #ifndef PB_LEGACY
     gbc_add_hook(g, B_CaptureAnimation, R_CaptureAnimation, hk_capture_anim, pb);
 #endif
+    if (pb->rom->id == PB_ROM_ORIGINAL) {                /* pb_set_double_speed */
+        gbc_add_hook(g, 0, US_TIMER_RELOAD, hk_timer_reload, pb);
+        gbc_add_hook(g, 3, US_ROULETTE_BC, hk_roulette, pb);
+        gbc_add_hook(g, 0x14, US_PCM_PLAY, hk_pcm, pb);
+        gbc_add_hook(g, 0x14, US_PCM_RETURN, hk_pcm_done, pb);
+    }
     gbc_add_watch(g, W_CurrentStage, on_stage_written, pb);
     g->irq_fn = on_irq;
     g->reti_fn = on_reti;
@@ -1371,18 +1481,29 @@ void pb_set_antilag(Pinball *pb, bool on) { pb->antilag = on; }
 
 void pb_set_frame_palettes(Pinball *pb, bool on) { gbc_set_frame_palettes(&pb->g, on); }
 
+void pb_set_double_speed(Pinball *pb, bool on) { pb->double_speed = on; }
+
+#define FLIPPER_GFX 0xA8600u                     /* 2A:4600 */
+const uint8_t *pb_flipper_tiles(const Pinball *pb)
+{
+    return pb->g.rom_size >= FLIPPER_GFX + 18 * 16 ? pb->g.rom + FLIPPER_GFX : NULL;
+}
+
 /* The game waits there (for an interrupt, or for time to pass): the work of the frame is done up
  * to this point. The frame wait (0468-0476) at any depth (the main loop, or a sequence that waits
  * frames itself); a flag cleared by an interrupt (0E62); the screen turned off (057E); a delay
  * counted down in BC or DE (the timing of some sequences: a roulette of the slot plays a sound
  * between such delays), which out of time would go faster; the Pokemon cries (14:4000-4075 and
  * their player 14:5F56-5FA5: see hk_cry), which out of time would play no sound. */
-static bool game_waits(GBC *g)
+static bool game_waits(Pinball *pb)
 {
+    GBC *g = &pb->g;
     uint16_t pc = g->s.pc;
-    if ((pc >= R_WaitFrame && pc <= R_WaitFrameLoop + 4) || (pc >= 0x0E62 && pc <= 0x0E67) || (pc >= 0x057E && pc <= 0x0585))
+    if ((pc >= R_WaitFrame && pc <= R_WaitFrameLoop + 4) || (pc >= PBR->R_FlagWait && pc <= PBR->R_FlagWaitEnd) ||
+        (pc >= PBR->R_ScreenOff && pc <= PBR->R_ScreenOffEnd))
         return true;
-    if (g->s.rom_bank == B_PlayCry && ((pc >= R_PlayCry && pc <= 0x4075) || (pc >= 0x5F56 && pc <= 0x5FA5))) return true;
+    if (g->s.rom_bank == B_PlayCry && ((pc >= R_PlayCry && pc <= PBR->R_PlayCryEnd) || (pc >= PBR->R_CryPlayer && pc <= PBR->R_CryPlayerEnd)))
+        return true;
     static const uint8_t delays[3][9] = {
         { 5, 0x0B, 0x78, 0xB1, 0x20, 0xFB },                         /* dec bc / ld a,b / or c / jr nz */
         { 5, 0x1B, 0x7A, 0xB3, 0x20, 0xFB },                         /* dec de / ld a,d / or e / jr nz */
@@ -1412,7 +1533,7 @@ static void finish_late_frame(Pinball *pb)
     GBC *g = &pb->g;
     GBCState *s = &g->s;
     if (!pb->wait_sp || s->halted || !(s->io[0x40] & 0x80) || W(W_CurrentScreen) != SCREEN_PINBALL_GAME) return;
-    if (game_waits(g)) return;
+    if (game_waits(pb)) return;
     pb->stats_late++;
 #ifdef PB_LAGDEBUG
     uint16_t start_pc = s->pc;
@@ -1426,7 +1547,7 @@ static void finish_late_frame(Pinball *pb)
         pb->late_budget = &budget;
         r = gbc_exec(g, GBC_EXEC_CALL, R_WaitFrameLoop, pb->wait_sp, &budget, 0);
         pb->late_budget = NULL;
-        if (r == GBC_EXEC_DONE || game_waits(g)) { r = GBC_EXEC_DONE; break; }
+        if (r == GBC_EXEC_DONE || game_waits(pb)) { r = GBC_EXEC_DONE; break; }
     }
     g->stretch--;
     g->frozen--;
@@ -1516,6 +1637,7 @@ const PbView *pb_view(const Pinball *pb) { return &pb->view; }
 void pb_run_frame(Pinball *pb, uint8_t buttons)
 {
     gbc_set_buttons(&pb->g, buttons);
+    speed_policy(pb);
     gbc_run_frame(&pb->g);
     if (pb->antilag && pb->g.frame_done) finish_late_frame(pb);
 #ifndef PB_LEGACY                       /* PB_LEGACY (tools): the output of 2.0, to compare the engines */
@@ -1576,13 +1698,17 @@ int pb_table(const Pinball *pb)
 {
     if (!pb_in_game(pb)) return -1;
     uint8_t st = pb->g.s.wram[W_CurrentStage - 0xC000];
-    return (st == 0 || st == 1) ? 0 : (st == 4 || st == 5) ? 1 : -1;
+    return st < 32 ? PBR->table[st] : -1;
 }
 
 int pb_stage(const Pinball *pb)
 {
     return pb_in_game(pb) ? pb->g.s.wram[W_CurrentStage - 0xC000] : -1;
 }
+
+int pb_stage_table(const Pinball *pb, int stage) { return stage >= 0 && stage < 32 ? PBR->table[stage] : -1; }
+
+int pb_stage_bonus(const Pinball *pb, int stage) { return stage >= 0 && stage < 32 ? PBR->bonus[stage] : PB_BONUS_NONE; }
 
 int pb_fix_key_config(Pinball *pb)
 {
@@ -1608,7 +1734,7 @@ int pb_fix_key_config(Pinball *pb)
  * old suspend.state as garbage (and crash at every start because of it).
  */
 #define PB_SNAP_MAGIC   0x43544250u    /* "PBTC" */
-#define PB_SNAP_VERSION 5u
+#define PB_SNAP_VERSION 6u
 
 typedef struct {
     uint32_t magic, version, layout, check;
@@ -1640,7 +1766,7 @@ size_t pb_snapshot_size(void) { return sizeof(SnapHeader) + sizeof(GBCState) + s
 void pb_snapshot_save(const Pinball *pb, void *dst)
 {
     uint8_t *d = (uint8_t *)dst;
-    SnapHeader h = { PB_SNAP_MAGIC, PB_SNAP_VERSION, snap_layout(), 0 };
+    SnapHeader h = { PB_SNAP_MAGIC, PB_SNAP_VERSION, snap_layout() ^ (uint32_t)pb->rom->id * 0x9E3779B9u, 0 };
     gbc_state_save(&pb->g, d + sizeof h);
     memcpy(d + sizeof h + sizeof(GBCState), &pb->st, sizeof(PinballState));
     h.check = fnv1a(2166136261u, d + sizeof h, sizeof(GBCState) + sizeof(PinballState));
@@ -1666,7 +1792,8 @@ int pb_snapshot_load(Pinball *pb, const void *src, size_t size)
     const uint8_t *d = (const uint8_t *)src;
     SnapHeader h;
     memcpy(&h, d, sizeof h);
-    if (h.magic != PB_SNAP_MAGIC || h.version != PB_SNAP_VERSION || h.layout != snap_layout()) return -1;
+    /* (the layout carries the ROM: the other game's state is refused) */
+    if (h.magic != PB_SNAP_MAGIC || h.version != PB_SNAP_VERSION || h.layout != (snap_layout() ^ (uint32_t)pb->rom->id * 0x9E3779B9u)) return -1;
     if (h.check != fnv1a(2166136261u, d + sizeof h, sizeof(GBCState) + sizeof(PinballState))) return -1;
     /* the source may be unaligned (file buffer): check copies */
     GBCState *s = pb->snap_c;

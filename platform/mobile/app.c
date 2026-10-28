@@ -6,12 +6,12 @@
  *   pinball.sav    the cartridge save (high scores, Pokedex, saved game)
  *   suspend.state  the whole machine when the app went to the background
  *   quick.state    the quick save of the menu
- *   settings.txt   vibration / sound / motion tilt / touch flippers / screen filter / colours / the
- *                  last table played (keys of its bonus stages)
+ *   gen_*          the same for Pokemon Pinball Generations (2.8), when its ROM was imported
+ *   settings.txt   vibration / sound / motion tilt / game touch / screen filter / colours / the
+ *                  game played / the last table played (keys of its bonus stages)
  */
 #define _POSIX_C_SOURCE 200809L
 #include "app.h"
-#include "../../src/game/pinball_us.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +24,19 @@
 static void path_of(const MobileApp *a, const char *name, char *out, size_t n)
 {
     snprintf(out, n, "%s/%s", a->dir, name);
+}
+
+/* the files of a game: those of Generations begin with "gen_" */
+static void game_path(const MobileApp *a, bool gen, const char *name, char *out, size_t n)
+{
+    snprintf(out, n, "%s/%s%s", a->dir, gen ? "gen_" : "", name);
+}
+
+static bool file_exists(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (f) fclose(f);
+    return f != NULL;
 }
 
 static uint8_t *read_all(const char *path, size_t *size, size_t max)
@@ -108,21 +121,27 @@ static void settings_load(MobileApp *a)
     if (strstr(buf, "vibration=0")) a->ui.vibration = false;
     if (strstr(buf, "sound=0")) a->ui.sound = false;
     if (strstr(buf, "motion=1")) a->ui.motion = true;
-    if (strstr(buf, "touch=0")) a->ui.touch_flippers = false;
+    /* what a finger on the game does; up to 2.7 "touch=" (the flippers on or off): off stays off */
+    const char *t = strstr(buf, "screen=");
+    if (t && t[7] >= '0' && t[7] < '0' + UI_TOUCHES) a->ui.touch_mode = t[7] - '0';
+    else if (strstr(buf, "touch=0")) a->ui.touch_mode = UI_TOUCH_OFF;
+    if (strstr(buf, "game=1")) a->gen = true;
+    if (strstr(buf, "controls=1")) a->ui.hide_controls = true;
     const char *f = strstr(buf, "filter=");
     if (f && f[7] >= '0' && f[7] < '0' + UI_FILTERS) a->ui.filter = f[7] - '0';
     f = strstr(buf, "colors=");
     if (f && f[7] >= '0' && f[7] < '0' + UI_COLORSETS) a->ui.colors = f[7] - '0';
-    if (strstr(buf, "table=1")) a->ui.table = 1;
+    t = strstr(buf, "table=");
+    if (t && t[6] >= '0' && t[6] < '0' + PB_TABLES) a->ui.table = t[6] - '0';
 }
 
 static void settings_save(MobileApp *a)
 {
-    char p[600], buf[160];
+    char p[600], buf[192];
     path_of(a, "settings.txt", p, sizeof p);
-    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\nmotion=%d\ntouch=%d\nfilter=%d\ncolors=%d\ntable=%d\n",
-                     a->ui.vibration ? 1 : 0, a->ui.sound ? 1 : 0, a->ui.motion ? 1 : 0, a->ui.touch_flippers ? 1 : 0,
-                     a->ui.filter, a->ui.colors, a->ui.table);
+    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\nmotion=%d\nscreen=%d\nfilter=%d\ncolors=%d\ngame=%d\ntable=%d\ncontrols=%d\n",
+                     a->ui.vibration ? 1 : 0, a->ui.sound ? 1 : 0, a->ui.motion ? 1 : 0, a->ui.touch_mode,
+                     a->ui.filter, a->ui.colors, a->gen ? 1 : 0, a->ui.table, a->ui.hide_controls ? 1 : 0);
     if (!write_later(a, 1, p, buf, (size_t)n)) {         /* the previous one still waits: after it */
         app_io_wait(a);
         write_later(a, 1, p, buf, (size_t)n);
@@ -135,7 +154,7 @@ static void sram_load(MobileApp *a)
 {
     app_io_wait(a);                                     /* a save being written: the new one */
     char p[600];
-    path_of(a, "pinball.sav", p, sizeof p);
+    game_path(a, a->gen, "pinball.sav", p, sizeof p);
     size_t n;
     uint8_t *d = read_all(p, &n, 0x8000);
     if (d) { pb_load_sram(a->pb, d, n); free(d); }
@@ -153,7 +172,7 @@ static void sram_flush(MobileApp *a)
     if (a->io[0].failed) { a->io[0].failed = false; a->sav_last_size = 0; }   /* written again */
     if (n == a->sav_last_size && memcmp(s, a->sav_last, n) == 0) return;
     char p[600];
-    path_of(a, "pinball.sav", p, sizeof p);
+    game_path(a, a->gen, "pinball.sav", p, sizeof p);
     if (write_later(a, 0, p, s, n)) { memcpy(a->sav_last, s, n); a->sav_last_size = n; }
 }
 
@@ -176,7 +195,7 @@ static bool state_save(MobileApp *a, const char *name)
     if (!buf) return false;
     pb_snapshot_save(a->pb, buf);
     char p[600];
-    path_of(a, name, p, sizeof p);
+    game_path(a, a->gen, name, p, sizeof p);
     bool ok = write_all(p, buf, n);
     free(buf);
     return ok;
@@ -186,7 +205,7 @@ static bool state_load(MobileApp *a, const char *name)
 {
     if (!a->pb) return false;
     char p[600];
-    path_of(a, name, p, sizeof p);
+    game_path(a, a->gen, name, p, sizeof p);
     size_t n;
     uint8_t *d = read_all(p, &n, 64u << 20);
     if (!d) return false;
@@ -211,25 +230,26 @@ static bool start_game(MobileApp *a, bool resume)
         return false;
     }
     a->pb = pb;
+    nd_set_flipper(pb_flipper_tiles(pb));       /* the game's flipper in the flipper keys */
     pb_set_narrow(pb, true);                    /* the table at its original width, always */
     pb_set_antilag(pb, true);                   /* no frame skipped by the game (see pinball.h) */
+    pb_set_double_speed(pb, true);              /* the double speed of Generations, original ROM too */
     pb_set_frame_palettes(pb, true);            /* no picture torn by a change of colours */
     pb_set_hold(pb, true);                      /* the screen off (loadings): the last picture stays */
     pb_set_audio_highpass(pb, GBC_HIGHPASS_FRONT);      /* the bass of the music (gbc.h) */
-    a->pic_seq = 0;
-    a->bg_ok = false;
-    a->shown = NULL;                            /* the old game's picture: not this one's size */
-    a->disp_table = a->ui.table;
+    screen_reset(&a->scr, a->ui.table);
     sram_load(a);
     if (resume) {
         /* The suspended game is used once: if it made the app crash, the next start must not
          * load it again (the cartridge save is kept). It is written again at the next suspend. */
         state_load(a, "suspend.state");
         char p[600];
-        path_of(a, "suspend.state", p, sizeof p);
+        game_path(a, a->gen, "suspend.state", p, sizeof p);
         remove(p);
     }
     a->ui.no_rom = false;
+    a->ui.game_gen = a->gen;
+    a->ui.other_game = a->installed[!a->gen];
     a->ui.no_rom_detail[0] = 0;
     atomic_store_explicit(&a->ring_flush, true, memory_order_release);   /* old samples: dropped by the audio thread */
     return true;
@@ -240,13 +260,14 @@ int app_init(MobileApp *a, const char *dir, uint32_t rate)
     memset(a, 0, sizeof *a);
     snprintf(a->dir, sizeof a->dir, "%s", dir);
     a->rate = rate ? rate : 48000;
-    a->canvas = (uint32_t *)calloc((size_t)ND_MAX_W * ND_MAX_H, sizeof(uint32_t));
-    a->bg = (uint32_t *)calloc((size_t)ND_MAX_W * ND_MAX_H, sizeof(uint32_t));
+    screen_init(&a->scr);
     ui_init(&a->ui);
     settings_load(a);
     a->ui.no_rom = true;
     char p[600];
-    path_of(a, "rom.gbc", p, sizeof p);
+    for (int g = 0; g < 2; g++) { game_path(a, g == 1, "rom.gbc", p, sizeof p); a->installed[g] = file_exists(p); }
+    if (!a->installed[a->gen] && a->installed[!a->gen]) a->gen = !a->gen;   /* the one there is */
+    game_path(a, a->gen, "rom.gbc", p, sizeof p);
     size_t n;
     uint8_t *d = read_all(p, &n, 8u << 20);
     if (d) {
@@ -262,49 +283,139 @@ void app_free(MobileApp *a)
     if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
     free(a->rom);
     a->rom = NULL;
-    free(a->canvas);
-    free(a->bg);
-    a->bg = NULL;
-    a->canvas = NULL;
-    deflicker_free(&a->defl);
-    a->shown = NULL;
+    screen_free(&a->scr);
+}
+
+/* An IPS patch ("PATCH", records: 3 bytes of offset, 2 of size, the data, or a size 0 and 2 bytes of
+ * count and the byte repeated, "EOF", maybe 3 bytes of the new size) applied to a ROM: the patched copy
+ * (malloc), or NULL if the patch is damaged. */
+static uint8_t *ips_apply(const uint8_t *rom, size_t rom_size, const uint8_t *ips, size_t n, size_t *out_size)
+{
+    const size_t max = 8u << 20;
+    if (n < 8 || memcmp(ips, "PATCH", 5) != 0 || rom_size > max) return NULL;
+    uint8_t *out = (uint8_t *)calloc(1, max);
+    if (!out) return NULL;
+    memcpy(out, rom, rom_size);
+    size_t size = rom_size, i = 5;
+    for (;;) {
+        if (i + 3 > n) { free(out); return NULL; }
+        if (!memcmp(ips + i, "EOF", 3)) {
+            i += 3;
+            if (i + 3 <= n) size = (size_t)ips[i] << 16 | (size_t)ips[i + 1] << 8 | ips[i + 2];
+            break;
+        }
+        if (i + 5 > n) { free(out); return NULL; }
+        size_t off = (size_t)ips[i] << 16 | (size_t)ips[i + 1] << 8 | ips[i + 2], len = (size_t)ips[i + 3] << 8 | ips[i + 4];
+        i += 5;
+        if (len) {
+            if (i + len > n || off + len > max) { free(out); return NULL; }
+            memcpy(out + off, ips + i, len);
+            i += len;
+        } else {
+            if (i + 3 > n) { free(out); return NULL; }
+            len = (size_t)ips[i] << 8 | ips[i + 1];
+            if (off + len > max) { free(out); return NULL; }
+            memset(out + off, ips[i + 2], len);
+            i += 3;
+        }
+        if (off + len > size) size = off + len;
+    }
+    *out_size = size;
+    return out;
 }
 
 bool app_import_rom(MobileApp *a, const uint8_t *data, size_t size)
 {
+    /* the patch of Generations: applied to the US ROM, if it is installed */
+    uint8_t *patched = NULL;
+    if (size >= 5 && !memcmp(data, "PATCH", 5)) {
+        char p[600];
+        game_path(a, false, "rom.gbc", p, sizeof p);
+        size_t n;
+        uint8_t *us = a->installed[0] ? read_all(p, &n, 8u << 20) : NULL;
+        if (!us) {
+            ui_toast(&a->ui, "Install the US ROM of Pokémon Pinball first, then open the patch again", 5);
+            return false;
+        }
+        patched = ips_apply(us, n, data, size, &size);
+        free(us);
+        if (!patched) { ui_toast(&a->ui, "This patch could not be applied", 4); return false; }
+        data = patched;
+    }
     char sha[41];
     pb_sha1_hex(data, size, sha);
-    if (a->rom && a->rom_size == size && memcmp(a->rom, data, size) == 0) {
+    const PbRom *rom = pb_rom_profile(sha);
+    bool gen = rom && rom->id == PB_ROM_GENERATIONS;
+    if (rom && a->rom && gen == a->gen && a->rom_size == size && memcmp(a->rom, data, size) == 0) {
         ui_toast(&a->ui, "This ROM is already installed", 3);
+        free(patched);
         return true;
     }
     Pinball *probe = (Pinball *)calloc(1, sizeof(Pinball));
-    if (!probe) return false;
+    if (!probe) { free(patched); return false; }
     int bad = pb_init(probe, data, size, a->rate);
     if (bad) {
         snprintf(a->ui.no_rom_detail, sizeof a->ui.no_rom_detail,
-                 "This file is not the right ROM (SHA-1 %.12s...). Pinball NS needs Pokémon Pinball, US "
-                 "version (USA, Australia).", sha);
-        if (a->pb) ui_toast(&a->ui, "This file is not the right ROM", 4);   /* else: explained on screen */
+                 "This file is not a ROM Pinball NS knows (SHA-1 %.12s...). It needs Pokémon Pinball, US version (USA, "
+                 "Australia), or Pokémon Pinball Generations 1.6.", sha);
+        if (a->pb) ui_toast(&a->ui, patched ? "The patched ROM is not Pokémon Pinball Generations 1.6" : "This file is not the right ROM", 4);
     }
     pb_free(probe);
     free(probe);
-    if (bad) return false;
+    if (bad) { free(patched); return false; }
 
     uint8_t *copy = (uint8_t *)malloc(size);
-    if (!copy) return false;
+    if (!copy) { free(patched); return false; }
     memcpy(copy, data, size);
+    free(patched);
     char p[600];
-    path_of(a, "rom.gbc", p, sizeof p);
+    game_path(a, gen, "rom.gbc", p, sizeof p);
     write_all(p, copy, size);
+    if (a->pb) app_suspend(a);                          /* the game played: kept to come back to */
     sram_flush_now(a);
     if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
     free(a->rom);
     a->rom = copy;
     a->rom_size = size;
+    a->installed[gen] = true;
+    a->gen = gen;
+    settings_save(a);
     if (!start_game(a, false)) return false;
-    ui_toast(&a->ui, "ROM installed. Have fun!", 4);
+    ui_toast(&a->ui, gen ? "Pokémon Pinball Generations installed. Have fun!" : "ROM installed. Have fun!", 4);
     return true;
+}
+
+bool app_has_rom(const MobileApp *a, const uint8_t *data, size_t size)
+{
+    if (size >= 5 && !memcmp(data, "PATCH", 5)) return a->installed[PB_ROM_GENERATIONS];
+    char sha[41];
+    pb_sha1_hex(data, size, sha);
+    const PbRom *rom = pb_rom_profile(sha);
+    return rom && a->installed[rom->id];
+}
+
+/* the other game installed: the one played is suspended (it is found again as it was), the other
+ * one resumed */
+static void switch_game(MobileApp *a)
+{
+    char p[600];
+    game_path(a, !a->gen, "rom.gbc", p, sizeof p);
+    size_t n;
+    uint8_t *d = a->installed[!a->gen] ? read_all(p, &n, 8u << 20) : NULL;
+    if (!d) {
+        ui_toast(&a->ui, a->gen ? "Open the US ROM of Pokémon Pinball with Pinball NS to play it"
+                                : "Open the ROM of Pokémon Pinball Generations 1.6 (or its IPS patch) with Pinball NS to play it", 5);
+        return;
+    }
+    app_suspend(a);
+    if (a->pb) { pb_free(a->pb); free(a->pb); a->pb = NULL; }
+    free(a->rom);
+    a->rom = d;
+    a->rom_size = n;
+    a->gen = !a->gen;
+    settings_save(a);
+    ui_open_menu(&a->ui, false);
+    if (start_game(a, true)) ui_toast(&a->ui, a->gen ? "Pokémon Pinball Generations" : "Pokémon Pinball", 2);
 }
 
 bool app_has_game(const MobileApp *a) { return a->pb != NULL; }
@@ -324,7 +435,7 @@ void app_set_insets(MobileApp *a, int top, int bottom, int left, int right, int 
 
 void app_back(MobileApp *a)
 {
-    if (a->ui.menu_open && a->ui.about_open) { a->ui.about_open = false; return; }     /* ABOUT: the menu again */
+    if (a->ui.menu_open && a->ui.about_open) { a->ui.about_open = false; a->ui.about_page = 0; return; }   /* ABOUT: the menu again */
     ui_open_menu(&a->ui, !a->ui.menu_open);
     if (a->ui.menu_open) a->ui.menu_sel = 0;          /* keys: the first entry is selected */
 }
@@ -334,16 +445,6 @@ int app_take_haptic(MobileApp *a)
     int h = a->ui.haptic;
     a->ui.haptic = UI_HAPTIC_NONE;
     return a->ui.vibration ? h : UI_HAPTIC_NONE;
-}
-
-/* what the game shows: the field controls, the table played */
-static void game_context(MobileApp *a)
-{
-    if (!a->pb) return;
-    a->ui.in_game = pb_in_game(a->pb);
-    a->ui.field = pb_playing(a->pb);
-    int t = pb_table(a->pb);
-    if (t >= 0 && t != a->ui.table) a->ui.table = t;     /* kept for its bonus stages */
 }
 
 /* ------------------------------------------------------------------ frames and audio */
@@ -356,25 +457,25 @@ void app_test_command(MobileApp *a, const char *cmd)
 }
 
 /* as tools/uisim's bonus:N, once the ball is in the bottom half of a table */
+#define PBR (a->pb->rom)
 static void test_step(MobileApp *a)
 {
     GBC *g = &a->pb->g;
     uint8_t st = gbc_read(g, W_CurrentStage);
-    if (gbc_read(g, W_CurrentScreen) == SCREEN_PINBALL_GAME && (st == 1 || st == 5) && !gbc_read(g, W_InSpecialMode) &&
-        gbc_read(g, W_PinballIsVisible) && !gbc_read(g, 0xD495)) {
-        gbc_write(g, 0xD495, 1);                              /* wGoingToBonusStage */
+    if (gbc_read(g, W_CurrentScreen) == SCREEN_PINBALL_GAME && pb_stage_table(a->pb, st) >= 0 && (st & 1) &&
+        !gbc_read(g, W_InSpecialMode) && gbc_read(g, W_PinballIsVisible) && !gbc_read(g, W_GoingToBonusStage)) {
+        gbc_write(g, W_GoingToBonusStage, 1);
         gbc_write(g, W_MoveToNextScreenState, 1);
-        gbc_write(g, 0xD497, (uint8_t)a->test_bonus);         /* wNextStage */
+        gbc_write(g, W_NextStage, (uint8_t)a->test_bonus);
         a->test_bonus = 0;
     }
 }
+#undef PBR
 #endif
 
-static void new_picture(MobileApp *a);
-
 #ifdef APP_PROF
-/* tools (uisim perf): milliseconds spent in the game's frames, the filter of its flicker, the
- * composition of its picture's background */
+/* tools (uisim perf): milliseconds spent in the game's frames, the picture (the filter of its
+ * flicker, the composition of its background) */
 double app_prof[3];
 static double prof_now(void)
 {
@@ -390,13 +491,13 @@ static double prof_now(void)
 void app_run_frame(MobileApp *a)
 {
     if (!app_running(a)) return;
-    game_context(a);
+    screen_context(&a->scr, a->pb, &a->ui);
 #ifdef PNS_TEST
     if (a->test_bonus) test_step(a);
 #endif
     PROF(0, pb_run_frame(a->pb, ui_buttons(&a->ui)));
     a->frame_seq++;
-    new_picture(a);
+    PROF(1, screen_new_picture(&a->scr, a->pb, &a->ui));
     int16_t tmp[4096];
     int n;
     while ((n = pb_audio(a->pb, tmp, 2048)) > 0) {
@@ -499,6 +600,7 @@ void app_update(MobileApp *a, double now)
         break;
     case UI_ACT_TOGGLE_VIBRATION:
         a->ui.vibration = !a->ui.vibration;
+        a->vibration_test = a->ui.vibration;            /* a pulse: the player feels whether it works */
         settings_save(a);
         break;
     case UI_ACT_TOGGLE_SOUND:
@@ -514,9 +616,16 @@ void app_update(MobileApp *a, double now)
         a->ui.filter = (a->ui.filter + 1) % UI_FILTERS;
         settings_save(a);
         break;
-    case UI_ACT_TOGGLE_TOUCH:
-        a->ui.touch_flippers = !a->ui.touch_flippers;
+    case UI_ACT_NEXT_TOUCH:
+        a->ui.touch_mode = (a->ui.touch_mode + 1) % UI_TOUCHES;
         settings_save(a);
+        break;
+    case UI_ACT_TOGGLE_CONTROLS:
+        a->ui.hide_controls = !a->ui.hide_controls;
+        settings_save(a);
+        break;
+    case UI_ACT_NEXT_GAME:
+        switch_game(a);
         break;
     case UI_ACT_NEXT_COLORS:
         a->ui.colors = (a->ui.colors + 1) % UI_COLORSETS;
@@ -524,6 +633,7 @@ void app_update(MobileApp *a, double now)
         break;
     case UI_ACT_ABOUT:
         a->ui.about_open = true;
+        a->ui.about_page = 0;
         a->ui.menu_hot = -1;
         break;
     case UI_ACT_RESET:
@@ -531,7 +641,7 @@ void app_update(MobileApp *a, double now)
         if (a->rom) {
             sram_flush_now(a);
             char p[600];
-            path_of(a, "suspend.state", p, sizeof p);
+            game_path(a, a->gen, "suspend.state", p, sizeof p);
             remove(p);
             start_game(a, false);
             ui_toast(&a->ui, "Game restarted", 2);
@@ -562,80 +672,6 @@ void app_suspend(MobileApp *a)
     a->io_async = async;
 }
 
-void app_build(MobileApp *a, UiList *l)
-{
-    int w = 0, h = 0, stride;
-    if (a->pb) {
-        pb_frame(a->pb, &w, &h, &stride);
-        game_context(a);
-        a->ui.scene = nd_scene(a->pb, h);
-    }
-    ui_build(&a->ui, l, w, h);
-}
+void app_build(MobileApp *a, UiList *l) { screen_build(&a->scr, a->pb, &a->ui, l); }
 
-/* the game's picture as shown: the held one (pb_set_hold), its 30 Hz flicker mixed */
-static const uint32_t *game_picture(MobileApp *a, int *w, int *h, int *stride)
-{
-    const uint32_t *px = pb_frame(a->pb, w, h, stride);
-    if (a->shown && !a->no_deflicker && *w == a->shown_w && *h == a->shown_h) { px = a->shown; *stride = *w; }
-    return px;
-}
-
-static bool same_layout(const NdLayout *x, const NdLayout *y)
-{
-    return x->sw == y->sw && x->sh == y->sh && x->cw == y->cw && x->ch == y->ch && x->gx == y->gx && x->gy == y->gy &&
-           x->gw == y->gw && x->gh == y->gh && x->scene == y->scene && x->corner == y->corner && x->bottom == y->bottom;
-}
-
-/* what comes with the picture: its layout, what continues it, the colours of its controls */
-static void compose_game(MobileApp *a)
-{
-    int w, h, stride;
-    const uint32_t *px = game_picture(a, &w, &h, &stride);
-    const PbView *v = pb_view(a->pb);
-    a->disp_in_game = v->in_game;
-    a->disp_field = v->playing;
-    if (v->table >= 0) a->disp_table = v->table;          /* kept for its bonus stages */
-    if (!a->canvas || !a->bg || a->ui.no_rom) return;
-    ui_nd_prepare(&a->ui, w, h, nd_scene(a->pb, h));
-    nd_render_game(&a->ui.nd, a->pb, px, stride, a->bg, a->bg_fade);
-    a->bg_layout = a->ui.nd;
-    a->bg_ok = true;
-}
-
-/* after each frame of the game: a new picture comes with what continues it, made now (the state
- * of the game is the one of the picture: its video memory for the stages); the screen off, the
- * last picture and its parts stay as they were */
-static void new_picture(MobileApp *a)
-{
-    uint32_t seq = pb_picture_seq(a->pb);
-    if (seq == a->pic_seq && a->shown) return;
-    a->pic_seq = seq;
-    int w, h, stride;
-    const uint32_t *px = pb_frame(a->pb, &w, &h, &stride);
-    PROF(1, a->shown = deflicker_frame(&a->defl, px, w, h, stride));
-    a->shown_w = w;
-    a->shown_h = h;
-    PROF(2, compose_game(a));
-}
-
-const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride)
-{
-    if (!a->pb) { *w = *h = 0; *stride = 0; return NULL; }
-    if (!a->shown) new_picture(a);
-    const uint32_t *px = game_picture(a, w, h, stride);
-    if (!a->canvas || !a->bg || a->ui.no_rom) return px;
-    /* the whole screen, one picture in the pixels of the game */
-    ui_nd_prepare(&a->ui, *w, *h, nd_scene(a->pb, *h));
-    if (!a->bg_ok || !same_layout(&a->bg_layout, &a->ui.nd)) compose_game(a);   /* new screen size */
-    NdState st;
-    ui_nd_state(&a->ui, &st);
-    /* the controls of the picture shown (a loading behind it: those of the next screen later) */
-    st.set = !a->disp_in_game ? ND_SET_GREY : a->disp_table == 1 ? ND_SET_BLUE : ND_SET_RED;
-    st.letters = !a->disp_field;
-    nd_render_controls(&a->ui.nd, &st, a->bg, a->bg_fade, a->canvas);
-    *w = a->ui.nd.cw;
-    *h = a->ui.nd.ch;
-    *stride = a->ui.nd.cw;
-    return a->canvas;
-}
+const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride) { return screen_frame(&a->scr, a->pb, &a->ui, w, h, stride); }

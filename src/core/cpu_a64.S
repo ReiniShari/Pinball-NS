@@ -1,13 +1,24 @@
-// cpu_a64.S - the fast interpreter of the SM83 for ARM64 (Android), written by
+// cpu_a64.S - the fast interpreter of the SM83 for ARM64 (Android, iPhone, Mac), written by
 // tools/gencpu.c from its description of the instructions: do not edit, see that file.
 // int gbc_cpu_run(GBC *g, int64_t *budget): see gbc_exec_asm (src/core/gbc_exec.c).
+// ELF (Android, Linux) or Mach-O (Apple: the C names with an underscore; x18 is never used,
+// the platform's register there).
 
+#ifdef __APPLE__
+#define SYM(x) _##x
+#else
+#define SYM(x) x
+#endif
     .text
     .p2align 4
-    .globl gbc_cpu_run
+    .globl SYM(gbc_cpu_run)
+#ifdef __APPLE__
+    .private_extern SYM(gbc_cpu_run)
+#else
     .hidden gbc_cpu_run
     .type gbc_cpu_run, %function
-gbc_cpu_run:
+#endif
+SYM(gbc_cpu_run):
     stp x29, x30, [sp, #-112]!
     mov x29, sp
     stp x19, x20, [sp, #16]
@@ -18,7 +29,7 @@ gbc_cpu_run:
     str x1, [sp, #96]
     mov x19, x0
     add x20, x0, #139, lsl #12
-    add x20, x20, #2944
+    add x20, x20, #2960
     ldr x23, [x1]
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
@@ -94,7 +105,7 @@ Lrs2:
 L1:
     mov x0, x19
     mov w1, w9
-    bl gbc_read
+    bl SYM(gbc_read)
     strb w0, [x20, #372]
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
@@ -225,7 +236,7 @@ L2:
     mov x0, x19
     mov w1, w9
     ldrb w2, [sp, #32]
-    bl gbc_asm_write
+    bl SYM(gbc_asm_write)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -267,7 +278,7 @@ Ltick_slow4:
 L3:
     mov x0, x19
     mov w1, #4
-    bl gbc_asm_tick
+    bl SYM(gbc_asm_tick)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -309,7 +320,7 @@ Ltick_slow8:
 L4:
     mov x0, x19
     mov w1, #8
-    bl gbc_asm_tick
+    bl SYM(gbc_asm_tick)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -1179,6 +1190,41 @@ L69:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
+    strb w26, [x19, #24]
+    strb w27, [x19, #25]
+    rev16 w17, w28
+    strh w17, [x19, #26]
+    rev16 w17, w13
+    strh w17, [x19, #28]
+    rev16 w17, w14
+    strh w17, [x19, #30]
+    strh w25, [x19, #32]
+    strh w24, [x19, #34]
+    ldrb w17, [x20, #371]
+    cbnz w17, L70
+    str x21, [x19, #40]
+    ldrh w17, [x20, #368]
+    add w17, w17, w21
+    add x16, x19, #16, lsl #12
+    strh w17, [x16, #322]
+L70:
+    mov x0, x19
+    mov w1, #16
+    bl SYM(gbc_asm_op)
+    ldrb w26, [x19, #24]
+    ldrb w27, [x19, #25]
+    ldrh w17, [x19, #26]
+    rev16 w28, w17
+    ldrh w17, [x19, #28]
+    rev16 w13, w17
+    ldrh w17, [x19, #30]
+    rev16 w14, w17
+    ldrh w25, [x19, #32]
+    ldrh w24, [x19, #34]
+    ldr x21, [x19, #40]
+    ldr x22, [x20, #320]
+    ldr x15, [x20, #288]
+    adr x16, Ljt_f
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -1188,8 +1234,8 @@ L69:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L70
-L71:
+    cbz x10, L71
+L72:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1199,18 +1245,18 @@ L71:
 L68:
     bl Lrd_slow
     b L69
-L70:
+L71:
     mov w9, w24
     bl Lrd_slow
-    b L71
+    b L72
     .p2align 4
 Lf_11:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L72
-L73:
+    cbz x10, L73
+L74:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1218,8 +1264,8 @@ L73:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L74
-L75:
+    cbz x10, L75
+L76:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1234,24 +1280,24 @@ L75:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L76
-L77:
+    cbz x10, L77
+L78:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L72:
+L73:
     bl Lrd_slow
-    b L73
-L74:
+    b L74
+L75:
     bl Lrd_slow
-    b L75
-L76:
+    b L76
+L77:
     mov w9, w24
     bl Lrd_slow
-    b L77
+    b L78
     .p2align 4
 Lf_12:
     mov w9, w13
@@ -1259,9 +1305,9 @@ Lf_12:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L78
+    cbz x10, L79
     strb w26, [x10, w9, uxtw]
-L79:
+L80:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -1271,22 +1317,22 @@ L79:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L80
-L81:
+    cbz x10, L81
+L82:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L78:
+L79:
     mov w0, w26
     bl Lwr_slow
-    b L79
-L80:
+    b L80
+L81:
     mov w9, w24
     bl Lrd_slow
-    b L81
+    b L82
     .p2align 4
 Lf_13:
     add w13, w13, #1
@@ -1301,18 +1347,18 @@ Lf_13:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L82
-L83:
+    cbz x10, L83
+L84:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L82:
+L83:
     mov w9, w24
     bl Lrd_slow
-    b L83
+    b L84
     .p2align 4
 Lf_14:
     lsr w0, w13, #8
@@ -1336,18 +1382,18 @@ Lf_14:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L84
-L85:
+    cbz x10, L85
+L86:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L84:
+L85:
     mov w9, w24
     bl Lrd_slow
-    b L85
+    b L86
     .p2align 4
 Lf_15:
     lsr w0, w13, #8
@@ -1372,26 +1418,26 @@ Lf_15:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L86
-L87:
+    cbz x10, L87
+L88:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L86:
+L87:
     mov w9, w24
     bl Lrd_slow
-    b L87
+    b L88
     .p2align 4
 Lf_16:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L88
-L89:
+    cbz x10, L89
+L90:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #8, #8
     add w24, w24, #1
@@ -1405,21 +1451,21 @@ L89:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L90
-L91:
+    cbz x10, L91
+L92:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L88:
+L89:
     bl Lrd_slow
-    b L89
-L90:
+    b L90
+L91:
     mov w9, w24
     bl Lrd_slow
-    b L91
+    b L92
     .p2align 4
 Lf_17:
     lsr w0, w26, #7
@@ -1437,26 +1483,26 @@ Lf_17:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L92
-L93:
+    cbz x10, L93
+L94:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L92:
+L93:
     mov w9, w24
     bl Lrd_slow
-    b L93
+    b L94
     .p2align 4
 Lf_18:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L94
-L95:
+    cbz x10, L95
+L96:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1464,7 +1510,7 @@ L95:
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
-L96:
+L97:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -1474,21 +1520,21 @@ L96:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L97
-L98:
+    cbz x10, L98
+L99:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L94:
+L95:
     bl Lrd_slow
-    b L95
-L97:
+    b L96
+L98:
     mov w9, w24
     bl Lrd_slow
-    b L98
+    b L99
     .p2align 4
 Lf_19:
     add w0, w14, w13
@@ -1510,26 +1556,26 @@ Lf_19:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L99
-L100:
+    cbz x10, L100
+L101:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L99:
+L100:
     mov w9, w24
     bl Lrd_slow
-    b L100
+    b L101
     .p2align 4
 Lf_1A:
     mov w9, w13
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L101
-L102:
+    cbz x10, L102
+L103:
     ldrb w26, [x10, w9, uxtw]
     cmp x21, x22
     b.hs Lslow_top
@@ -1540,21 +1586,21 @@ L102:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L103
-L104:
+    cbz x10, L104
+L105:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L101:
+L102:
     bl Lrd_slow
-    b L102
-L103:
+    b L103
+L104:
     mov w9, w24
     bl Lrd_slow
-    b L104
+    b L105
     .p2align 4
 Lf_1B:
     sub w13, w13, #1
@@ -1569,18 +1615,18 @@ Lf_1B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L105
-L106:
+    cbz x10, L106
+L107:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L105:
+L106:
     mov w9, w24
     bl Lrd_slow
-    b L106
+    b L107
     .p2align 4
 Lf_1C:
     and w0, w13, #0xFF
@@ -1604,18 +1650,18 @@ Lf_1C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L107
-L108:
+    cbz x10, L108
+L109:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L107:
+L108:
     mov w9, w24
     bl Lrd_slow
-    b L108
+    b L109
     .p2align 4
 Lf_1D:
     and w0, w13, #0xFF
@@ -1640,26 +1686,26 @@ Lf_1D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L109
-L110:
+    cbz x10, L110
+L111:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L109:
+L110:
     mov w9, w24
     bl Lrd_slow
-    b L110
+    b L111
     .p2align 4
 Lf_1E:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L111
-L112:
+    cbz x10, L112
+L113:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #0, #8
     add w24, w24, #1
@@ -1673,21 +1719,21 @@ L112:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L113
-L114:
+    cbz x10, L114
+L115:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L111:
+L112:
     bl Lrd_slow
-    b L112
-L113:
+    b L113
+L114:
     mov w9, w24
     bl Lrd_slow
-    b L114
+    b L115
     .p2align 4
 Lf_1F:
     and w0, w26, #1
@@ -1704,38 +1750,38 @@ Lf_1F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L115
-L116:
+    cbz x10, L116
+L117:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L115:
+L116:
     mov w9, w24
     bl Lrd_slow
-    b L116
+    b L117
     .p2align 4
 Lf_20:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L117
-L118:
+    cbz x10, L118
+L119:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbnz w27, #7, L119
+    tbnz w27, #7, L120
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     cmn w0, #8
-    b.eq L120
-L121:
-L119:
+    b.eq L121
+L122:
+L120:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -1745,32 +1791,32 @@ L119:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L122
-L123:
+    cbz x10, L123
+L124:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L117:
+L118:
     bl Lrd_slow
-    b L118
-L120:
+    b L119
+L121:
     bl Lcopy
-    b L121
-L122:
+    b L122
+L123:
     mov w9, w24
     bl Lrd_slow
-    b L123
+    b L124
     .p2align 4
 Lf_21:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L124
-L125:
+    cbz x10, L125
+L126:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1778,8 +1824,8 @@ L125:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L126
-L127:
+    cbz x10, L127
+L128:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -1794,24 +1840,24 @@ L127:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L128
-L129:
+    cbz x10, L129
+L130:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L124:
+L125:
     bl Lrd_slow
-    b L125
-L126:
+    b L126
+L127:
     bl Lrd_slow
-    b L127
-L128:
+    b L128
+L129:
     mov w9, w24
     bl Lrd_slow
-    b L129
+    b L130
     .p2align 4
 Lf_22:
     mov w9, w14
@@ -1819,9 +1865,9 @@ Lf_22:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L130
+    cbz x10, L131
     strb w26, [x10, w9, uxtw]
-L131:
+L132:
     add w14, w9, #1
     and w14, w14, #0xFFFF
     cmp x21, x22
@@ -1833,22 +1879,22 @@ L131:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L132
-L133:
+    cbz x10, L133
+L134:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L130:
+L131:
     mov w0, w26
     bl Lwr_slow
-    b L131
-L132:
+    b L132
+L133:
     mov w9, w24
     bl Lrd_slow
-    b L133
+    b L134
     .p2align 4
 Lf_23:
     add w14, w14, #1
@@ -1863,18 +1909,18 @@ Lf_23:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L134
-L135:
+    cbz x10, L135
+L136:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L134:
+L135:
     mov w9, w24
     bl Lrd_slow
-    b L135
+    b L136
     .p2align 4
 Lf_24:
     lsr w0, w14, #8
@@ -1898,18 +1944,18 @@ Lf_24:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L136
-L137:
+    cbz x10, L137
+L138:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L136:
+L137:
     mov w9, w24
     bl Lrd_slow
-    b L137
+    b L138
     .p2align 4
 Lf_25:
     lsr w0, w14, #8
@@ -1934,26 +1980,26 @@ Lf_25:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L138
-L139:
+    cbz x10, L139
+L140:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L138:
+L139:
     mov w9, w24
     bl Lrd_slow
-    b L139
+    b L140
     .p2align 4
 Lf_26:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L140
-L141:
+    cbz x10, L141
+L142:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #8, #8
     add w24, w24, #1
@@ -1967,47 +2013,47 @@ L141:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L142
-L143:
+    cbz x10, L143
+L144:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L140:
+L141:
     bl Lrd_slow
-    b L141
-L142:
+    b L142
+L143:
     mov w9, w24
     bl Lrd_slow
-    b L143
+    b L144
     .p2align 4
 Lf_27:
     mov w0, w26
     ubfx w1, w27, #4, #1
-    tbz w27, #6, L144
-    tbz w27, #5, L145
+    tbz w27, #6, L145
+    tbz w27, #5, L146
     sub w0, w0, #6
-L145:
-    cbz w1, L149
-    sub w0, w0, #0x60
-    b L149
-L144:
-    cbnz w1, L146
-    cmp w0, #0x99
-    b.ls L147
 L146:
+    cbz w1, L150
+    sub w0, w0, #0x60
+    b L150
+L145:
+    cbnz w1, L147
+    cmp w0, #0x99
+    b.ls L148
+L147:
     add w0, w0, #0x60
     mov w1, #1
-L147:
-    tbnz w27, #5, L148
+L148:
+    tbnz w27, #5, L149
     and w2, w0, #0xF
     cmp w2, #9
-    b.ls L149
-L148:
-    add w0, w0, #6
+    b.ls L150
 L149:
+    add w0, w0, #6
+L150:
     and w26, w0, #0xFF
     and w27, w27, #0x40
     orr w27, w27, w1, lsl #4
@@ -2023,38 +2069,38 @@ L149:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L151
-L152:
+    cbz x10, L152
+L153:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L151:
+L152:
     mov w9, w24
     bl Lrd_slow
-    b L152
+    b L153
     .p2align 4
 Lf_28:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L153
-L154:
+    cbz x10, L154
+L155:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbz w27, #7, L155
+    tbz w27, #7, L156
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     cmn w0, #4
-    b.eq L156
-L157:
-L155:
+    b.eq L157
+L158:
+L156:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2064,24 +2110,24 @@ L155:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L158
-L159:
+    cbz x10, L159
+L160:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L153:
+L154:
     bl Lrd_slow
-    b L154
-L156:
+    b L155
+L157:
     bl Lidle
-    b L157
-L158:
+    b L158
+L159:
     mov w9, w24
     bl Lrd_slow
-    b L159
+    b L160
     .p2align 4
 Lf_29:
     add w0, w14, w14
@@ -2103,26 +2149,26 @@ Lf_29:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L160
-L161:
+    cbz x10, L161
+L162:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L160:
+L161:
     mov w9, w24
     bl Lrd_slow
-    b L161
+    b L162
     .p2align 4
 Lf_2A:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L162
-L163:
+    cbz x10, L163
+L164:
     ldrb w26, [x10, w9, uxtw]
     add w14, w9, #1
     and w14, w14, #0xFFFF
@@ -2135,21 +2181,21 @@ L163:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L164
-L165:
+    cbz x10, L165
+L166:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L162:
+L163:
     bl Lrd_slow
-    b L163
-L164:
+    b L164
+L165:
     mov w9, w24
     bl Lrd_slow
-    b L165
+    b L166
     .p2align 4
 Lf_2B:
     sub w14, w14, #1
@@ -2164,18 +2210,18 @@ Lf_2B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L166
-L167:
+    cbz x10, L167
+L168:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L166:
+L167:
     mov w9, w24
     bl Lrd_slow
-    b L167
+    b L168
     .p2align 4
 Lf_2C:
     and w0, w14, #0xFF
@@ -2199,18 +2245,18 @@ Lf_2C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L168
-L169:
+    cbz x10, L169
+L170:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L168:
+L169:
     mov w9, w24
     bl Lrd_slow
-    b L169
+    b L170
     .p2align 4
 Lf_2D:
     and w0, w14, #0xFF
@@ -2235,26 +2281,26 @@ Lf_2D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L170
-L171:
+    cbz x10, L171
+L172:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L170:
+L171:
     mov w9, w24
     bl Lrd_slow
-    b L171
+    b L172
     .p2align 4
 Lf_2E:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L172
-L173:
+    cbz x10, L173
+L174:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #0, #8
     add w24, w24, #1
@@ -2268,21 +2314,21 @@ L173:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L174
-L175:
+    cbz x10, L175
+L176:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L172:
+L173:
     bl Lrd_slow
-    b L173
-L174:
+    b L174
+L175:
     mov w9, w24
     bl Lrd_slow
-    b L175
+    b L176
     .p2align 4
 Lf_2F:
     eor w26, w26, #0xFF
@@ -2296,35 +2342,35 @@ Lf_2F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L176
-L177:
+    cbz x10, L177
+L178:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L176:
+L177:
     mov w9, w24
     bl Lrd_slow
-    b L177
+    b L178
     .p2align 4
 Lf_30:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L178
-L179:
+    cbz x10, L179
+L180:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbnz w27, #4, L180
+    tbnz w27, #4, L181
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
-L180:
+L181:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2334,29 +2380,29 @@ L180:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L181
-L182:
+    cbz x10, L182
+L183:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L178:
+L179:
     bl Lrd_slow
-    b L179
-L181:
+    b L180
+L182:
     mov w9, w24
     bl Lrd_slow
-    b L182
+    b L183
     .p2align 4
 Lf_31:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L183
-L184:
+    cbz x10, L184
+L185:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -2364,8 +2410,8 @@ L184:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L185
-L186:
+    cbz x10, L186
+L187:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -2380,24 +2426,24 @@ L186:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L187
-L188:
+    cbz x10, L188
+L189:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L183:
+L184:
     bl Lrd_slow
-    b L184
-L185:
+    b L185
+L186:
     bl Lrd_slow
-    b L186
-L187:
+    b L187
+L188:
     mov w9, w24
     bl Lrd_slow
-    b L188
+    b L189
     .p2align 4
 Lf_32:
     mov w9, w14
@@ -2405,9 +2451,9 @@ Lf_32:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L189
+    cbz x10, L190
     strb w26, [x10, w9, uxtw]
-L190:
+L191:
     sub w14, w9, #1
     and w14, w14, #0xFFFF
     cmp x21, x22
@@ -2419,22 +2465,22 @@ L190:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L191
-L192:
+    cbz x10, L192
+L193:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L189:
+L190:
     mov w0, w26
     bl Lwr_slow
-    b L190
-L191:
+    b L191
+L192:
     mov w9, w24
     bl Lrd_slow
-    b L192
+    b L193
     .p2align 4
 Lf_33:
     add w25, w25, #1
@@ -2449,26 +2495,26 @@ Lf_33:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L193
-L194:
+    cbz x10, L194
+L195:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L193:
+L194:
     mov w9, w24
     bl Lrd_slow
-    b L194
+    b L195
     .p2align 4
 Lf_34:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L195
-L196:
+    cbz x10, L196
+L197:
     ldrb w11, [x10, w9, uxtw]
     add w1, w11, #1
     and w1, w1, #0xFF
@@ -2485,9 +2531,9 @@ L196:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L197
+    cbz x10, L198
     strb w11, [x10, w9, uxtw]
-L198:
+L199:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2497,33 +2543,33 @@ L198:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L199
-L200:
+    cbz x10, L200
+L201:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L195:
+L196:
     bl Lrd_slow
-    b L196
-L197:
+    b L197
+L198:
     mov w0, w11
     bl Lwr_slow
-    b L198
-L199:
+    b L199
+L200:
     mov w9, w24
     bl Lrd_slow
-    b L200
+    b L201
     .p2align 4
 Lf_35:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L201
-L202:
+    cbz x10, L202
+L203:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w11, #1
     and w1, w1, #0xFF
@@ -2541,9 +2587,9 @@ L202:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L203
+    cbz x10, L204
     strb w11, [x10, w9, uxtw]
-L204:
+L205:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2553,33 +2599,33 @@ L204:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L205
-L206:
+    cbz x10, L206
+L207:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L201:
+L202:
     bl Lrd_slow
-    b L202
-L203:
+    b L203
+L204:
     mov w0, w11
     bl Lwr_slow
-    b L204
-L205:
+    b L205
+L206:
     mov w9, w24
     bl Lrd_slow
-    b L206
+    b L207
     .p2align 4
 Lf_36:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L207
-L208:
+    cbz x10, L208
+L209:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -2588,9 +2634,9 @@ L208:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L209
+    cbz x10, L210
     strb w11, [x10, w9, uxtw]
-L210:
+L211:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2600,25 +2646,25 @@ L210:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L211
-L212:
+    cbz x10, L212
+L213:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L207:
+L208:
     bl Lrd_slow
-    b L208
-L209:
+    b L209
+L210:
     mov w0, w11
     bl Lwr_slow
-    b L210
-L211:
+    b L211
+L212:
     mov w9, w24
     bl Lrd_slow
-    b L212
+    b L213
     .p2align 4
 Lf_37:
     and w27, w27, #0x80
@@ -2632,35 +2678,35 @@ Lf_37:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L213
-L214:
+    cbz x10, L214
+L215:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L213:
+L214:
     mov w9, w24
     bl Lrd_slow
-    b L214
+    b L215
     .p2align 4
 Lf_38:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L215
-L216:
+    cbz x10, L216
+L217:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbz w27, #4, L217
+    tbz w27, #4, L218
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
-L217:
+L218:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -2670,21 +2716,21 @@ L217:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L218
-L219:
+    cbz x10, L219
+L220:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L215:
+L216:
     bl Lrd_slow
-    b L216
-L218:
+    b L217
+L219:
     mov w9, w24
     bl Lrd_slow
-    b L219
+    b L220
     .p2align 4
 Lf_39:
     add w0, w14, w25
@@ -2706,26 +2752,26 @@ Lf_39:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L220
-L221:
+    cbz x10, L221
+L222:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L220:
+L221:
     mov w9, w24
     bl Lrd_slow
-    b L221
+    b L222
     .p2align 4
 Lf_3A:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L222
-L223:
+    cbz x10, L223
+L224:
     ldrb w26, [x10, w9, uxtw]
     sub w14, w9, #1
     and w14, w14, #0xFFFF
@@ -2738,21 +2784,21 @@ L223:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L224
-L225:
+    cbz x10, L225
+L226:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L222:
+L223:
     bl Lrd_slow
-    b L223
-L224:
+    b L224
+L225:
     mov w9, w24
     bl Lrd_slow
-    b L225
+    b L226
     .p2align 4
 Lf_3B:
     sub w25, w25, #1
@@ -2767,18 +2813,18 @@ Lf_3B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L226
-L227:
+    cbz x10, L227
+L228:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L226:
+L227:
     mov w9, w24
     bl Lrd_slow
-    b L227
+    b L228
     .p2align 4
 Lf_3C:
     add w1, w26, #1
@@ -2801,18 +2847,18 @@ Lf_3C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L228
-L229:
+    cbz x10, L229
+L230:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L228:
+L229:
     mov w9, w24
     bl Lrd_slow
-    b L229
+    b L230
     .p2align 4
 Lf_3D:
     sub w1, w26, #1
@@ -2836,26 +2882,26 @@ Lf_3D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L230
-L231:
+    cbz x10, L231
+L232:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L230:
+L231:
     mov w9, w24
     bl Lrd_slow
-    b L231
+    b L232
     .p2align 4
 Lf_3E:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L232
-L233:
+    cbz x10, L233
+L234:
     ldrb w26, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -2868,21 +2914,21 @@ L233:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L234
-L235:
+    cbz x10, L235
+L236:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L232:
+L233:
     bl Lrd_slow
-    b L233
-L234:
+    b L234
+L235:
     mov w9, w24
     bl Lrd_slow
-    b L235
+    b L236
     .p2align 4
 Lf_3F:
     mov w0, #0x90
@@ -2897,18 +2943,18 @@ Lf_3F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L236
-L237:
+    cbz x10, L237
+L238:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L236:
+L237:
     mov w9, w24
     bl Lrd_slow
-    b L237
+    b L238
     .p2align 4
 Lf_40:
     cmp x21, x22
@@ -2920,18 +2966,18 @@ Lf_40:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L238
-L239:
+    cbz x10, L239
+L240:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L238:
+L239:
     mov w9, w24
     bl Lrd_slow
-    b L239
+    b L240
     .p2align 4
 Lf_41:
     and w0, w28, #0xFF
@@ -2945,18 +2991,18 @@ Lf_41:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L240
-L241:
+    cbz x10, L241
+L242:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L240:
+L241:
     mov w9, w24
     bl Lrd_slow
-    b L241
+    b L242
     .p2align 4
 Lf_42:
     lsr w0, w13, #8
@@ -2970,18 +3016,18 @@ Lf_42:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L242
-L243:
+    cbz x10, L243
+L244:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L242:
+L243:
     mov w9, w24
     bl Lrd_slow
-    b L243
+    b L244
     .p2align 4
 Lf_43:
     and w0, w13, #0xFF
@@ -2995,18 +3041,18 @@ Lf_43:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L244
-L245:
+    cbz x10, L245
+L246:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L244:
+L245:
     mov w9, w24
     bl Lrd_slow
-    b L245
+    b L246
     .p2align 4
 Lf_44:
     lsr w0, w14, #8
@@ -3020,18 +3066,18 @@ Lf_44:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L246
-L247:
+    cbz x10, L247
+L248:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L246:
+L247:
     mov w9, w24
     bl Lrd_slow
-    b L247
+    b L248
     .p2align 4
 Lf_45:
     and w0, w14, #0xFF
@@ -3045,26 +3091,26 @@ Lf_45:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L248
-L249:
+    cbz x10, L249
+L250:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L248:
+L249:
     mov w9, w24
     bl Lrd_slow
-    b L249
+    b L250
     .p2align 4
 Lf_46:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L250
-L251:
+    cbz x10, L251
+L252:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #8, #8
     cmp x21, x22
@@ -3076,21 +3122,21 @@ L251:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L252
-L253:
+    cbz x10, L253
+L254:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L250:
+L251:
     bl Lrd_slow
-    b L251
-L252:
+    b L252
+L253:
     mov w9, w24
     bl Lrd_slow
-    b L253
+    b L254
     .p2align 4
 Lf_47:
     bfi w28, w26, #8, #8
@@ -3103,18 +3149,18 @@ Lf_47:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L254
-L255:
+    cbz x10, L255
+L256:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L254:
+L255:
     mov w9, w24
     bl Lrd_slow
-    b L255
+    b L256
     .p2align 4
 Lf_48:
     lsr w0, w28, #8
@@ -3128,18 +3174,18 @@ Lf_48:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L256
-L257:
+    cbz x10, L257
+L258:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L256:
+L257:
     mov w9, w24
     bl Lrd_slow
-    b L257
+    b L258
     .p2align 4
 Lf_49:
     cmp x21, x22
@@ -3151,18 +3197,18 @@ Lf_49:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L258
-L259:
+    cbz x10, L259
+L260:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L258:
+L259:
     mov w9, w24
     bl Lrd_slow
-    b L259
+    b L260
     .p2align 4
 Lf_4A:
     lsr w0, w13, #8
@@ -3176,18 +3222,18 @@ Lf_4A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L260
-L261:
+    cbz x10, L261
+L262:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L260:
+L261:
     mov w9, w24
     bl Lrd_slow
-    b L261
+    b L262
     .p2align 4
 Lf_4B:
     and w0, w13, #0xFF
@@ -3201,18 +3247,18 @@ Lf_4B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L262
-L263:
+    cbz x10, L263
+L264:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L262:
+L263:
     mov w9, w24
     bl Lrd_slow
-    b L263
+    b L264
     .p2align 4
 Lf_4C:
     lsr w0, w14, #8
@@ -3226,18 +3272,18 @@ Lf_4C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L264
-L265:
+    cbz x10, L265
+L266:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L264:
+L265:
     mov w9, w24
     bl Lrd_slow
-    b L265
+    b L266
     .p2align 4
 Lf_4D:
     and w0, w14, #0xFF
@@ -3251,26 +3297,26 @@ Lf_4D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L266
-L267:
+    cbz x10, L267
+L268:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L266:
+L267:
     mov w9, w24
     bl Lrd_slow
-    b L267
+    b L268
     .p2align 4
 Lf_4E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L268
-L269:
+    cbz x10, L269
+L270:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #0, #8
     cmp x21, x22
@@ -3282,21 +3328,21 @@ L269:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L270
-L271:
+    cbz x10, L271
+L272:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L268:
+L269:
     bl Lrd_slow
-    b L269
-L270:
+    b L270
+L271:
     mov w9, w24
     bl Lrd_slow
-    b L271
+    b L272
     .p2align 4
 Lf_4F:
     bfi w28, w26, #0, #8
@@ -3309,18 +3355,18 @@ Lf_4F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L272
-L273:
+    cbz x10, L273
+L274:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L272:
+L273:
     mov w9, w24
     bl Lrd_slow
-    b L273
+    b L274
     .p2align 4
 Lf_50:
     lsr w0, w28, #8
@@ -3334,18 +3380,18 @@ Lf_50:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L274
-L275:
+    cbz x10, L275
+L276:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L274:
+L275:
     mov w9, w24
     bl Lrd_slow
-    b L275
+    b L276
     .p2align 4
 Lf_51:
     and w0, w28, #0xFF
@@ -3359,18 +3405,18 @@ Lf_51:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L276
-L277:
+    cbz x10, L277
+L278:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L276:
+L277:
     mov w9, w24
     bl Lrd_slow
-    b L277
+    b L278
     .p2align 4
 Lf_52:
     cmp x21, x22
@@ -3382,18 +3428,18 @@ Lf_52:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L278
-L279:
+    cbz x10, L279
+L280:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L278:
+L279:
     mov w9, w24
     bl Lrd_slow
-    b L279
+    b L280
     .p2align 4
 Lf_53:
     and w0, w13, #0xFF
@@ -3407,18 +3453,18 @@ Lf_53:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L280
-L281:
+    cbz x10, L281
+L282:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L280:
+L281:
     mov w9, w24
     bl Lrd_slow
-    b L281
+    b L282
     .p2align 4
 Lf_54:
     lsr w0, w14, #8
@@ -3432,18 +3478,18 @@ Lf_54:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L282
-L283:
+    cbz x10, L283
+L284:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L282:
+L283:
     mov w9, w24
     bl Lrd_slow
-    b L283
+    b L284
     .p2align 4
 Lf_55:
     and w0, w14, #0xFF
@@ -3457,26 +3503,26 @@ Lf_55:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L284
-L285:
+    cbz x10, L285
+L286:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L284:
+L285:
     mov w9, w24
     bl Lrd_slow
-    b L285
+    b L286
     .p2align 4
 Lf_56:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L286
-L287:
+    cbz x10, L287
+L288:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #8, #8
     cmp x21, x22
@@ -3488,21 +3534,21 @@ L287:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L288
-L289:
+    cbz x10, L289
+L290:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L286:
+L287:
     bl Lrd_slow
-    b L287
-L288:
+    b L288
+L289:
     mov w9, w24
     bl Lrd_slow
-    b L289
+    b L290
     .p2align 4
 Lf_57:
     bfi w13, w26, #8, #8
@@ -3515,18 +3561,18 @@ Lf_57:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L290
-L291:
+    cbz x10, L291
+L292:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L290:
+L291:
     mov w9, w24
     bl Lrd_slow
-    b L291
+    b L292
     .p2align 4
 Lf_58:
     lsr w0, w28, #8
@@ -3540,18 +3586,18 @@ Lf_58:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L292
-L293:
+    cbz x10, L293
+L294:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L292:
+L293:
     mov w9, w24
     bl Lrd_slow
-    b L293
+    b L294
     .p2align 4
 Lf_59:
     and w0, w28, #0xFF
@@ -3565,18 +3611,18 @@ Lf_59:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L294
-L295:
+    cbz x10, L295
+L296:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L294:
+L295:
     mov w9, w24
     bl Lrd_slow
-    b L295
+    b L296
     .p2align 4
 Lf_5A:
     lsr w0, w13, #8
@@ -3590,18 +3636,18 @@ Lf_5A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L296
-L297:
+    cbz x10, L297
+L298:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L296:
+L297:
     mov w9, w24
     bl Lrd_slow
-    b L297
+    b L298
     .p2align 4
 Lf_5B:
     cmp x21, x22
@@ -3613,18 +3659,18 @@ Lf_5B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L298
-L299:
+    cbz x10, L299
+L300:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L298:
+L299:
     mov w9, w24
     bl Lrd_slow
-    b L299
+    b L300
     .p2align 4
 Lf_5C:
     lsr w0, w14, #8
@@ -3638,18 +3684,18 @@ Lf_5C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L300
-L301:
+    cbz x10, L301
+L302:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L300:
+L301:
     mov w9, w24
     bl Lrd_slow
-    b L301
+    b L302
     .p2align 4
 Lf_5D:
     and w0, w14, #0xFF
@@ -3663,26 +3709,26 @@ Lf_5D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L302
-L303:
+    cbz x10, L303
+L304:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L302:
+L303:
     mov w9, w24
     bl Lrd_slow
-    b L303
+    b L304
     .p2align 4
 Lf_5E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L304
-L305:
+    cbz x10, L305
+L306:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #0, #8
     cmp x21, x22
@@ -3694,21 +3740,21 @@ L305:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L306
-L307:
+    cbz x10, L307
+L308:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L304:
+L305:
     bl Lrd_slow
-    b L305
-L306:
+    b L306
+L307:
     mov w9, w24
     bl Lrd_slow
-    b L307
+    b L308
     .p2align 4
 Lf_5F:
     bfi w13, w26, #0, #8
@@ -3721,18 +3767,18 @@ Lf_5F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L308
-L309:
+    cbz x10, L309
+L310:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L308:
+L309:
     mov w9, w24
     bl Lrd_slow
-    b L309
+    b L310
     .p2align 4
 Lf_60:
     lsr w0, w28, #8
@@ -3746,18 +3792,18 @@ Lf_60:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L310
-L311:
+    cbz x10, L311
+L312:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L310:
+L311:
     mov w9, w24
     bl Lrd_slow
-    b L311
+    b L312
     .p2align 4
 Lf_61:
     and w0, w28, #0xFF
@@ -3771,18 +3817,18 @@ Lf_61:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L312
-L313:
+    cbz x10, L313
+L314:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L312:
+L313:
     mov w9, w24
     bl Lrd_slow
-    b L313
+    b L314
     .p2align 4
 Lf_62:
     lsr w0, w13, #8
@@ -3796,18 +3842,18 @@ Lf_62:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L314
-L315:
+    cbz x10, L315
+L316:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L314:
+L315:
     mov w9, w24
     bl Lrd_slow
-    b L315
+    b L316
     .p2align 4
 Lf_63:
     and w0, w13, #0xFF
@@ -3821,18 +3867,18 @@ Lf_63:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L316
-L317:
+    cbz x10, L317
+L318:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L316:
+L317:
     mov w9, w24
     bl Lrd_slow
-    b L317
+    b L318
     .p2align 4
 Lf_64:
     cmp x21, x22
@@ -3844,18 +3890,18 @@ Lf_64:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L318
-L319:
+    cbz x10, L319
+L320:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L318:
+L319:
     mov w9, w24
     bl Lrd_slow
-    b L319
+    b L320
     .p2align 4
 Lf_65:
     and w0, w14, #0xFF
@@ -3869,26 +3915,26 @@ Lf_65:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L320
-L321:
+    cbz x10, L321
+L322:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L320:
+L321:
     mov w9, w24
     bl Lrd_slow
-    b L321
+    b L322
     .p2align 4
 Lf_66:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L322
-L323:
+    cbz x10, L323
+L324:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #8, #8
     cmp x21, x22
@@ -3900,21 +3946,21 @@ L323:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L324
-L325:
+    cbz x10, L325
+L326:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L322:
+L323:
     bl Lrd_slow
-    b L323
-L324:
+    b L324
+L325:
     mov w9, w24
     bl Lrd_slow
-    b L325
+    b L326
     .p2align 4
 Lf_67:
     bfi w14, w26, #8, #8
@@ -3927,18 +3973,18 @@ Lf_67:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L326
-L327:
+    cbz x10, L327
+L328:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L326:
+L327:
     mov w9, w24
     bl Lrd_slow
-    b L327
+    b L328
     .p2align 4
 Lf_68:
     lsr w0, w28, #8
@@ -3952,18 +3998,18 @@ Lf_68:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L328
-L329:
+    cbz x10, L329
+L330:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L328:
+L329:
     mov w9, w24
     bl Lrd_slow
-    b L329
+    b L330
     .p2align 4
 Lf_69:
     and w0, w28, #0xFF
@@ -3977,18 +4023,18 @@ Lf_69:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L330
-L331:
+    cbz x10, L331
+L332:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L330:
+L331:
     mov w9, w24
     bl Lrd_slow
-    b L331
+    b L332
     .p2align 4
 Lf_6A:
     lsr w0, w13, #8
@@ -4002,18 +4048,18 @@ Lf_6A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L332
-L333:
+    cbz x10, L333
+L334:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L332:
+L333:
     mov w9, w24
     bl Lrd_slow
-    b L333
+    b L334
     .p2align 4
 Lf_6B:
     and w0, w13, #0xFF
@@ -4027,18 +4073,18 @@ Lf_6B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L334
-L335:
+    cbz x10, L335
+L336:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L334:
+L335:
     mov w9, w24
     bl Lrd_slow
-    b L335
+    b L336
     .p2align 4
 Lf_6C:
     lsr w0, w14, #8
@@ -4052,18 +4098,18 @@ Lf_6C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L336
-L337:
+    cbz x10, L337
+L338:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L336:
+L337:
     mov w9, w24
     bl Lrd_slow
-    b L337
+    b L338
     .p2align 4
 Lf_6D:
     cmp x21, x22
@@ -4075,26 +4121,26 @@ Lf_6D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L338
-L339:
+    cbz x10, L339
+L340:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L338:
+L339:
     mov w9, w24
     bl Lrd_slow
-    b L339
+    b L340
     .p2align 4
 Lf_6E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L340
-L341:
+    cbz x10, L341
+L342:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #0, #8
     cmp x21, x22
@@ -4106,21 +4152,21 @@ L341:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L342
-L343:
+    cbz x10, L343
+L344:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L340:
+L341:
     bl Lrd_slow
-    b L341
-L342:
+    b L342
+L343:
     mov w9, w24
     bl Lrd_slow
-    b L343
+    b L344
     .p2align 4
 Lf_6F:
     bfi w14, w26, #0, #8
@@ -4133,18 +4179,18 @@ Lf_6F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L344
-L345:
+    cbz x10, L345
+L346:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L344:
+L345:
     mov w9, w24
     bl Lrd_slow
-    b L345
+    b L346
     .p2align 4
 Lf_70:
     mov w9, w14
@@ -4153,9 +4199,9 @@ Lf_70:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L346
+    cbz x10, L347
     strb w0, [x10, w9, uxtw]
-L347:
+L348:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4165,21 +4211,21 @@ L347:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L348
-L349:
+    cbz x10, L349
+L350:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L346:
+L347:
     bl Lwr_slow
-    b L347
-L348:
+    b L348
+L349:
     mov w9, w24
     bl Lrd_slow
-    b L349
+    b L350
     .p2align 4
 Lf_71:
     mov w9, w14
@@ -4188,9 +4234,9 @@ Lf_71:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L350
+    cbz x10, L351
     strb w0, [x10, w9, uxtw]
-L351:
+L352:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4200,21 +4246,21 @@ L351:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L352
-L353:
+    cbz x10, L353
+L354:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L350:
+L351:
     bl Lwr_slow
-    b L351
-L352:
+    b L352
+L353:
     mov w9, w24
     bl Lrd_slow
-    b L353
+    b L354
     .p2align 4
 Lf_72:
     mov w9, w14
@@ -4223,9 +4269,9 @@ Lf_72:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L354
+    cbz x10, L355
     strb w0, [x10, w9, uxtw]
-L355:
+L356:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4235,21 +4281,21 @@ L355:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L356
-L357:
+    cbz x10, L357
+L358:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L354:
+L355:
     bl Lwr_slow
-    b L355
-L356:
+    b L356
+L357:
     mov w9, w24
     bl Lrd_slow
-    b L357
+    b L358
     .p2align 4
 Lf_73:
     mov w9, w14
@@ -4258,9 +4304,9 @@ Lf_73:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L358
+    cbz x10, L359
     strb w0, [x10, w9, uxtw]
-L359:
+L360:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4270,21 +4316,21 @@ L359:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L360
-L361:
+    cbz x10, L361
+L362:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L358:
+L359:
     bl Lwr_slow
-    b L359
-L360:
+    b L360
+L361:
     mov w9, w24
     bl Lrd_slow
-    b L361
+    b L362
     .p2align 4
 Lf_74:
     mov w9, w14
@@ -4293,9 +4339,9 @@ Lf_74:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L362
+    cbz x10, L363
     strb w0, [x10, w9, uxtw]
-L363:
+L364:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4305,21 +4351,21 @@ L363:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L364
-L365:
+    cbz x10, L365
+L366:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L362:
+L363:
     bl Lwr_slow
-    b L363
-L364:
+    b L364
+L365:
     mov w9, w24
     bl Lrd_slow
-    b L365
+    b L366
     .p2align 4
 Lf_75:
     mov w9, w14
@@ -4328,9 +4374,9 @@ Lf_75:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L366
+    cbz x10, L367
     strb w0, [x10, w9, uxtw]
-L367:
+L368:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4340,21 +4386,21 @@ L367:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L368
-L369:
+    cbz x10, L369
+L370:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L366:
+L367:
     bl Lwr_slow
-    b L367
-L368:
+    b L368
+L369:
     mov w9, w24
     bl Lrd_slow
-    b L369
+    b L370
     .p2align 4
 Lf_76:
     strb w26, [x19, #24]
@@ -4368,16 +4414,16 @@ Lf_76:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L370
+    cbnz w17, L371
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L370:
+L371:
     mov x0, x19
     mov w1, #118
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -4401,18 +4447,18 @@ L370:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L371
-L372:
+    cbz x10, L372
+L373:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L371:
+L372:
     mov w9, w24
     bl Lrd_slow
-    b L372
+    b L373
     .p2align 4
 Lf_77:
     mov w9, w14
@@ -4420,9 +4466,9 @@ Lf_77:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L373
+    cbz x10, L374
     strb w26, [x10, w9, uxtw]
-L374:
+L375:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -4432,22 +4478,22 @@ L374:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L375
-L376:
+    cbz x10, L376
+L377:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L373:
+L374:
     mov w0, w26
     bl Lwr_slow
-    b L374
-L375:
+    b L375
+L376:
     mov w9, w24
     bl Lrd_slow
-    b L376
+    b L377
     .p2align 4
 Lf_78:
     lsr w26, w28, #8
@@ -4460,18 +4506,18 @@ Lf_78:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L377
-L378:
+    cbz x10, L378
+L379:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L377:
+L378:
     mov w9, w24
     bl Lrd_slow
-    b L378
+    b L379
     .p2align 4
 Lf_79:
     and w26, w28, #0xFF
@@ -4484,18 +4530,18 @@ Lf_79:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L379
-L380:
+    cbz x10, L380
+L381:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L379:
+L380:
     mov w9, w24
     bl Lrd_slow
-    b L380
+    b L381
     .p2align 4
 Lf_7A:
     lsr w26, w13, #8
@@ -4508,18 +4554,18 @@ Lf_7A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L381
-L382:
+    cbz x10, L382
+L383:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L381:
+L382:
     mov w9, w24
     bl Lrd_slow
-    b L382
+    b L383
     .p2align 4
 Lf_7B:
     and w26, w13, #0xFF
@@ -4532,18 +4578,18 @@ Lf_7B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L383
-L384:
+    cbz x10, L384
+L385:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L383:
+L384:
     mov w9, w24
     bl Lrd_slow
-    b L384
+    b L385
     .p2align 4
 Lf_7C:
     lsr w26, w14, #8
@@ -4556,18 +4602,18 @@ Lf_7C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L385
-L386:
+    cbz x10, L386
+L387:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L385:
+L386:
     mov w9, w24
     bl Lrd_slow
-    b L386
+    b L387
     .p2align 4
 Lf_7D:
     and w26, w14, #0xFF
@@ -4580,26 +4626,26 @@ Lf_7D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L387
-L388:
+    cbz x10, L388
+L389:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L387:
+L388:
     mov w9, w24
     bl Lrd_slow
-    b L388
+    b L389
     .p2align 4
 Lf_7E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L389
-L390:
+    cbz x10, L390
+L391:
     ldrb w26, [x10, w9, uxtw]
     cmp x21, x22
     b.hs Lslow_top
@@ -4610,21 +4656,21 @@ L390:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L391
-L392:
+    cbz x10, L392
+L393:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L389:
+L390:
     bl Lrd_slow
-    b L390
-L391:
+    b L391
+L392:
     mov w9, w24
     bl Lrd_slow
-    b L392
+    b L393
     .p2align 4
 Lf_7F:
     cmp x21, x22
@@ -4636,18 +4682,18 @@ Lf_7F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L393
-L394:
+    cbz x10, L394
+L395:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L393:
+L394:
     mov w9, w24
     bl Lrd_slow
-    b L394
+    b L395
     .p2align 4
 Lf_80:
     lsr w0, w28, #8
@@ -4671,18 +4717,18 @@ Lf_80:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L395
-L396:
+    cbz x10, L396
+L397:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L395:
+L396:
     mov w9, w24
     bl Lrd_slow
-    b L396
+    b L397
     .p2align 4
 Lf_81:
     and w0, w28, #0xFF
@@ -4706,18 +4752,18 @@ Lf_81:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L397
-L398:
+    cbz x10, L398
+L399:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L397:
+L398:
     mov w9, w24
     bl Lrd_slow
-    b L398
+    b L399
     .p2align 4
 Lf_82:
     lsr w0, w13, #8
@@ -4741,18 +4787,18 @@ Lf_82:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L399
-L400:
+    cbz x10, L400
+L401:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L399:
+L400:
     mov w9, w24
     bl Lrd_slow
-    b L400
+    b L401
     .p2align 4
 Lf_83:
     and w0, w13, #0xFF
@@ -4776,18 +4822,18 @@ Lf_83:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L401
-L402:
+    cbz x10, L402
+L403:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L401:
+L402:
     mov w9, w24
     bl Lrd_slow
-    b L402
+    b L403
     .p2align 4
 Lf_84:
     lsr w0, w14, #8
@@ -4811,18 +4857,18 @@ Lf_84:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L403
-L404:
+    cbz x10, L404
+L405:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L403:
+L404:
     mov w9, w24
     bl Lrd_slow
-    b L404
+    b L405
     .p2align 4
 Lf_85:
     and w0, w14, #0xFF
@@ -4846,26 +4892,26 @@ Lf_85:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L405
-L406:
+    cbz x10, L406
+L407:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L405:
+L406:
     mov w9, w24
     bl Lrd_slow
-    b L406
+    b L407
     .p2align 4
 Lf_86:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L407
-L408:
+    cbz x10, L408
+L409:
     ldrb w11, [x10, w9, uxtw]
     add w1, w26, w11
     eor w2, w26, w11
@@ -4887,21 +4933,21 @@ L408:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L409
-L410:
+    cbz x10, L410
+L411:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L407:
+L408:
     bl Lrd_slow
-    b L408
-L409:
+    b L409
+L410:
     mov w9, w24
     bl Lrd_slow
-    b L410
+    b L411
     .p2align 4
 Lf_87:
     add w1, w26, w26
@@ -4924,18 +4970,18 @@ Lf_87:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L411
-L412:
+    cbz x10, L412
+L413:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L411:
+L412:
     mov w9, w24
     bl Lrd_slow
-    b L412
+    b L413
     .p2align 4
 Lf_88:
     lsr w0, w28, #8
@@ -4961,18 +5007,18 @@ Lf_88:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L413
-L414:
+    cbz x10, L414
+L415:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L413:
+L414:
     mov w9, w24
     bl Lrd_slow
-    b L414
+    b L415
     .p2align 4
 Lf_89:
     and w0, w28, #0xFF
@@ -4998,18 +5044,18 @@ Lf_89:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L415
-L416:
+    cbz x10, L416
+L417:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L415:
+L416:
     mov w9, w24
     bl Lrd_slow
-    b L416
+    b L417
     .p2align 4
 Lf_8A:
     lsr w0, w13, #8
@@ -5035,18 +5081,18 @@ Lf_8A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L417
-L418:
+    cbz x10, L418
+L419:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L417:
+L418:
     mov w9, w24
     bl Lrd_slow
-    b L418
+    b L419
     .p2align 4
 Lf_8B:
     and w0, w13, #0xFF
@@ -5072,18 +5118,18 @@ Lf_8B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L419
-L420:
+    cbz x10, L420
+L421:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L419:
+L420:
     mov w9, w24
     bl Lrd_slow
-    b L420
+    b L421
     .p2align 4
 Lf_8C:
     lsr w0, w14, #8
@@ -5109,18 +5155,18 @@ Lf_8C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L421
-L422:
+    cbz x10, L422
+L423:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L421:
+L422:
     mov w9, w24
     bl Lrd_slow
-    b L422
+    b L423
     .p2align 4
 Lf_8D:
     and w0, w14, #0xFF
@@ -5146,26 +5192,26 @@ Lf_8D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L423
-L424:
+    cbz x10, L424
+L425:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L423:
+L424:
     mov w9, w24
     bl Lrd_slow
-    b L424
+    b L425
     .p2align 4
 Lf_8E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L425
-L426:
+    cbz x10, L426
+L427:
     ldrb w11, [x10, w9, uxtw]
     ubfx w2, w27, #4, #1
     add w1, w26, w11
@@ -5189,21 +5235,21 @@ L426:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L427
-L428:
+    cbz x10, L428
+L429:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L425:
+L426:
     bl Lrd_slow
-    b L426
-L427:
+    b L427
+L428:
     mov w9, w24
     bl Lrd_slow
-    b L428
+    b L429
     .p2align 4
 Lf_8F:
     ubfx w2, w27, #4, #1
@@ -5228,18 +5274,18 @@ Lf_8F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L429
-L430:
+    cbz x10, L430
+L431:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L429:
+L430:
     mov w9, w24
     bl Lrd_slow
-    b L430
+    b L431
     .p2align 4
 Lf_90:
     lsr w0, w28, #8
@@ -5264,18 +5310,18 @@ Lf_90:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L431
-L432:
+    cbz x10, L432
+L433:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L431:
+L432:
     mov w9, w24
     bl Lrd_slow
-    b L432
+    b L433
     .p2align 4
 Lf_91:
     and w0, w28, #0xFF
@@ -5300,18 +5346,18 @@ Lf_91:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L433
-L434:
+    cbz x10, L434
+L435:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L433:
+L434:
     mov w9, w24
     bl Lrd_slow
-    b L434
+    b L435
     .p2align 4
 Lf_92:
     lsr w0, w13, #8
@@ -5336,18 +5382,18 @@ Lf_92:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L435
-L436:
+    cbz x10, L436
+L437:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L435:
+L436:
     mov w9, w24
     bl Lrd_slow
-    b L436
+    b L437
     .p2align 4
 Lf_93:
     and w0, w13, #0xFF
@@ -5372,18 +5418,18 @@ Lf_93:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L437
-L438:
+    cbz x10, L438
+L439:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L437:
+L438:
     mov w9, w24
     bl Lrd_slow
-    b L438
+    b L439
     .p2align 4
 Lf_94:
     lsr w0, w14, #8
@@ -5408,18 +5454,18 @@ Lf_94:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L439
-L440:
+    cbz x10, L440
+L441:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L439:
+L440:
     mov w9, w24
     bl Lrd_slow
-    b L440
+    b L441
     .p2align 4
 Lf_95:
     and w0, w14, #0xFF
@@ -5444,26 +5490,26 @@ Lf_95:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L441
-L442:
+    cbz x10, L442
+L443:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L441:
+L442:
     mov w9, w24
     bl Lrd_slow
-    b L442
+    b L443
     .p2align 4
 Lf_96:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L443
-L444:
+    cbz x10, L444
+L445:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w26, w11
     eor w2, w26, w11
@@ -5486,21 +5532,21 @@ L444:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L445
-L446:
+    cbz x10, L446
+L447:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L443:
+L444:
     bl Lrd_slow
-    b L444
-L445:
+    b L445
+L446:
     mov w9, w24
     bl Lrd_slow
-    b L446
+    b L447
     .p2align 4
 Lf_97:
     sub w1, w26, w26
@@ -5524,18 +5570,18 @@ Lf_97:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L447
-L448:
+    cbz x10, L448
+L449:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L447:
+L448:
     mov w9, w24
     bl Lrd_slow
-    b L448
+    b L449
     .p2align 4
 Lf_98:
     lsr w0, w28, #8
@@ -5562,18 +5608,18 @@ Lf_98:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L449
-L450:
+    cbz x10, L450
+L451:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L449:
+L450:
     mov w9, w24
     bl Lrd_slow
-    b L450
+    b L451
     .p2align 4
 Lf_99:
     and w0, w28, #0xFF
@@ -5600,18 +5646,18 @@ Lf_99:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L451
-L452:
+    cbz x10, L452
+L453:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L451:
+L452:
     mov w9, w24
     bl Lrd_slow
-    b L452
+    b L453
     .p2align 4
 Lf_9A:
     lsr w0, w13, #8
@@ -5638,18 +5684,18 @@ Lf_9A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L453
-L454:
+    cbz x10, L454
+L455:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L453:
+L454:
     mov w9, w24
     bl Lrd_slow
-    b L454
+    b L455
     .p2align 4
 Lf_9B:
     and w0, w13, #0xFF
@@ -5676,18 +5722,18 @@ Lf_9B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L455
-L456:
+    cbz x10, L456
+L457:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L455:
+L456:
     mov w9, w24
     bl Lrd_slow
-    b L456
+    b L457
     .p2align 4
 Lf_9C:
     lsr w0, w14, #8
@@ -5714,18 +5760,18 @@ Lf_9C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L457
-L458:
+    cbz x10, L458
+L459:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L457:
+L458:
     mov w9, w24
     bl Lrd_slow
-    b L458
+    b L459
     .p2align 4
 Lf_9D:
     and w0, w14, #0xFF
@@ -5752,26 +5798,26 @@ Lf_9D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L459
-L460:
+    cbz x10, L460
+L461:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L459:
+L460:
     mov w9, w24
     bl Lrd_slow
-    b L460
+    b L461
     .p2align 4
 Lf_9E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L461
-L462:
+    cbz x10, L462
+L463:
     ldrb w11, [x10, w9, uxtw]
     ubfx w2, w27, #4, #1
     sub w1, w26, w11
@@ -5796,21 +5842,21 @@ L462:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L463
-L464:
+    cbz x10, L464
+L465:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L461:
+L462:
     bl Lrd_slow
-    b L462
-L463:
+    b L463
+L464:
     mov w9, w24
     bl Lrd_slow
-    b L464
+    b L465
     .p2align 4
 Lf_9F:
     ubfx w2, w27, #4, #1
@@ -5836,18 +5882,18 @@ Lf_9F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L465
-L466:
+    cbz x10, L466
+L467:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L465:
+L466:
     mov w9, w24
     bl Lrd_slow
-    b L466
+    b L467
     .p2align 4
 Lf_A0:
     lsr w0, w28, #8
@@ -5865,18 +5911,18 @@ Lf_A0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L467
-L468:
+    cbz x10, L468
+L469:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L467:
+L468:
     mov w9, w24
     bl Lrd_slow
-    b L468
+    b L469
     .p2align 4
 Lf_A1:
     and w0, w28, #0xFF
@@ -5894,18 +5940,18 @@ Lf_A1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L469
-L470:
+    cbz x10, L470
+L471:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L469:
+L470:
     mov w9, w24
     bl Lrd_slow
-    b L470
+    b L471
     .p2align 4
 Lf_A2:
     lsr w0, w13, #8
@@ -5923,18 +5969,18 @@ Lf_A2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L471
-L472:
+    cbz x10, L472
+L473:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L471:
+L472:
     mov w9, w24
     bl Lrd_slow
-    b L472
+    b L473
     .p2align 4
 Lf_A3:
     and w0, w13, #0xFF
@@ -5952,18 +5998,18 @@ Lf_A3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L473
-L474:
+    cbz x10, L474
+L475:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L473:
+L474:
     mov w9, w24
     bl Lrd_slow
-    b L474
+    b L475
     .p2align 4
 Lf_A4:
     lsr w0, w14, #8
@@ -5981,18 +6027,18 @@ Lf_A4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L475
-L476:
+    cbz x10, L476
+L477:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L475:
+L476:
     mov w9, w24
     bl Lrd_slow
-    b L476
+    b L477
     .p2align 4
 Lf_A5:
     and w0, w14, #0xFF
@@ -6010,26 +6056,26 @@ Lf_A5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L477
-L478:
+    cbz x10, L478
+L479:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L477:
+L478:
     mov w9, w24
     bl Lrd_slow
-    b L478
+    b L479
     .p2align 4
 Lf_A6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L479
-L480:
+    cbz x10, L480
+L481:
     ldrb w11, [x10, w9, uxtw]
     and w26, w26, w11
     cmp w26, #0
@@ -6045,21 +6091,21 @@ L480:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L481
-L482:
+    cbz x10, L482
+L483:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L479:
+L480:
     bl Lrd_slow
-    b L480
-L481:
+    b L481
+L482:
     mov w9, w24
     bl Lrd_slow
-    b L482
+    b L483
     .p2align 4
 Lf_A7:
     and w26, w26, w26
@@ -6076,18 +6122,18 @@ Lf_A7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L483
-L484:
+    cbz x10, L484
+L485:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L483:
+L484:
     mov w9, w24
     bl Lrd_slow
-    b L484
+    b L485
     .p2align 4
 Lf_A8:
     lsr w0, w28, #8
@@ -6104,18 +6150,18 @@ Lf_A8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L485
-L486:
+    cbz x10, L486
+L487:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L485:
+L486:
     mov w9, w24
     bl Lrd_slow
-    b L486
+    b L487
     .p2align 4
 Lf_A9:
     and w0, w28, #0xFF
@@ -6132,18 +6178,18 @@ Lf_A9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L487
-L488:
+    cbz x10, L488
+L489:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L487:
+L488:
     mov w9, w24
     bl Lrd_slow
-    b L488
+    b L489
     .p2align 4
 Lf_AA:
     lsr w0, w13, #8
@@ -6160,18 +6206,18 @@ Lf_AA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L489
-L490:
+    cbz x10, L490
+L491:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L489:
+L490:
     mov w9, w24
     bl Lrd_slow
-    b L490
+    b L491
     .p2align 4
 Lf_AB:
     and w0, w13, #0xFF
@@ -6188,18 +6234,18 @@ Lf_AB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L491
-L492:
+    cbz x10, L492
+L493:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L491:
+L492:
     mov w9, w24
     bl Lrd_slow
-    b L492
+    b L493
     .p2align 4
 Lf_AC:
     lsr w0, w14, #8
@@ -6216,18 +6262,18 @@ Lf_AC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L493
-L494:
+    cbz x10, L494
+L495:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L493:
+L494:
     mov w9, w24
     bl Lrd_slow
-    b L494
+    b L495
     .p2align 4
 Lf_AD:
     and w0, w14, #0xFF
@@ -6244,26 +6290,26 @@ Lf_AD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L495
-L496:
+    cbz x10, L496
+L497:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L495:
+L496:
     mov w9, w24
     bl Lrd_slow
-    b L496
+    b L497
     .p2align 4
 Lf_AE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L497
-L498:
+    cbz x10, L498
+L499:
     ldrb w11, [x10, w9, uxtw]
     eor w26, w26, w11
     cmp w26, #0
@@ -6278,21 +6324,21 @@ L498:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L499
-L500:
+    cbz x10, L500
+L501:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L497:
+L498:
     bl Lrd_slow
-    b L498
-L499:
+    b L499
+L500:
     mov w9, w24
     bl Lrd_slow
-    b L500
+    b L501
     .p2align 4
 Lf_AF:
     eor w26, w26, w26
@@ -6308,18 +6354,18 @@ Lf_AF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L501
-L502:
+    cbz x10, L502
+L503:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L501:
+L502:
     mov w9, w24
     bl Lrd_slow
-    b L502
+    b L503
     .p2align 4
 Lf_B0:
     lsr w0, w28, #8
@@ -6336,18 +6382,18 @@ Lf_B0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L503
-L504:
+    cbz x10, L504
+L505:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L503:
+L504:
     mov w9, w24
     bl Lrd_slow
-    b L504
+    b L505
     .p2align 4
 Lf_B1:
     and w0, w28, #0xFF
@@ -6364,18 +6410,18 @@ Lf_B1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L505
-L506:
+    cbz x10, L506
+L507:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L505:
+L506:
     mov w9, w24
     bl Lrd_slow
-    b L506
+    b L507
     .p2align 4
 Lf_B2:
     lsr w0, w13, #8
@@ -6392,18 +6438,18 @@ Lf_B2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L507
-L508:
+    cbz x10, L508
+L509:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L507:
+L508:
     mov w9, w24
     bl Lrd_slow
-    b L508
+    b L509
     .p2align 4
 Lf_B3:
     and w0, w13, #0xFF
@@ -6420,18 +6466,18 @@ Lf_B3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L509
-L510:
+    cbz x10, L510
+L511:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L509:
+L510:
     mov w9, w24
     bl Lrd_slow
-    b L510
+    b L511
     .p2align 4
 Lf_B4:
     lsr w0, w14, #8
@@ -6448,18 +6494,18 @@ Lf_B4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L511
-L512:
+    cbz x10, L512
+L513:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L511:
+L512:
     mov w9, w24
     bl Lrd_slow
-    b L512
+    b L513
     .p2align 4
 Lf_B5:
     and w0, w14, #0xFF
@@ -6476,26 +6522,26 @@ Lf_B5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L513
-L514:
+    cbz x10, L514
+L515:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L513:
+L514:
     mov w9, w24
     bl Lrd_slow
-    b L514
+    b L515
     .p2align 4
 Lf_B6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L515
-L516:
+    cbz x10, L516
+L517:
     ldrb w11, [x10, w9, uxtw]
     orr w26, w26, w11
     cmp w26, #0
@@ -6510,21 +6556,21 @@ L516:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L517
-L518:
+    cbz x10, L518
+L519:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L515:
+L516:
     bl Lrd_slow
-    b L516
-L517:
+    b L517
+L518:
     mov w9, w24
     bl Lrd_slow
-    b L518
+    b L519
     .p2align 4
 Lf_B7:
     orr w26, w26, w26
@@ -6540,18 +6586,18 @@ Lf_B7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L519
-L520:
+    cbz x10, L520
+L521:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L519:
+L520:
     mov w9, w24
     bl Lrd_slow
-    b L520
+    b L521
     .p2align 4
 Lf_B8:
     lsr w0, w28, #8
@@ -6575,18 +6621,18 @@ Lf_B8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L521
-L522:
+    cbz x10, L522
+L523:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L521:
+L522:
     mov w9, w24
     bl Lrd_slow
-    b L522
+    b L523
     .p2align 4
 Lf_B9:
     and w0, w28, #0xFF
@@ -6610,18 +6656,18 @@ Lf_B9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L523
-L524:
+    cbz x10, L524
+L525:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L523:
+L524:
     mov w9, w24
     bl Lrd_slow
-    b L524
+    b L525
     .p2align 4
 Lf_BA:
     lsr w0, w13, #8
@@ -6645,18 +6691,18 @@ Lf_BA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L525
-L526:
+    cbz x10, L526
+L527:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L525:
+L526:
     mov w9, w24
     bl Lrd_slow
-    b L526
+    b L527
     .p2align 4
 Lf_BB:
     and w0, w13, #0xFF
@@ -6680,18 +6726,18 @@ Lf_BB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L527
-L528:
+    cbz x10, L528
+L529:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L527:
+L528:
     mov w9, w24
     bl Lrd_slow
-    b L528
+    b L529
     .p2align 4
 Lf_BC:
     lsr w0, w14, #8
@@ -6715,18 +6761,18 @@ Lf_BC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L529
-L530:
+    cbz x10, L530
+L531:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L529:
+L530:
     mov w9, w24
     bl Lrd_slow
-    b L530
+    b L531
     .p2align 4
 Lf_BD:
     and w0, w14, #0xFF
@@ -6750,26 +6796,26 @@ Lf_BD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L531
-L532:
+    cbz x10, L532
+L533:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L531:
+L532:
     mov w9, w24
     bl Lrd_slow
-    b L532
+    b L533
     .p2align 4
 Lf_BE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L533
-L534:
+    cbz x10, L534
+L535:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w26, w11
     eor w2, w26, w11
@@ -6791,21 +6837,21 @@ L534:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L535
-L536:
+    cbz x10, L536
+L537:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L533:
+L534:
     bl Lrd_slow
-    b L534
-L535:
+    b L535
+L536:
     mov w9, w24
     bl Lrd_slow
-    b L536
+    b L537
     .p2align 4
 Lf_BF:
     sub w1, w26, w26
@@ -6828,28 +6874,28 @@ Lf_BF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L537
-L538:
+    cbz x10, L538
+L539:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L537:
+L538:
     mov w9, w24
     bl Lrd_slow
-    b L538
+    b L539
     .p2align 4
 Lf_C0:
     add x21, x21, #4
-    tbnz w27, #7, L539
+    tbnz w27, #7, L540
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L540
-L541:
+    cbz x10, L541
+L542:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -6857,15 +6903,15 @@ L541:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L542
-L543:
+    cbz x10, L543
+L544:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w24, w12
     add x21, x21, #4
-L539:
+L540:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -6875,32 +6921,32 @@ L539:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L544
-L545:
+    cbz x10, L545
+L546:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L540:
+L541:
     bl Lrd_slow
-    b L541
-L542:
+    b L542
+L543:
     bl Lrd_slow
-    b L543
-L544:
+    b L544
+L545:
     mov w9, w24
     bl Lrd_slow
-    b L545
+    b L546
     .p2align 4
 Lf_C1:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L546
-L547:
+    cbz x10, L547
+L548:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -6908,8 +6954,8 @@ L547:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L548
-L549:
+    cbz x10, L549
+L550:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -6924,32 +6970,32 @@ L549:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L550
-L551:
+    cbz x10, L551
+L552:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L546:
+L547:
     bl Lrd_slow
-    b L547
-L548:
+    b L548
+L549:
     bl Lrd_slow
-    b L549
-L550:
+    b L550
+L551:
     mov w9, w24
     bl Lrd_slow
-    b L551
+    b L552
     .p2align 4
 Lf_C2:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L552
-L553:
+    cbz x10, L553
+L554:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -6957,16 +7003,16 @@ L553:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L554
-L555:
+    cbz x10, L555
+L556:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #7, L556
+    tbnz w27, #7, L557
     mov w24, w12
     add x21, x21, #4
-L556:
+L557:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -6976,32 +7022,32 @@ L556:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L557
-L558:
+    cbz x10, L558
+L559:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L552:
+L553:
     bl Lrd_slow
-    b L553
-L554:
+    b L554
+L555:
     bl Lrd_slow
-    b L555
-L557:
+    b L556
+L558:
     mov w9, w24
     bl Lrd_slow
-    b L558
+    b L559
     .p2align 4
 Lf_C3:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L559
-L560:
+    cbz x10, L560
+L561:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7009,15 +7055,15 @@ L560:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L561
-L562:
+    cbz x10, L562
+L563:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w24, w12
     add x21, x21, #4
-L563:
+L564:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7027,32 +7073,32 @@ L563:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L564
-L565:
+    cbz x10, L565
+L566:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L559:
+L560:
     bl Lrd_slow
-    b L560
-L561:
+    b L561
+L562:
     bl Lrd_slow
-    b L562
-L564:
+    b L563
+L565:
     mov w9, w24
     bl Lrd_slow
-    b L565
+    b L566
     .p2align 4
 Lf_C4:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L566
-L567:
+    cbz x10, L567
+L568:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7060,13 +7106,13 @@ L567:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L568
-L569:
+    cbz x10, L569
+L570:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #7, L570
+    tbnz w27, #7, L571
     add x21, x21, #4
     str w12, [sp, #104]
     mov w12, w24
@@ -7078,25 +7124,25 @@ L569:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L571
+    cbz x10, L572
     strb w11, [x10, w9, uxtw]
-L572:
+L573:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L573
-L574:
+    b.hs L574
+L575:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L575
+    cbz x10, L576
     strb w12, [x10, w9, uxtw]
-L576:
+L577:
     ldr w24, [sp, #104]
-L570:
+L571:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7106,35 +7152,35 @@ L570:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L577
-L578:
+    cbz x10, L578
+L579:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L566:
+L567:
     bl Lrd_slow
-    b L567
-L568:
+    b L568
+L569:
     bl Lrd_slow
-    b L569
-L571:
+    b L570
+L572:
     mov w0, w11
     bl Lwr_slow
-    b L572
-L573:
+    b L573
+L574:
     bl Ltick_slow4
-    b L574
-L575:
+    b L575
+L576:
     mov w0, w12
     bl Lwr_slow
-    b L576
-L577:
+    b L577
+L578:
     mov w9, w24
     bl Lrd_slow
-    b L578
+    b L579
     .p2align 4
 Lf_C5:
     add x21, x21, #4
@@ -7147,23 +7193,23 @@ Lf_C5:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L579
+    cbz x10, L580
     strb w11, [x10, w9, uxtw]
-L580:
+L581:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L581
-L582:
+    b.hs L582
+L583:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L583
+    cbz x10, L584
     strb w12, [x10, w9, uxtw]
-L584:
+L585:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7173,37 +7219,37 @@ L584:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L585
-L586:
+    cbz x10, L586
+L587:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L579:
+L580:
     mov w0, w11
     bl Lwr_slow
-    b L580
-L581:
+    b L581
+L582:
     bl Ltick_slow4
-    b L582
-L583:
+    b L583
+L584:
     mov w0, w12
     bl Lwr_slow
-    b L584
-L585:
+    b L585
+L586:
     mov w9, w24
     bl Lrd_slow
-    b L586
+    b L587
     .p2align 4
 Lf_C6:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L587
-L588:
+    cbz x10, L588
+L589:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7227,21 +7273,21 @@ L588:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L589
-L590:
+    cbz x10, L590
+L591:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L587:
+L588:
     bl Lrd_slow
-    b L588
-L589:
+    b L589
+L590:
     mov w9, w24
     bl Lrd_slow
-    b L590
+    b L591
     .p2align 4
 Lf_C7:
     add x21, x21, #4
@@ -7254,23 +7300,23 @@ Lf_C7:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L591
+    cbz x10, L592
     strb w11, [x10, w9, uxtw]
-L592:
+L593:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L593
-L594:
+    b.hs L594
+L595:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L595
+    cbz x10, L596
     strb w12, [x10, w9, uxtw]
-L596:
+L597:
     mov w24, #0
     cmp x21, x22
     b.hs Lslow_top
@@ -7281,39 +7327,39 @@ L596:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L597
-L598:
+    cbz x10, L598
+L599:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L591:
+L592:
     mov w0, w11
     bl Lwr_slow
-    b L592
-L593:
+    b L593
+L594:
     bl Ltick_slow4
-    b L594
-L595:
+    b L595
+L596:
     mov w0, w12
     bl Lwr_slow
-    b L596
-L597:
+    b L597
+L598:
     mov w9, w24
     bl Lrd_slow
-    b L598
+    b L599
     .p2align 4
 Lf_C8:
     add x21, x21, #4
-    tbz w27, #7, L599
+    tbz w27, #7, L600
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L600
-L601:
+    cbz x10, L601
+L602:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7321,15 +7367,15 @@ L601:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L602
-L603:
+    cbz x10, L603
+L604:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w24, w12
     add x21, x21, #4
-L599:
+L600:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7339,32 +7385,32 @@ L599:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L604
-L605:
+    cbz x10, L605
+L606:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L600:
+L601:
     bl Lrd_slow
-    b L601
-L602:
+    b L602
+L603:
     bl Lrd_slow
-    b L603
-L604:
+    b L604
+L605:
     mov w9, w24
     bl Lrd_slow
-    b L605
+    b L606
     .p2align 4
 Lf_C9:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L606
-L607:
+    cbz x10, L607
+L608:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7372,8 +7418,8 @@ L607:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L608
-L609:
+    cbz x10, L609
+L610:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7389,32 +7435,32 @@ L609:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L610
-L611:
+    cbz x10, L611
+L612:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L606:
+L607:
     bl Lrd_slow
-    b L607
-L608:
+    b L608
+L609:
     bl Lrd_slow
-    b L609
-L610:
+    b L610
+L611:
     mov w9, w24
     bl Lrd_slow
-    b L611
+    b L612
     .p2align 4
 Lf_CA:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L612
-L613:
+    cbz x10, L613
+L614:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7422,16 +7468,16 @@ L613:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L614
-L615:
+    cbz x10, L615
+L616:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #7, L616
+    tbz w27, #7, L617
     mov w24, w12
     add x21, x21, #4
-L616:
+L617:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7441,32 +7487,32 @@ L616:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L617
-L618:
+    cbz x10, L618
+L619:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L612:
+L613:
     bl Lrd_slow
-    b L613
-L614:
+    b L614
+L615:
     bl Lrd_slow
-    b L615
-L617:
+    b L616
+L618:
     mov w9, w24
     bl Lrd_slow
-    b L618
+    b L619
     .p2align 4
 Lf_CB:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L619
-L620:
+    cbz x10, L620
+L621:
     ldrb w9, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7474,17 +7520,17 @@ L620:
     ldrsw x0, [x17, x9, lsl #2]
     add x17, x17, x0
     br x17
-L619:
+L620:
     bl Lrd_slow
-    b L620
+    b L621
     .p2align 4
 Lf_CC:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L621
-L622:
+    cbz x10, L622
+L623:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7492,13 +7538,13 @@ L622:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L623
-L624:
+    cbz x10, L624
+L625:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #7, L625
+    tbz w27, #7, L626
     add x21, x21, #4
     str w12, [sp, #104]
     mov w12, w24
@@ -7510,25 +7556,25 @@ L624:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L626
+    cbz x10, L627
     strb w11, [x10, w9, uxtw]
-L627:
+L628:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L628
-L629:
+    b.hs L629
+L630:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L630
+    cbz x10, L631
     strb w12, [x10, w9, uxtw]
-L631:
+L632:
     ldr w24, [sp, #104]
-L625:
+L626:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7538,43 +7584,43 @@ L625:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L632
-L633:
+    cbz x10, L633
+L634:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L621:
+L622:
     bl Lrd_slow
-    b L622
-L623:
+    b L623
+L624:
     bl Lrd_slow
-    b L624
-L626:
+    b L625
+L627:
     mov w0, w11
     bl Lwr_slow
-    b L627
-L628:
+    b L628
+L629:
     bl Ltick_slow4
-    b L629
-L630:
+    b L630
+L631:
     mov w0, w12
     bl Lwr_slow
-    b L631
-L632:
+    b L632
+L633:
     mov w9, w24
     bl Lrd_slow
-    b L633
+    b L634
     .p2align 4
 Lf_CD:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L634
-L635:
+    cbz x10, L635
+L636:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7582,8 +7628,8 @@ L635:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L636
-L637:
+    cbz x10, L637
+L638:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7599,25 +7645,25 @@ L637:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L639
+    cbz x10, L640
     strb w11, [x10, w9, uxtw]
-L640:
+L641:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L641
-L642:
+    b.hs L642
+L643:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L643
+    cbz x10, L644
     strb w12, [x10, w9, uxtw]
-L644:
+L645:
     ldr w24, [sp, #104]
-L638:
+L639:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7627,43 +7673,43 @@ L638:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L645
-L646:
+    cbz x10, L646
+L647:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L634:
+L635:
     bl Lrd_slow
-    b L635
-L636:
+    b L636
+L637:
     bl Lrd_slow
-    b L637
-L639:
+    b L638
+L640:
     mov w0, w11
     bl Lwr_slow
-    b L640
-L641:
+    b L641
+L642:
     bl Ltick_slow4
-    b L642
-L643:
+    b L643
+L644:
     mov w0, w12
     bl Lwr_slow
-    b L644
-L645:
+    b L645
+L646:
     mov w9, w24
     bl Lrd_slow
-    b L646
+    b L647
     .p2align 4
 Lf_CE:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L647
-L648:
+    cbz x10, L648
+L649:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7689,21 +7735,21 @@ L648:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L649
-L650:
+    cbz x10, L650
+L651:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L647:
+L648:
     bl Lrd_slow
-    b L648
-L649:
+    b L649
+L650:
     mov w9, w24
     bl Lrd_slow
-    b L650
+    b L651
     .p2align 4
 Lf_CF:
     add x21, x21, #4
@@ -7716,23 +7762,23 @@ Lf_CF:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L651
+    cbz x10, L652
     strb w11, [x10, w9, uxtw]
-L652:
+L653:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L653
-L654:
+    b.hs L654
+L655:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L655
+    cbz x10, L656
     strb w12, [x10, w9, uxtw]
-L656:
+L657:
     mov w24, #8
     cmp x21, x22
     b.hs Lslow_top
@@ -7743,39 +7789,39 @@ L656:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L657
-L658:
+    cbz x10, L658
+L659:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L651:
+L652:
     mov w0, w11
     bl Lwr_slow
-    b L652
-L653:
+    b L653
+L654:
     bl Ltick_slow4
-    b L654
-L655:
+    b L655
+L656:
     mov w0, w12
     bl Lwr_slow
-    b L656
-L657:
+    b L657
+L658:
     mov w9, w24
     bl Lrd_slow
-    b L658
+    b L659
     .p2align 4
 Lf_D0:
     add x21, x21, #4
-    tbnz w27, #4, L659
+    tbnz w27, #4, L660
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L660
-L661:
+    cbz x10, L661
+L662:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7783,15 +7829,15 @@ L661:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L662
-L663:
+    cbz x10, L663
+L664:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w24, w12
     add x21, x21, #4
-L659:
+L660:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7801,32 +7847,32 @@ L659:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L664
-L665:
+    cbz x10, L665
+L666:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L660:
+L661:
     bl Lrd_slow
-    b L661
-L662:
+    b L662
+L663:
     bl Lrd_slow
-    b L663
-L664:
+    b L664
+L665:
     mov w9, w24
     bl Lrd_slow
-    b L665
+    b L666
     .p2align 4
 Lf_D1:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L666
-L667:
+    cbz x10, L667
+L668:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7834,8 +7880,8 @@ L667:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L668
-L669:
+    cbz x10, L669
+L670:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -7850,32 +7896,32 @@ L669:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L670
-L671:
+    cbz x10, L671
+L672:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L666:
+L667:
     bl Lrd_slow
-    b L667
-L668:
+    b L668
+L669:
     bl Lrd_slow
-    b L669
-L670:
+    b L670
+L671:
     mov w9, w24
     bl Lrd_slow
-    b L671
+    b L672
     .p2align 4
 Lf_D2:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L672
-L673:
+    cbz x10, L673
+L674:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7883,16 +7929,16 @@ L673:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L674
-L675:
+    cbz x10, L675
+L676:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #4, L676
+    tbnz w27, #4, L677
     mov w24, w12
     add x21, x21, #4
-L676:
+L677:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -7902,24 +7948,24 @@ L676:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L677
-L678:
+    cbz x10, L678
+L679:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L672:
+L673:
     bl Lrd_slow
-    b L673
-L674:
+    b L674
+L675:
     bl Lrd_slow
-    b L675
-L677:
+    b L676
+L678:
     mov w9, w24
     bl Lrd_slow
-    b L678
+    b L679
     .p2align 4
 Lf_D3:
     cmp x21, x22
@@ -7931,26 +7977,26 @@ Lf_D3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L679
-L680:
+    cbz x10, L680
+L681:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L679:
+L680:
     mov w9, w24
     bl Lrd_slow
-    b L680
+    b L681
     .p2align 4
 Lf_D4:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L681
-L682:
+    cbz x10, L682
+L683:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -7958,13 +8004,13 @@ L682:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L683
-L684:
+    cbz x10, L684
+L685:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #4, L685
+    tbnz w27, #4, L686
     add x21, x21, #4
     str w12, [sp, #104]
     mov w12, w24
@@ -7976,25 +8022,25 @@ L684:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L686
+    cbz x10, L687
     strb w11, [x10, w9, uxtw]
-L687:
+L688:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L688
-L689:
+    b.hs L689
+L690:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L690
+    cbz x10, L691
     strb w12, [x10, w9, uxtw]
-L691:
+L692:
     ldr w24, [sp, #104]
-L685:
+L686:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8004,35 +8050,35 @@ L685:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L692
-L693:
+    cbz x10, L693
+L694:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L681:
+L682:
     bl Lrd_slow
-    b L682
-L683:
+    b L683
+L684:
     bl Lrd_slow
-    b L684
-L686:
+    b L685
+L687:
     mov w0, w11
     bl Lwr_slow
-    b L687
-L688:
+    b L688
+L689:
     bl Ltick_slow4
-    b L689
-L690:
+    b L690
+L691:
     mov w0, w12
     bl Lwr_slow
-    b L691
-L692:
+    b L692
+L693:
     mov w9, w24
     bl Lrd_slow
-    b L693
+    b L694
     .p2align 4
 Lf_D5:
     add x21, x21, #4
@@ -8045,23 +8091,23 @@ Lf_D5:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L694
+    cbz x10, L695
     strb w11, [x10, w9, uxtw]
-L695:
+L696:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L696
-L697:
+    b.hs L697
+L698:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L698
+    cbz x10, L699
     strb w12, [x10, w9, uxtw]
-L699:
+L700:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8071,37 +8117,37 @@ L699:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L700
-L701:
+    cbz x10, L701
+L702:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L694:
+L695:
     mov w0, w11
     bl Lwr_slow
-    b L695
-L696:
+    b L696
+L697:
     bl Ltick_slow4
-    b L697
-L698:
+    b L698
+L699:
     mov w0, w12
     bl Lwr_slow
-    b L699
-L700:
+    b L700
+L701:
     mov w9, w24
     bl Lrd_slow
-    b L701
+    b L702
     .p2align 4
 Lf_D6:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L702
-L703:
+    cbz x10, L703
+L704:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -8126,21 +8172,21 @@ L703:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L704
-L705:
+    cbz x10, L705
+L706:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L702:
+L703:
     bl Lrd_slow
-    b L703
-L704:
+    b L704
+L705:
     mov w9, w24
     bl Lrd_slow
-    b L705
+    b L706
     .p2align 4
 Lf_D7:
     add x21, x21, #4
@@ -8153,23 +8199,23 @@ Lf_D7:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L706
+    cbz x10, L707
     strb w11, [x10, w9, uxtw]
-L707:
+L708:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L708
-L709:
+    b.hs L709
+L710:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L710
+    cbz x10, L711
     strb w12, [x10, w9, uxtw]
-L711:
+L712:
     mov w24, #16
     cmp x21, x22
     b.hs Lslow_top
@@ -8180,39 +8226,39 @@ L711:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L712
-L713:
+    cbz x10, L713
+L714:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L706:
+L707:
     mov w0, w11
     bl Lwr_slow
-    b L707
-L708:
+    b L708
+L709:
     bl Ltick_slow4
-    b L709
-L710:
+    b L710
+L711:
     mov w0, w12
     bl Lwr_slow
-    b L711
-L712:
+    b L712
+L713:
     mov w9, w24
     bl Lrd_slow
-    b L713
+    b L714
     .p2align 4
 Lf_D8:
     add x21, x21, #4
-    tbz w27, #4, L714
+    tbz w27, #4, L715
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L715
-L716:
+    cbz x10, L716
+L717:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -8220,15 +8266,15 @@ L716:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L717
-L718:
+    cbz x10, L718
+L719:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w24, w12
     add x21, x21, #4
-L714:
+L715:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8238,32 +8284,32 @@ L714:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L719
-L720:
+    cbz x10, L720
+L721:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L715:
+L716:
     bl Lrd_slow
-    b L716
-L717:
+    b L717
+L718:
     bl Lrd_slow
-    b L718
-L719:
+    b L719
+L720:
     mov w9, w24
     bl Lrd_slow
-    b L720
+    b L721
     .p2align 4
 Lf_D9:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L721
-L722:
+    cbz x10, L722
+L723:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -8271,8 +8317,8 @@ L722:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L723
-L724:
+    cbz x10, L724
+L725:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -8290,16 +8336,16 @@ L724:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L725
+    cbnz w17, L726
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L725:
+L726:
     mov x0, x19
     mov w1, #217
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -8323,32 +8369,32 @@ L725:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L726
-L727:
+    cbz x10, L727
+L728:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L721:
+L722:
     bl Lrd_slow
-    b L722
-L723:
+    b L723
+L724:
     bl Lrd_slow
-    b L724
-L726:
+    b L725
+L727:
     mov w9, w24
     bl Lrd_slow
-    b L727
+    b L728
     .p2align 4
 Lf_DA:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L728
-L729:
+    cbz x10, L729
+L730:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -8356,16 +8402,16 @@ L729:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L730
-L731:
+    cbz x10, L731
+L732:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #4, L732
+    tbz w27, #4, L733
     mov w24, w12
     add x21, x21, #4
-L732:
+L733:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8375,24 +8421,24 @@ L732:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L733
-L734:
+    cbz x10, L734
+L735:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L728:
+L729:
     bl Lrd_slow
-    b L729
-L730:
+    b L730
+L731:
     bl Lrd_slow
-    b L731
-L733:
+    b L732
+L734:
     mov w9, w24
     bl Lrd_slow
-    b L734
+    b L735
     .p2align 4
 Lf_DB:
     cmp x21, x22
@@ -8404,26 +8450,26 @@ Lf_DB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L735
-L736:
+    cbz x10, L736
+L737:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L735:
+L736:
     mov w9, w24
     bl Lrd_slow
-    b L736
+    b L737
     .p2align 4
 Lf_DC:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L737
-L738:
+    cbz x10, L738
+L739:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -8431,13 +8477,13 @@ L738:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L739
-L740:
+    cbz x10, L740
+L741:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #4, L741
+    tbz w27, #4, L742
     add x21, x21, #4
     str w12, [sp, #104]
     mov w12, w24
@@ -8449,25 +8495,25 @@ L740:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L742
+    cbz x10, L743
     strb w11, [x10, w9, uxtw]
-L743:
+L744:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L744
-L745:
+    b.hs L745
+L746:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L746
+    cbz x10, L747
     strb w12, [x10, w9, uxtw]
-L747:
+L748:
     ldr w24, [sp, #104]
-L741:
+L742:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8477,35 +8523,35 @@ L741:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L748
-L749:
+    cbz x10, L749
+L750:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L737:
+L738:
     bl Lrd_slow
-    b L738
-L739:
+    b L739
+L740:
     bl Lrd_slow
-    b L740
-L742:
+    b L741
+L743:
     mov w0, w11
     bl Lwr_slow
-    b L743
-L744:
+    b L744
+L745:
     bl Ltick_slow4
-    b L745
-L746:
+    b L746
+L747:
     mov w0, w12
     bl Lwr_slow
-    b L747
-L748:
+    b L748
+L749:
     mov w9, w24
     bl Lrd_slow
-    b L749
+    b L750
     .p2align 4
 Lf_DD:
     cmp x21, x22
@@ -8517,26 +8563,26 @@ Lf_DD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L750
-L751:
+    cbz x10, L751
+L752:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L750:
+L751:
     mov w9, w24
     bl Lrd_slow
-    b L751
+    b L752
     .p2align 4
 Lf_DE:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L752
-L753:
+    cbz x10, L753
+L754:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -8563,21 +8609,21 @@ L753:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L754
-L755:
+    cbz x10, L755
+L756:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L752:
+L753:
     bl Lrd_slow
-    b L753
-L754:
+    b L754
+L755:
     mov w9, w24
     bl Lrd_slow
-    b L755
+    b L756
     .p2align 4
 Lf_DF:
     add x21, x21, #4
@@ -8590,23 +8636,23 @@ Lf_DF:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L756
+    cbz x10, L757
     strb w11, [x10, w9, uxtw]
-L757:
+L758:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L758
-L759:
+    b.hs L759
+L760:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L760
+    cbz x10, L761
     strb w12, [x10, w9, uxtw]
-L761:
+L762:
     mov w24, #24
     cmp x21, x22
     b.hs Lslow_top
@@ -8617,60 +8663,60 @@ L761:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L762
-L763:
+    cbz x10, L763
+L764:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L756:
+L757:
     mov w0, w11
     bl Lwr_slow
-    b L757
-L758:
+    b L758
+L759:
     bl Ltick_slow4
-    b L759
-L760:
+    b L760
+L761:
     mov w0, w12
     bl Lwr_slow
-    b L761
-L762:
+    b L762
+L763:
     mov w9, w24
     bl Lrd_slow
-    b L763
+    b L764
     .p2align 4
 Lf_E0:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L766
-L767:
+    cbz x10, L767
+L768:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     cmp w11, #0x80
-    b.lo L764
+    b.lo L765
     cmp w11, #0xFF
-    b.eq L764
+    b.eq L765
     add x21, x21, #4
     ldr x10, [x20, #272]
     orr w0, w11, #0xFF00
     strb w26, [x10, w0, uxtw]
-    b L765
-L764:
+    b L766
+L765:
     mov w9, w11
     orr w9, w9, #0xFF00
     add x21, x21, #4
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L768
+    cbz x10, L769
     strb w26, [x10, w9, uxtw]
-L769:
-L765:
+L770:
+L766:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8680,33 +8726,33 @@ L765:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L770
-L771:
+    cbz x10, L771
+L772:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L766:
+L767:
     bl Lrd_slow
-    b L767
-L768:
+    b L768
+L769:
     mov w0, w26
     bl Lwr_slow
-    b L769
-L770:
+    b L770
+L771:
     mov w9, w24
     bl Lrd_slow
-    b L771
+    b L772
     .p2align 4
 Lf_E1:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L772
-L773:
+    cbz x10, L773
+L774:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -8714,8 +8760,8 @@ L773:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L774
-L775:
+    cbz x10, L775
+L776:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -8730,24 +8776,24 @@ L775:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L776
-L777:
+    cbz x10, L777
+L778:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L772:
+L773:
     bl Lrd_slow
-    b L773
-L774:
+    b L774
+L775:
     bl Lrd_slow
-    b L775
-L776:
+    b L776
+L777:
     mov w9, w24
     bl Lrd_slow
-    b L777
+    b L778
     .p2align 4
 Lf_E2:
     and w9, w28, #0xFF
@@ -8756,9 +8802,9 @@ Lf_E2:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L778
+    cbz x10, L779
     strb w26, [x10, w9, uxtw]
-L779:
+L780:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8768,22 +8814,22 @@ L779:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L780
-L781:
+    cbz x10, L781
+L782:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L778:
+L779:
     mov w0, w26
     bl Lwr_slow
-    b L779
-L780:
+    b L780
+L781:
     mov w9, w24
     bl Lrd_slow
-    b L781
+    b L782
     .p2align 4
 Lf_E3:
     cmp x21, x22
@@ -8795,18 +8841,18 @@ Lf_E3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L782
-L783:
+    cbz x10, L783
+L784:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L782:
+L783:
     mov w9, w24
     bl Lrd_slow
-    b L783
+    b L784
     .p2align 4
 Lf_E4:
     cmp x21, x22
@@ -8818,18 +8864,18 @@ Lf_E4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L784
-L785:
+    cbz x10, L785
+L786:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L784:
+L785:
     mov w9, w24
     bl Lrd_slow
-    b L785
+    b L786
     .p2align 4
 Lf_E5:
     add x21, x21, #4
@@ -8842,23 +8888,23 @@ Lf_E5:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L786
+    cbz x10, L787
     strb w11, [x10, w9, uxtw]
-L787:
+L788:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L788
-L789:
+    b.hs L789
+L790:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L790
+    cbz x10, L791
     strb w12, [x10, w9, uxtw]
-L791:
+L792:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -8868,37 +8914,37 @@ L791:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L792
-L793:
+    cbz x10, L793
+L794:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L786:
+L787:
     mov w0, w11
     bl Lwr_slow
-    b L787
-L788:
+    b L788
+L789:
     bl Ltick_slow4
-    b L789
-L790:
+    b L790
+L791:
     mov w0, w12
     bl Lwr_slow
-    b L791
-L792:
+    b L792
+L793:
     mov w9, w24
     bl Lrd_slow
-    b L793
+    b L794
     .p2align 4
 Lf_E6:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L794
-L795:
+    cbz x10, L795
+L796:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -8916,21 +8962,21 @@ L795:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L796
-L797:
+    cbz x10, L797
+L798:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L794:
+L795:
     bl Lrd_slow
-    b L795
-L796:
+    b L796
+L797:
     mov w9, w24
     bl Lrd_slow
-    b L797
+    b L798
     .p2align 4
 Lf_E7:
     add x21, x21, #4
@@ -8943,23 +8989,23 @@ Lf_E7:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L798
+    cbz x10, L799
     strb w11, [x10, w9, uxtw]
-L799:
+L800:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L800
-L801:
+    b.hs L801
+L802:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L802
+    cbz x10, L803
     strb w12, [x10, w9, uxtw]
-L803:
+L804:
     mov w24, #32
     cmp x21, x22
     b.hs Lslow_top
@@ -8970,37 +9016,37 @@ L803:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L804
-L805:
+    cbz x10, L805
+L806:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L798:
+L799:
     mov w0, w11
     bl Lwr_slow
-    b L799
-L800:
+    b L800
+L801:
     bl Ltick_slow4
-    b L801
-L802:
+    b L802
+L803:
     mov w0, w12
     bl Lwr_slow
-    b L803
-L804:
+    b L804
+L805:
     mov w9, w24
     bl Lrd_slow
-    b L805
+    b L806
     .p2align 4
 Lf_E8:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L806
-L807:
+    cbz x10, L807
+L808:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9026,21 +9072,21 @@ L807:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L808
-L809:
+    cbz x10, L809
+L810:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L806:
+L807:
     bl Lrd_slow
-    b L807
-L808:
+    b L808
+L809:
     mov w9, w24
     bl Lrd_slow
-    b L809
+    b L810
     .p2align 4
 Lf_E9:
     mov w24, w14
@@ -9053,26 +9099,26 @@ Lf_E9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L810
-L811:
+    cbz x10, L811
+L812:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L810:
+L811:
     mov w9, w24
     bl Lrd_slow
-    b L811
+    b L812
     .p2align 4
 Lf_EA:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L812
-L813:
+    cbz x10, L813
+L814:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9080,8 +9126,8 @@ L813:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L814
-L815:
+    cbz x10, L815
+L816:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9091,9 +9137,9 @@ L815:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L816
+    cbz x10, L817
     strb w26, [x10, w9, uxtw]
-L817:
+L818:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -9103,28 +9149,28 @@ L817:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L818
-L819:
+    cbz x10, L819
+L820:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L812:
+L813:
     bl Lrd_slow
-    b L813
-L814:
+    b L814
+L815:
     bl Lrd_slow
-    b L815
-L816:
+    b L816
+L817:
     mov w0, w26
     bl Lwr_slow
-    b L817
-L818:
+    b L818
+L819:
     mov w9, w24
     bl Lrd_slow
-    b L819
+    b L820
     .p2align 4
 Lf_EB:
     cmp x21, x22
@@ -9136,18 +9182,18 @@ Lf_EB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L820
-L821:
+    cbz x10, L821
+L822:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L820:
+L821:
     mov w9, w24
     bl Lrd_slow
-    b L821
+    b L822
     .p2align 4
 Lf_EC:
     cmp x21, x22
@@ -9159,18 +9205,18 @@ Lf_EC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L822
-L823:
+    cbz x10, L823
+L824:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L822:
+L823:
     mov w9, w24
     bl Lrd_slow
-    b L823
+    b L824
     .p2align 4
 Lf_ED:
     cmp x21, x22
@@ -9182,26 +9228,26 @@ Lf_ED:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L824
-L825:
+    cbz x10, L825
+L826:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L824:
+L825:
     mov w9, w24
     bl Lrd_slow
-    b L825
+    b L826
     .p2align 4
 Lf_EE:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L826
-L827:
+    cbz x10, L827
+L828:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9218,21 +9264,21 @@ L827:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L828
-L829:
+    cbz x10, L829
+L830:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L826:
+L827:
     bl Lrd_slow
-    b L827
-L828:
+    b L828
+L829:
     mov w9, w24
     bl Lrd_slow
-    b L829
+    b L830
     .p2align 4
 Lf_EF:
     add x21, x21, #4
@@ -9245,23 +9291,23 @@ Lf_EF:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L830
+    cbz x10, L831
     strb w11, [x10, w9, uxtw]
-L831:
+L832:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L832
-L833:
+    b.hs L833
+L834:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L834
+    cbz x10, L835
     strb w12, [x10, w9, uxtw]
-L835:
+L836:
     mov w24, #40
     cmp x21, x22
     b.hs Lslow_top
@@ -9272,59 +9318,59 @@ L835:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L836
-L837:
+    cbz x10, L837
+L838:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L830:
+L831:
     mov w0, w11
     bl Lwr_slow
-    b L831
-L832:
+    b L832
+L833:
     bl Ltick_slow4
-    b L833
-L834:
+    b L834
+L835:
     mov w0, w12
     bl Lwr_slow
-    b L835
-L836:
+    b L836
+L837:
     mov w9, w24
     bl Lrd_slow
-    b L837
+    b L838
     .p2align 4
 Lf_F0:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L840
-L841:
+    cbz x10, L841
+L842:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     cmp w11, #0x80
-    b.lo L838
+    b.lo L839
     cmp w11, #0xFF
-    b.eq L838
+    b.eq L839
     add x21, x21, #4
     ldr x10, [x20, #272]
     orr w0, w11, #0xFF00
     ldrb w26, [x10, w0, uxtw]
-    b L839
-L838:
+    b L840
+L839:
     mov w9, w11
     orr w9, w9, #0xFF00
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L842
-L843:
+    cbz x10, L843
+L844:
     ldrb w26, [x10, w9, uxtw]
-L839:
+L840:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -9334,32 +9380,32 @@ L839:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L844
-L845:
+    cbz x10, L845
+L846:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L840:
+L841:
     bl Lrd_slow
-    b L841
-L842:
+    b L842
+L843:
     bl Lrd_slow
-    b L843
-L844:
+    b L844
+L845:
     mov w9, w24
     bl Lrd_slow
-    b L845
+    b L846
     .p2align 4
 Lf_F1:
     mov w9, w25
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L846
-L847:
+    cbz x10, L847
+L848:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -9367,8 +9413,8 @@ L847:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L848
-L849:
+    cbz x10, L849
+L850:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -9384,24 +9430,24 @@ L849:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L850
-L851:
+    cbz x10, L851
+L852:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L846:
+L847:
     bl Lrd_slow
-    b L847
-L848:
+    b L848
+L849:
     bl Lrd_slow
-    b L849
-L850:
+    b L850
+L851:
     mov w9, w24
     bl Lrd_slow
-    b L851
+    b L852
     .p2align 4
 Lf_F2:
     and w9, w28, #0xFF
@@ -9409,8 +9455,8 @@ Lf_F2:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L852
-L853:
+    cbz x10, L853
+L854:
     ldrb w26, [x10, w9, uxtw]
     cmp x21, x22
     b.hs Lslow_top
@@ -9421,21 +9467,21 @@ L853:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L854
-L855:
+    cbz x10, L855
+L856:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L852:
+L853:
     bl Lrd_slow
-    b L853
-L854:
+    b L854
+L855:
     mov w9, w24
     bl Lrd_slow
-    b L855
+    b L856
     .p2align 4
 Lf_F3:
     strb w26, [x19, #24]
@@ -9449,16 +9495,16 @@ Lf_F3:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L856
+    cbnz w17, L857
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L856:
+L857:
     mov x0, x19
     mov w1, #243
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -9482,18 +9528,18 @@ L856:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L857
-L858:
+    cbz x10, L858
+L859:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L857:
+L858:
     mov w9, w24
     bl Lrd_slow
-    b L858
+    b L859
     .p2align 4
 Lf_F4:
     cmp x21, x22
@@ -9505,18 +9551,18 @@ Lf_F4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L859
-L860:
+    cbz x10, L860
+L861:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L859:
+L860:
     mov w9, w24
     bl Lrd_slow
-    b L860
+    b L861
     .p2align 4
 Lf_F5:
     add x21, x21, #4
@@ -9529,23 +9575,23 @@ Lf_F5:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L861
+    cbz x10, L862
     strb w11, [x10, w9, uxtw]
-L862:
+L863:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L863
-L864:
+    b.hs L864
+L865:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L865
+    cbz x10, L866
     strb w12, [x10, w9, uxtw]
-L866:
+L867:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -9555,37 +9601,37 @@ L866:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L867
-L868:
+    cbz x10, L868
+L869:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L861:
+L862:
     mov w0, w11
     bl Lwr_slow
-    b L862
-L863:
+    b L863
+L864:
     bl Ltick_slow4
-    b L864
-L865:
+    b L865
+L866:
     mov w0, w12
     bl Lwr_slow
-    b L866
-L867:
+    b L867
+L868:
     mov w9, w24
     bl Lrd_slow
-    b L868
+    b L869
     .p2align 4
 Lf_F6:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L869
-L870:
+    cbz x10, L870
+L871:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9602,21 +9648,21 @@ L870:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L871
-L872:
+    cbz x10, L872
+L873:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L869:
+L870:
     bl Lrd_slow
-    b L870
-L871:
+    b L871
+L872:
     mov w9, w24
     bl Lrd_slow
-    b L872
+    b L873
     .p2align 4
 Lf_F7:
     add x21, x21, #4
@@ -9629,23 +9675,23 @@ Lf_F7:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L873
+    cbz x10, L874
     strb w11, [x10, w9, uxtw]
-L874:
+L875:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L875
-L876:
+    b.hs L876
+L877:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L877
+    cbz x10, L878
     strb w12, [x10, w9, uxtw]
-L878:
+L879:
     mov w24, #48
     cmp x21, x22
     b.hs Lslow_top
@@ -9656,37 +9702,37 @@ L878:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L879
-L880:
+    cbz x10, L880
+L881:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L873:
+L874:
     mov w0, w11
     bl Lwr_slow
-    b L874
-L875:
+    b L875
+L876:
     bl Ltick_slow4
-    b L876
-L877:
+    b L877
+L878:
     mov w0, w12
     bl Lwr_slow
-    b L878
-L879:
+    b L879
+L880:
     mov w9, w24
     bl Lrd_slow
-    b L880
+    b L881
     .p2align 4
 Lf_F8:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L881
-L882:
+    cbz x10, L882
+L883:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9712,21 +9758,21 @@ L882:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L883
-L884:
+    cbz x10, L884
+L885:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L881:
+L882:
     bl Lrd_slow
-    b L882
-L883:
+    b L883
+L884:
     mov w9, w24
     bl Lrd_slow
-    b L884
+    b L885
     .p2align 4
 Lf_F9:
     mov w25, w14
@@ -9740,26 +9786,26 @@ Lf_F9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L885
-L886:
+    cbz x10, L886
+L887:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L885:
+L886:
     mov w9, w24
     bl Lrd_slow
-    b L886
+    b L887
     .p2align 4
 Lf_FA:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L887
-L888:
+    cbz x10, L888
+L889:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9767,8 +9813,8 @@ L888:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L889
-L890:
+    cbz x10, L890
+L891:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9777,8 +9823,8 @@ L890:
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L891
-L892:
+    cbz x10, L892
+L893:
     ldrb w26, [x10, w9, uxtw]
     cmp x21, x22
     b.hs Lslow_top
@@ -9789,27 +9835,27 @@ L892:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L893
-L894:
+    cbz x10, L894
+L895:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L887:
+L888:
     bl Lrd_slow
-    b L888
-L889:
+    b L889
+L890:
     bl Lrd_slow
-    b L890
-L891:
+    b L891
+L892:
     bl Lrd_slow
-    b L892
-L893:
+    b L893
+L894:
     mov w9, w24
     bl Lrd_slow
-    b L894
+    b L895
     .p2align 4
 Lf_FB:
     strb w26, [x19, #24]
@@ -9823,16 +9869,16 @@ Lf_FB:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L895
+    cbnz w17, L896
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L895:
+L896:
     mov x0, x19
     mov w1, #251
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -9856,18 +9902,18 @@ L895:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L896
-L897:
+    cbz x10, L897
+L898:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L896:
+L897:
     mov w9, w24
     bl Lrd_slow
-    b L897
+    b L898
     .p2align 4
 Lf_FC:
     cmp x21, x22
@@ -9879,18 +9925,18 @@ Lf_FC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L898
-L899:
+    cbz x10, L899
+L900:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L898:
+L899:
     mov w9, w24
     bl Lrd_slow
-    b L899
+    b L900
     .p2align 4
 Lf_FD:
     cmp x21, x22
@@ -9902,26 +9948,26 @@ Lf_FD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L900
-L901:
+    cbz x10, L901
+L902:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L900:
+L901:
     mov w9, w24
     bl Lrd_slow
-    b L901
+    b L902
     .p2align 4
 Lf_FE:
     mov w9, w24
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L902
-L903:
+    cbz x10, L903
+L904:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -9945,21 +9991,21 @@ L903:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L904
-L905:
+    cbz x10, L905
+L906:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L902:
+L903:
     bl Lrd_slow
-    b L903
-L904:
+    b L904
+L905:
     mov w9, w24
     bl Lrd_slow
-    b L905
+    b L906
     .p2align 4
 Lf_FF:
     add x21, x21, #4
@@ -9972,23 +10018,23 @@ Lf_FF:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L906
+    cbz x10, L907
     strb w11, [x10, w9, uxtw]
-L907:
+L908:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L908
-L909:
+    b.hs L909
+L910:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L910
+    cbz x10, L911
     strb w12, [x10, w9, uxtw]
-L911:
+L912:
     mov w24, #56
     cmp x21, x22
     b.hs Lslow_top
@@ -9999,29 +10045,29 @@ L911:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L912
-L913:
+    cbz x10, L913
+L914:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L906:
+L907:
     mov w0, w11
     bl Lwr_slow
-    b L907
-L908:
+    b L908
+L909:
     bl Ltick_slow4
-    b L909
-L910:
+    b L910
+L911:
     mov w0, w12
     bl Lwr_slow
-    b L911
-L912:
+    b L912
+L913:
     mov w9, w24
     bl Lrd_slow
-    b L913
+    b L914
     .p2align 4
 Lfcb_00:
     lsr w0, w28, #8
@@ -10043,18 +10089,18 @@ Lfcb_00:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L914
-L915:
+    cbz x10, L915
+L916:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L914:
+L915:
     mov w9, w24
     bl Lrd_slow
-    b L915
+    b L916
     .p2align 4
 Lfcb_01:
     and w0, w28, #0xFF
@@ -10076,18 +10122,18 @@ Lfcb_01:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L916
-L917:
+    cbz x10, L917
+L918:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L916:
+L917:
     mov w9, w24
     bl Lrd_slow
-    b L917
+    b L918
     .p2align 4
 Lfcb_02:
     lsr w0, w13, #8
@@ -10109,18 +10155,18 @@ Lfcb_02:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L918
-L919:
+    cbz x10, L919
+L920:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L918:
+L919:
     mov w9, w24
     bl Lrd_slow
-    b L919
+    b L920
     .p2align 4
 Lfcb_03:
     and w0, w13, #0xFF
@@ -10142,18 +10188,18 @@ Lfcb_03:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L920
-L921:
+    cbz x10, L921
+L922:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L920:
+L921:
     mov w9, w24
     bl Lrd_slow
-    b L921
+    b L922
     .p2align 4
 Lfcb_04:
     lsr w0, w14, #8
@@ -10175,18 +10221,18 @@ Lfcb_04:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L922
-L923:
+    cbz x10, L923
+L924:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L922:
+L923:
     mov w9, w24
     bl Lrd_slow
-    b L923
+    b L924
     .p2align 4
 Lfcb_05:
     and w0, w14, #0xFF
@@ -10208,26 +10254,26 @@ Lfcb_05:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L924
-L925:
+    cbz x10, L925
+L926:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L924:
+L925:
     mov w9, w24
     bl Lrd_slow
-    b L925
+    b L926
     .p2align 4
 Lfcb_06:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L926
-L927:
+    cbz x10, L927
+L928:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     lsl w2, w11, #1
@@ -10242,9 +10288,9 @@ L927:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L928
+    cbz x10, L929
     strb w11, [x10, w9, uxtw]
-L929:
+L930:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -10254,25 +10300,25 @@ L929:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L930
-L931:
+    cbz x10, L931
+L932:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L926:
+L927:
     bl Lrd_slow
-    b L927
-L928:
+    b L928
+L929:
     mov w0, w11
     bl Lwr_slow
-    b L929
-L930:
+    b L930
+L931:
     mov w9, w24
     bl Lrd_slow
-    b L931
+    b L932
     .p2align 4
 Lfcb_07:
     lsr w1, w26, #7
@@ -10293,18 +10339,18 @@ Lfcb_07:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L932
-L933:
+    cbz x10, L933
+L934:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L932:
+L933:
     mov w9, w24
     bl Lrd_slow
-    b L933
+    b L934
     .p2align 4
 Lfcb_08:
     lsr w0, w28, #8
@@ -10325,18 +10371,18 @@ Lfcb_08:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L934
-L935:
+    cbz x10, L935
+L936:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L934:
+L935:
     mov w9, w24
     bl Lrd_slow
-    b L935
+    b L936
     .p2align 4
 Lfcb_09:
     and w0, w28, #0xFF
@@ -10357,18 +10403,18 @@ Lfcb_09:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L936
-L937:
+    cbz x10, L937
+L938:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L936:
+L937:
     mov w9, w24
     bl Lrd_slow
-    b L937
+    b L938
     .p2align 4
 Lfcb_0A:
     lsr w0, w13, #8
@@ -10389,18 +10435,18 @@ Lfcb_0A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L938
-L939:
+    cbz x10, L939
+L940:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L938:
+L939:
     mov w9, w24
     bl Lrd_slow
-    b L939
+    b L940
     .p2align 4
 Lfcb_0B:
     and w0, w13, #0xFF
@@ -10421,18 +10467,18 @@ Lfcb_0B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L940
-L941:
+    cbz x10, L941
+L942:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L940:
+L941:
     mov w9, w24
     bl Lrd_slow
-    b L941
+    b L942
     .p2align 4
 Lfcb_0C:
     lsr w0, w14, #8
@@ -10453,18 +10499,18 @@ Lfcb_0C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L942
-L943:
+    cbz x10, L943
+L944:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L942:
+L943:
     mov w9, w24
     bl Lrd_slow
-    b L943
+    b L944
     .p2align 4
 Lfcb_0D:
     and w0, w14, #0xFF
@@ -10485,26 +10531,26 @@ Lfcb_0D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L944
-L945:
+    cbz x10, L945
+L946:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L944:
+L945:
     mov w9, w24
     bl Lrd_slow
-    b L945
+    b L946
     .p2align 4
 Lfcb_0E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L946
-L947:
+    cbz x10, L947
+L948:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     lsr w2, w11, #1
@@ -10518,9 +10564,9 @@ L947:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L948
+    cbz x10, L949
     strb w11, [x10, w9, uxtw]
-L949:
+L950:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -10530,25 +10576,25 @@ L949:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L950
-L951:
+    cbz x10, L951
+L952:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L946:
+L947:
     bl Lrd_slow
-    b L947
-L948:
+    b L948
+L949:
     mov w0, w11
     bl Lwr_slow
-    b L949
-L950:
+    b L950
+L951:
     mov w9, w24
     bl Lrd_slow
-    b L951
+    b L952
     .p2align 4
 Lfcb_0F:
     and w1, w26, #1
@@ -10568,18 +10614,18 @@ Lfcb_0F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L952
-L953:
+    cbz x10, L953
+L954:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L952:
+L953:
     mov w9, w24
     bl Lrd_slow
-    b L953
+    b L954
     .p2align 4
 Lfcb_10:
     lsr w0, w28, #8
@@ -10602,18 +10648,18 @@ Lfcb_10:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L954
-L955:
+    cbz x10, L955
+L956:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L954:
+L955:
     mov w9, w24
     bl Lrd_slow
-    b L955
+    b L956
     .p2align 4
 Lfcb_11:
     and w0, w28, #0xFF
@@ -10636,18 +10682,18 @@ Lfcb_11:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L956
-L957:
+    cbz x10, L957
+L958:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L956:
+L957:
     mov w9, w24
     bl Lrd_slow
-    b L957
+    b L958
     .p2align 4
 Lfcb_12:
     lsr w0, w13, #8
@@ -10670,18 +10716,18 @@ Lfcb_12:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L958
-L959:
+    cbz x10, L959
+L960:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L958:
+L959:
     mov w9, w24
     bl Lrd_slow
-    b L959
+    b L960
     .p2align 4
 Lfcb_13:
     and w0, w13, #0xFF
@@ -10704,18 +10750,18 @@ Lfcb_13:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L960
-L961:
+    cbz x10, L961
+L962:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L960:
+L961:
     mov w9, w24
     bl Lrd_slow
-    b L961
+    b L962
     .p2align 4
 Lfcb_14:
     lsr w0, w14, #8
@@ -10738,18 +10784,18 @@ Lfcb_14:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L962
-L963:
+    cbz x10, L963
+L964:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L962:
+L963:
     mov w9, w24
     bl Lrd_slow
-    b L963
+    b L964
     .p2align 4
 Lfcb_15:
     and w0, w14, #0xFF
@@ -10772,26 +10818,26 @@ Lfcb_15:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L964
-L965:
+    cbz x10, L965
+L966:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L964:
+L965:
     mov w9, w24
     bl Lrd_slow
-    b L965
+    b L966
     .p2align 4
 Lfcb_16:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L966
-L967:
+    cbz x10, L967
+L968:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     ubfx w3, w27, #4, #1
@@ -10807,9 +10853,9 @@ L967:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L968
+    cbz x10, L969
     strb w11, [x10, w9, uxtw]
-L969:
+L970:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -10819,25 +10865,25 @@ L969:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L970
-L971:
+    cbz x10, L971
+L972:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L966:
+L967:
     bl Lrd_slow
-    b L967
-L968:
+    b L968
+L969:
     mov w0, w11
     bl Lwr_slow
-    b L969
-L970:
+    b L970
+L971:
     mov w9, w24
     bl Lrd_slow
-    b L971
+    b L972
     .p2align 4
 Lfcb_17:
     lsr w1, w26, #7
@@ -10859,18 +10905,18 @@ Lfcb_17:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L972
-L973:
+    cbz x10, L973
+L974:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L972:
+L973:
     mov w9, w24
     bl Lrd_slow
-    b L973
+    b L974
     .p2align 4
 Lfcb_18:
     lsr w0, w28, #8
@@ -10892,18 +10938,18 @@ Lfcb_18:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L974
-L975:
+    cbz x10, L975
+L976:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L974:
+L975:
     mov w9, w24
     bl Lrd_slow
-    b L975
+    b L976
     .p2align 4
 Lfcb_19:
     and w0, w28, #0xFF
@@ -10925,18 +10971,18 @@ Lfcb_19:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L976
-L977:
+    cbz x10, L977
+L978:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L976:
+L977:
     mov w9, w24
     bl Lrd_slow
-    b L977
+    b L978
     .p2align 4
 Lfcb_1A:
     lsr w0, w13, #8
@@ -10958,18 +11004,18 @@ Lfcb_1A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L978
-L979:
+    cbz x10, L979
+L980:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L978:
+L979:
     mov w9, w24
     bl Lrd_slow
-    b L979
+    b L980
     .p2align 4
 Lfcb_1B:
     and w0, w13, #0xFF
@@ -10991,18 +11037,18 @@ Lfcb_1B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L980
-L981:
+    cbz x10, L981
+L982:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L980:
+L981:
     mov w9, w24
     bl Lrd_slow
-    b L981
+    b L982
     .p2align 4
 Lfcb_1C:
     lsr w0, w14, #8
@@ -11024,18 +11070,18 @@ Lfcb_1C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L982
-L983:
+    cbz x10, L983
+L984:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L982:
+L983:
     mov w9, w24
     bl Lrd_slow
-    b L983
+    b L984
     .p2align 4
 Lfcb_1D:
     and w0, w14, #0xFF
@@ -11057,26 +11103,26 @@ Lfcb_1D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L984
-L985:
+    cbz x10, L985
+L986:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L984:
+L985:
     mov w9, w24
     bl Lrd_slow
-    b L985
+    b L986
     .p2align 4
 Lfcb_1E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L986
-L987:
+    cbz x10, L987
+L988:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     ubfx w3, w27, #4, #1
@@ -11091,9 +11137,9 @@ L987:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L988
+    cbz x10, L989
     strb w11, [x10, w9, uxtw]
-L989:
+L990:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -11103,25 +11149,25 @@ L989:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L990
-L991:
+    cbz x10, L991
+L992:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L986:
+L987:
     bl Lrd_slow
-    b L987
-L988:
+    b L988
+L989:
     mov w0, w11
     bl Lwr_slow
-    b L989
-L990:
+    b L990
+L991:
     mov w9, w24
     bl Lrd_slow
-    b L991
+    b L992
     .p2align 4
 Lfcb_1F:
     and w1, w26, #1
@@ -11142,18 +11188,18 @@ Lfcb_1F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L992
-L993:
+    cbz x10, L993
+L994:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L992:
+L993:
     mov w9, w24
     bl Lrd_slow
-    b L993
+    b L994
     .p2align 4
 Lfcb_20:
     lsr w0, w28, #8
@@ -11174,18 +11220,18 @@ Lfcb_20:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L994
-L995:
+    cbz x10, L995
+L996:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L994:
+L995:
     mov w9, w24
     bl Lrd_slow
-    b L995
+    b L996
     .p2align 4
 Lfcb_21:
     and w0, w28, #0xFF
@@ -11206,18 +11252,18 @@ Lfcb_21:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L996
-L997:
+    cbz x10, L997
+L998:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L996:
+L997:
     mov w9, w24
     bl Lrd_slow
-    b L997
+    b L998
     .p2align 4
 Lfcb_22:
     lsr w0, w13, #8
@@ -11238,18 +11284,18 @@ Lfcb_22:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L998
-L999:
+    cbz x10, L999
+L1000:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L998:
+L999:
     mov w9, w24
     bl Lrd_slow
-    b L999
+    b L1000
     .p2align 4
 Lfcb_23:
     and w0, w13, #0xFF
@@ -11270,18 +11316,18 @@ Lfcb_23:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1000
-L1001:
+    cbz x10, L1001
+L1002:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1000:
+L1001:
     mov w9, w24
     bl Lrd_slow
-    b L1001
+    b L1002
     .p2align 4
 Lfcb_24:
     lsr w0, w14, #8
@@ -11302,18 +11348,18 @@ Lfcb_24:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1002
-L1003:
+    cbz x10, L1003
+L1004:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1002:
+L1003:
     mov w9, w24
     bl Lrd_slow
-    b L1003
+    b L1004
     .p2align 4
 Lfcb_25:
     and w0, w14, #0xFF
@@ -11334,26 +11380,26 @@ Lfcb_25:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1004
-L1005:
+    cbz x10, L1005
+L1006:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1004:
+L1005:
     mov w9, w24
     bl Lrd_slow
-    b L1005
+    b L1006
     .p2align 4
 Lfcb_26:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1006
-L1007:
+    cbz x10, L1007
+L1008:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     lsl w2, w11, #1
@@ -11367,9 +11413,9 @@ L1007:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1008
+    cbz x10, L1009
     strb w11, [x10, w9, uxtw]
-L1009:
+L1010:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -11379,25 +11425,25 @@ L1009:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1010
-L1011:
+    cbz x10, L1011
+L1012:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1006:
+L1007:
     bl Lrd_slow
-    b L1007
-L1008:
+    b L1008
+L1009:
     mov w0, w11
     bl Lwr_slow
-    b L1009
-L1010:
+    b L1010
+L1011:
     mov w9, w24
     bl Lrd_slow
-    b L1011
+    b L1012
     .p2align 4
 Lfcb_27:
     lsr w1, w26, #7
@@ -11417,18 +11463,18 @@ Lfcb_27:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1012
-L1013:
+    cbz x10, L1013
+L1014:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1012:
+L1013:
     mov w9, w24
     bl Lrd_slow
-    b L1013
+    b L1014
     .p2align 4
 Lfcb_28:
     lsr w0, w28, #8
@@ -11450,18 +11496,18 @@ Lfcb_28:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1014
-L1015:
+    cbz x10, L1015
+L1016:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1014:
+L1015:
     mov w9, w24
     bl Lrd_slow
-    b L1015
+    b L1016
     .p2align 4
 Lfcb_29:
     and w0, w28, #0xFF
@@ -11483,18 +11529,18 @@ Lfcb_29:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1016
-L1017:
+    cbz x10, L1017
+L1018:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1016:
+L1017:
     mov w9, w24
     bl Lrd_slow
-    b L1017
+    b L1018
     .p2align 4
 Lfcb_2A:
     lsr w0, w13, #8
@@ -11516,18 +11562,18 @@ Lfcb_2A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1018
-L1019:
+    cbz x10, L1019
+L1020:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1018:
+L1019:
     mov w9, w24
     bl Lrd_slow
-    b L1019
+    b L1020
     .p2align 4
 Lfcb_2B:
     and w0, w13, #0xFF
@@ -11549,18 +11595,18 @@ Lfcb_2B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1020
-L1021:
+    cbz x10, L1021
+L1022:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1020:
+L1021:
     mov w9, w24
     bl Lrd_slow
-    b L1021
+    b L1022
     .p2align 4
 Lfcb_2C:
     lsr w0, w14, #8
@@ -11582,18 +11628,18 @@ Lfcb_2C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1022
-L1023:
+    cbz x10, L1023
+L1024:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1022:
+L1023:
     mov w9, w24
     bl Lrd_slow
-    b L1023
+    b L1024
     .p2align 4
 Lfcb_2D:
     and w0, w14, #0xFF
@@ -11615,26 +11661,26 @@ Lfcb_2D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1024
-L1025:
+    cbz x10, L1025
+L1026:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1024:
+L1025:
     mov w9, w24
     bl Lrd_slow
-    b L1025
+    b L1026
     .p2align 4
 Lfcb_2E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1026
-L1027:
+    cbz x10, L1027
+L1028:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     and w3, w11, #0x80
@@ -11649,9 +11695,9 @@ L1027:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1028
+    cbz x10, L1029
     strb w11, [x10, w9, uxtw]
-L1029:
+L1030:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -11661,25 +11707,25 @@ L1029:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1030
-L1031:
+    cbz x10, L1031
+L1032:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1026:
+L1027:
     bl Lrd_slow
-    b L1027
-L1028:
+    b L1028
+L1029:
     mov w0, w11
     bl Lwr_slow
-    b L1029
-L1030:
+    b L1030
+L1031:
     mov w9, w24
     bl Lrd_slow
-    b L1031
+    b L1032
     .p2align 4
 Lfcb_2F:
     and w1, w26, #1
@@ -11700,18 +11746,18 @@ Lfcb_2F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1032
-L1033:
+    cbz x10, L1033
+L1034:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1032:
+L1033:
     mov w9, w24
     bl Lrd_slow
-    b L1033
+    b L1034
     .p2align 4
 Lfcb_30:
     lsr w0, w28, #8
@@ -11733,18 +11779,18 @@ Lfcb_30:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1034
-L1035:
+    cbz x10, L1035
+L1036:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1034:
+L1035:
     mov w9, w24
     bl Lrd_slow
-    b L1035
+    b L1036
     .p2align 4
 Lfcb_31:
     and w0, w28, #0xFF
@@ -11766,18 +11812,18 @@ Lfcb_31:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1036
-L1037:
+    cbz x10, L1037
+L1038:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1036:
+L1037:
     mov w9, w24
     bl Lrd_slow
-    b L1037
+    b L1038
     .p2align 4
 Lfcb_32:
     lsr w0, w13, #8
@@ -11799,18 +11845,18 @@ Lfcb_32:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1038
-L1039:
+    cbz x10, L1039
+L1040:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1038:
+L1039:
     mov w9, w24
     bl Lrd_slow
-    b L1039
+    b L1040
     .p2align 4
 Lfcb_33:
     and w0, w13, #0xFF
@@ -11832,18 +11878,18 @@ Lfcb_33:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1040
-L1041:
+    cbz x10, L1041
+L1042:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1040:
+L1041:
     mov w9, w24
     bl Lrd_slow
-    b L1041
+    b L1042
     .p2align 4
 Lfcb_34:
     lsr w0, w14, #8
@@ -11865,18 +11911,18 @@ Lfcb_34:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1042
-L1043:
+    cbz x10, L1043
+L1044:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1042:
+L1043:
     mov w9, w24
     bl Lrd_slow
-    b L1043
+    b L1044
     .p2align 4
 Lfcb_35:
     and w0, w14, #0xFF
@@ -11898,26 +11944,26 @@ Lfcb_35:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1044
-L1045:
+    cbz x10, L1045
+L1046:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1044:
+L1045:
     mov w9, w24
     bl Lrd_slow
-    b L1045
+    b L1046
     .p2align 4
 Lfcb_36:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1046
-L1047:
+    cbz x10, L1047
+L1048:
     ldrb w11, [x10, w9, uxtw]
     mov w1, #0
     lsl w2, w11, #4
@@ -11932,9 +11978,9 @@ L1047:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1048
+    cbz x10, L1049
     strb w11, [x10, w9, uxtw]
-L1049:
+L1050:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -11944,25 +11990,25 @@ L1049:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1050
-L1051:
+    cbz x10, L1051
+L1052:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1046:
+L1047:
     bl Lrd_slow
-    b L1047
-L1048:
+    b L1048
+L1049:
     mov w0, w11
     bl Lwr_slow
-    b L1049
-L1050:
+    b L1050
+L1051:
     mov w9, w24
     bl Lrd_slow
-    b L1051
+    b L1052
     .p2align 4
 Lfcb_37:
     mov w1, #0
@@ -11983,18 +12029,18 @@ Lfcb_37:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1052
-L1053:
+    cbz x10, L1053
+L1054:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1052:
+L1053:
     mov w9, w24
     bl Lrd_slow
-    b L1053
+    b L1054
     .p2align 4
 Lfcb_38:
     lsr w0, w28, #8
@@ -12014,18 +12060,18 @@ Lfcb_38:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1054
-L1055:
+    cbz x10, L1055
+L1056:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1054:
+L1055:
     mov w9, w24
     bl Lrd_slow
-    b L1055
+    b L1056
     .p2align 4
 Lfcb_39:
     and w0, w28, #0xFF
@@ -12045,18 +12091,18 @@ Lfcb_39:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1056
-L1057:
+    cbz x10, L1057
+L1058:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1056:
+L1057:
     mov w9, w24
     bl Lrd_slow
-    b L1057
+    b L1058
     .p2align 4
 Lfcb_3A:
     lsr w0, w13, #8
@@ -12076,18 +12122,18 @@ Lfcb_3A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1058
-L1059:
+    cbz x10, L1059
+L1060:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1058:
+L1059:
     mov w9, w24
     bl Lrd_slow
-    b L1059
+    b L1060
     .p2align 4
 Lfcb_3B:
     and w0, w13, #0xFF
@@ -12107,18 +12153,18 @@ Lfcb_3B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1060
-L1061:
+    cbz x10, L1061
+L1062:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1060:
+L1061:
     mov w9, w24
     bl Lrd_slow
-    b L1061
+    b L1062
     .p2align 4
 Lfcb_3C:
     lsr w0, w14, #8
@@ -12138,18 +12184,18 @@ Lfcb_3C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1062
-L1063:
+    cbz x10, L1063
+L1064:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1062:
+L1063:
     mov w9, w24
     bl Lrd_slow
-    b L1063
+    b L1064
     .p2align 4
 Lfcb_3D:
     and w0, w14, #0xFF
@@ -12169,26 +12215,26 @@ Lfcb_3D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1064
-L1065:
+    cbz x10, L1065
+L1066:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1064:
+L1065:
     mov w9, w24
     bl Lrd_slow
-    b L1065
+    b L1066
     .p2align 4
 Lfcb_3E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1066
-L1067:
+    cbz x10, L1067
+L1068:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     lsr w2, w11, #1
@@ -12201,9 +12247,9 @@ L1067:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1068
+    cbz x10, L1069
     strb w11, [x10, w9, uxtw]
-L1069:
+L1070:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -12213,25 +12259,25 @@ L1069:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1070
-L1071:
+    cbz x10, L1071
+L1072:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1066:
+L1067:
     bl Lrd_slow
-    b L1067
-L1068:
+    b L1068
+L1069:
     mov w0, w11
     bl Lwr_slow
-    b L1069
-L1070:
+    b L1070
+L1071:
     mov w9, w24
     bl Lrd_slow
-    b L1071
+    b L1072
     .p2align 4
 Lfcb_3F:
     and w1, w26, #1
@@ -12250,18 +12296,18 @@ Lfcb_3F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1072
-L1073:
+    cbz x10, L1073
+L1074:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1072:
+L1073:
     mov w9, w24
     bl Lrd_slow
-    b L1073
+    b L1074
     .p2align 4
 Lfcb_40:
     lsr w0, w28, #8
@@ -12279,18 +12325,18 @@ Lfcb_40:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1074
-L1075:
+    cbz x10, L1075
+L1076:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1074:
+L1075:
     mov w9, w24
     bl Lrd_slow
-    b L1075
+    b L1076
     .p2align 4
 Lfcb_41:
     and w0, w28, #0xFF
@@ -12308,18 +12354,18 @@ Lfcb_41:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1076
-L1077:
+    cbz x10, L1077
+L1078:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1076:
+L1077:
     mov w9, w24
     bl Lrd_slow
-    b L1077
+    b L1078
     .p2align 4
 Lfcb_42:
     lsr w0, w13, #8
@@ -12337,18 +12383,18 @@ Lfcb_42:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1078
-L1079:
+    cbz x10, L1079
+L1080:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1078:
+L1079:
     mov w9, w24
     bl Lrd_slow
-    b L1079
+    b L1080
     .p2align 4
 Lfcb_43:
     and w0, w13, #0xFF
@@ -12366,18 +12412,18 @@ Lfcb_43:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1080
-L1081:
+    cbz x10, L1081
+L1082:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1080:
+L1081:
     mov w9, w24
     bl Lrd_slow
-    b L1081
+    b L1082
     .p2align 4
 Lfcb_44:
     lsr w0, w14, #8
@@ -12395,18 +12441,18 @@ Lfcb_44:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1082
-L1083:
+    cbz x10, L1083
+L1084:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1082:
+L1083:
     mov w9, w24
     bl Lrd_slow
-    b L1083
+    b L1084
     .p2align 4
 Lfcb_45:
     and w0, w14, #0xFF
@@ -12424,26 +12470,26 @@ Lfcb_45:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1084
-L1085:
+    cbz x10, L1085
+L1086:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1084:
+L1085:
     mov w9, w24
     bl Lrd_slow
-    b L1085
+    b L1086
     .p2align 4
 Lfcb_46:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1086
-L1087:
+    cbz x10, L1087
+L1088:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #1
     cset w1, eq
@@ -12459,21 +12505,21 @@ L1087:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1088
-L1089:
+    cbz x10, L1089
+L1090:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1086:
+L1087:
     bl Lrd_slow
-    b L1087
-L1088:
+    b L1088
+L1089:
     mov w9, w24
     bl Lrd_slow
-    b L1089
+    b L1090
     .p2align 4
 Lfcb_47:
     tst w26, #1
@@ -12490,18 +12536,18 @@ Lfcb_47:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1090
-L1091:
+    cbz x10, L1091
+L1092:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1090:
+L1091:
     mov w9, w24
     bl Lrd_slow
-    b L1091
+    b L1092
     .p2align 4
 Lfcb_48:
     lsr w0, w28, #8
@@ -12519,18 +12565,18 @@ Lfcb_48:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1092
-L1093:
+    cbz x10, L1093
+L1094:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1092:
+L1093:
     mov w9, w24
     bl Lrd_slow
-    b L1093
+    b L1094
     .p2align 4
 Lfcb_49:
     and w0, w28, #0xFF
@@ -12548,18 +12594,18 @@ Lfcb_49:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1094
-L1095:
+    cbz x10, L1095
+L1096:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1094:
+L1095:
     mov w9, w24
     bl Lrd_slow
-    b L1095
+    b L1096
     .p2align 4
 Lfcb_4A:
     lsr w0, w13, #8
@@ -12577,18 +12623,18 @@ Lfcb_4A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1096
-L1097:
+    cbz x10, L1097
+L1098:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1096:
+L1097:
     mov w9, w24
     bl Lrd_slow
-    b L1097
+    b L1098
     .p2align 4
 Lfcb_4B:
     and w0, w13, #0xFF
@@ -12606,18 +12652,18 @@ Lfcb_4B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1098
-L1099:
+    cbz x10, L1099
+L1100:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1098:
+L1099:
     mov w9, w24
     bl Lrd_slow
-    b L1099
+    b L1100
     .p2align 4
 Lfcb_4C:
     lsr w0, w14, #8
@@ -12635,18 +12681,18 @@ Lfcb_4C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1100
-L1101:
+    cbz x10, L1101
+L1102:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1100:
+L1101:
     mov w9, w24
     bl Lrd_slow
-    b L1101
+    b L1102
     .p2align 4
 Lfcb_4D:
     and w0, w14, #0xFF
@@ -12664,26 +12710,26 @@ Lfcb_4D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1102
-L1103:
+    cbz x10, L1103
+L1104:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1102:
+L1103:
     mov w9, w24
     bl Lrd_slow
-    b L1103
+    b L1104
     .p2align 4
 Lfcb_4E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1104
-L1105:
+    cbz x10, L1105
+L1106:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #2
     cset w1, eq
@@ -12699,21 +12745,21 @@ L1105:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1106
-L1107:
+    cbz x10, L1107
+L1108:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1104:
+L1105:
     bl Lrd_slow
-    b L1105
-L1106:
+    b L1106
+L1107:
     mov w9, w24
     bl Lrd_slow
-    b L1107
+    b L1108
     .p2align 4
 Lfcb_4F:
     tst w26, #2
@@ -12730,18 +12776,18 @@ Lfcb_4F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1108
-L1109:
+    cbz x10, L1109
+L1110:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1108:
+L1109:
     mov w9, w24
     bl Lrd_slow
-    b L1109
+    b L1110
     .p2align 4
 Lfcb_50:
     lsr w0, w28, #8
@@ -12759,18 +12805,18 @@ Lfcb_50:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1110
-L1111:
+    cbz x10, L1111
+L1112:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1110:
+L1111:
     mov w9, w24
     bl Lrd_slow
-    b L1111
+    b L1112
     .p2align 4
 Lfcb_51:
     and w0, w28, #0xFF
@@ -12788,18 +12834,18 @@ Lfcb_51:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1112
-L1113:
+    cbz x10, L1113
+L1114:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1112:
+L1113:
     mov w9, w24
     bl Lrd_slow
-    b L1113
+    b L1114
     .p2align 4
 Lfcb_52:
     lsr w0, w13, #8
@@ -12817,18 +12863,18 @@ Lfcb_52:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1114
-L1115:
+    cbz x10, L1115
+L1116:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1114:
+L1115:
     mov w9, w24
     bl Lrd_slow
-    b L1115
+    b L1116
     .p2align 4
 Lfcb_53:
     and w0, w13, #0xFF
@@ -12846,18 +12892,18 @@ Lfcb_53:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1116
-L1117:
+    cbz x10, L1117
+L1118:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1116:
+L1117:
     mov w9, w24
     bl Lrd_slow
-    b L1117
+    b L1118
     .p2align 4
 Lfcb_54:
     lsr w0, w14, #8
@@ -12875,18 +12921,18 @@ Lfcb_54:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1118
-L1119:
+    cbz x10, L1119
+L1120:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1118:
+L1119:
     mov w9, w24
     bl Lrd_slow
-    b L1119
+    b L1120
     .p2align 4
 Lfcb_55:
     and w0, w14, #0xFF
@@ -12904,26 +12950,26 @@ Lfcb_55:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1120
-L1121:
+    cbz x10, L1121
+L1122:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1120:
+L1121:
     mov w9, w24
     bl Lrd_slow
-    b L1121
+    b L1122
     .p2align 4
 Lfcb_56:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1122
-L1123:
+    cbz x10, L1123
+L1124:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #4
     cset w1, eq
@@ -12939,21 +12985,21 @@ L1123:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1124
-L1125:
+    cbz x10, L1125
+L1126:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1122:
+L1123:
     bl Lrd_slow
-    b L1123
-L1124:
+    b L1124
+L1125:
     mov w9, w24
     bl Lrd_slow
-    b L1125
+    b L1126
     .p2align 4
 Lfcb_57:
     tst w26, #4
@@ -12970,18 +13016,18 @@ Lfcb_57:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1126
-L1127:
+    cbz x10, L1127
+L1128:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1126:
+L1127:
     mov w9, w24
     bl Lrd_slow
-    b L1127
+    b L1128
     .p2align 4
 Lfcb_58:
     lsr w0, w28, #8
@@ -12999,18 +13045,18 @@ Lfcb_58:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1128
-L1129:
+    cbz x10, L1129
+L1130:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1128:
+L1129:
     mov w9, w24
     bl Lrd_slow
-    b L1129
+    b L1130
     .p2align 4
 Lfcb_59:
     and w0, w28, #0xFF
@@ -13028,18 +13074,18 @@ Lfcb_59:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1130
-L1131:
+    cbz x10, L1131
+L1132:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1130:
+L1131:
     mov w9, w24
     bl Lrd_slow
-    b L1131
+    b L1132
     .p2align 4
 Lfcb_5A:
     lsr w0, w13, #8
@@ -13057,18 +13103,18 @@ Lfcb_5A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1132
-L1133:
+    cbz x10, L1133
+L1134:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1132:
+L1133:
     mov w9, w24
     bl Lrd_slow
-    b L1133
+    b L1134
     .p2align 4
 Lfcb_5B:
     and w0, w13, #0xFF
@@ -13086,18 +13132,18 @@ Lfcb_5B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1134
-L1135:
+    cbz x10, L1135
+L1136:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1134:
+L1135:
     mov w9, w24
     bl Lrd_slow
-    b L1135
+    b L1136
     .p2align 4
 Lfcb_5C:
     lsr w0, w14, #8
@@ -13115,18 +13161,18 @@ Lfcb_5C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1136
-L1137:
+    cbz x10, L1137
+L1138:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1136:
+L1137:
     mov w9, w24
     bl Lrd_slow
-    b L1137
+    b L1138
     .p2align 4
 Lfcb_5D:
     and w0, w14, #0xFF
@@ -13144,26 +13190,26 @@ Lfcb_5D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1138
-L1139:
+    cbz x10, L1139
+L1140:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1138:
+L1139:
     mov w9, w24
     bl Lrd_slow
-    b L1139
+    b L1140
     .p2align 4
 Lfcb_5E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1140
-L1141:
+    cbz x10, L1141
+L1142:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #8
     cset w1, eq
@@ -13179,21 +13225,21 @@ L1141:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1142
-L1143:
+    cbz x10, L1143
+L1144:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1140:
+L1141:
     bl Lrd_slow
-    b L1141
-L1142:
+    b L1142
+L1143:
     mov w9, w24
     bl Lrd_slow
-    b L1143
+    b L1144
     .p2align 4
 Lfcb_5F:
     tst w26, #8
@@ -13210,18 +13256,18 @@ Lfcb_5F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1144
-L1145:
+    cbz x10, L1145
+L1146:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1144:
+L1145:
     mov w9, w24
     bl Lrd_slow
-    b L1145
+    b L1146
     .p2align 4
 Lfcb_60:
     lsr w0, w28, #8
@@ -13239,18 +13285,18 @@ Lfcb_60:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1146
-L1147:
+    cbz x10, L1147
+L1148:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1146:
+L1147:
     mov w9, w24
     bl Lrd_slow
-    b L1147
+    b L1148
     .p2align 4
 Lfcb_61:
     and w0, w28, #0xFF
@@ -13268,18 +13314,18 @@ Lfcb_61:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1148
-L1149:
+    cbz x10, L1149
+L1150:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1148:
+L1149:
     mov w9, w24
     bl Lrd_slow
-    b L1149
+    b L1150
     .p2align 4
 Lfcb_62:
     lsr w0, w13, #8
@@ -13297,18 +13343,18 @@ Lfcb_62:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1150
-L1151:
+    cbz x10, L1151
+L1152:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1150:
+L1151:
     mov w9, w24
     bl Lrd_slow
-    b L1151
+    b L1152
     .p2align 4
 Lfcb_63:
     and w0, w13, #0xFF
@@ -13326,18 +13372,18 @@ Lfcb_63:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1152
-L1153:
+    cbz x10, L1153
+L1154:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1152:
+L1153:
     mov w9, w24
     bl Lrd_slow
-    b L1153
+    b L1154
     .p2align 4
 Lfcb_64:
     lsr w0, w14, #8
@@ -13355,18 +13401,18 @@ Lfcb_64:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1154
-L1155:
+    cbz x10, L1155
+L1156:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1154:
+L1155:
     mov w9, w24
     bl Lrd_slow
-    b L1155
+    b L1156
     .p2align 4
 Lfcb_65:
     and w0, w14, #0xFF
@@ -13384,26 +13430,26 @@ Lfcb_65:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1156
-L1157:
+    cbz x10, L1157
+L1158:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1156:
+L1157:
     mov w9, w24
     bl Lrd_slow
-    b L1157
+    b L1158
     .p2align 4
 Lfcb_66:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1158
-L1159:
+    cbz x10, L1159
+L1160:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #16
     cset w1, eq
@@ -13419,21 +13465,21 @@ L1159:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1160
-L1161:
+    cbz x10, L1161
+L1162:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1158:
+L1159:
     bl Lrd_slow
-    b L1159
-L1160:
+    b L1160
+L1161:
     mov w9, w24
     bl Lrd_slow
-    b L1161
+    b L1162
     .p2align 4
 Lfcb_67:
     tst w26, #16
@@ -13450,18 +13496,18 @@ Lfcb_67:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1162
-L1163:
+    cbz x10, L1163
+L1164:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1162:
+L1163:
     mov w9, w24
     bl Lrd_slow
-    b L1163
+    b L1164
     .p2align 4
 Lfcb_68:
     lsr w0, w28, #8
@@ -13479,18 +13525,18 @@ Lfcb_68:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1164
-L1165:
+    cbz x10, L1165
+L1166:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1164:
+L1165:
     mov w9, w24
     bl Lrd_slow
-    b L1165
+    b L1166
     .p2align 4
 Lfcb_69:
     and w0, w28, #0xFF
@@ -13508,18 +13554,18 @@ Lfcb_69:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1166
-L1167:
+    cbz x10, L1167
+L1168:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1166:
+L1167:
     mov w9, w24
     bl Lrd_slow
-    b L1167
+    b L1168
     .p2align 4
 Lfcb_6A:
     lsr w0, w13, #8
@@ -13537,18 +13583,18 @@ Lfcb_6A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1168
-L1169:
+    cbz x10, L1169
+L1170:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1168:
+L1169:
     mov w9, w24
     bl Lrd_slow
-    b L1169
+    b L1170
     .p2align 4
 Lfcb_6B:
     and w0, w13, #0xFF
@@ -13566,18 +13612,18 @@ Lfcb_6B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1170
-L1171:
+    cbz x10, L1171
+L1172:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1170:
+L1171:
     mov w9, w24
     bl Lrd_slow
-    b L1171
+    b L1172
     .p2align 4
 Lfcb_6C:
     lsr w0, w14, #8
@@ -13595,18 +13641,18 @@ Lfcb_6C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1172
-L1173:
+    cbz x10, L1173
+L1174:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1172:
+L1173:
     mov w9, w24
     bl Lrd_slow
-    b L1173
+    b L1174
     .p2align 4
 Lfcb_6D:
     and w0, w14, #0xFF
@@ -13624,26 +13670,26 @@ Lfcb_6D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1174
-L1175:
+    cbz x10, L1175
+L1176:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1174:
+L1175:
     mov w9, w24
     bl Lrd_slow
-    b L1175
+    b L1176
     .p2align 4
 Lfcb_6E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1176
-L1177:
+    cbz x10, L1177
+L1178:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #32
     cset w1, eq
@@ -13659,21 +13705,21 @@ L1177:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1178
-L1179:
+    cbz x10, L1179
+L1180:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1176:
+L1177:
     bl Lrd_slow
-    b L1177
-L1178:
+    b L1178
+L1179:
     mov w9, w24
     bl Lrd_slow
-    b L1179
+    b L1180
     .p2align 4
 Lfcb_6F:
     tst w26, #32
@@ -13690,18 +13736,18 @@ Lfcb_6F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1180
-L1181:
+    cbz x10, L1181
+L1182:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1180:
+L1181:
     mov w9, w24
     bl Lrd_slow
-    b L1181
+    b L1182
     .p2align 4
 Lfcb_70:
     lsr w0, w28, #8
@@ -13719,18 +13765,18 @@ Lfcb_70:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1182
-L1183:
+    cbz x10, L1183
+L1184:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1182:
+L1183:
     mov w9, w24
     bl Lrd_slow
-    b L1183
+    b L1184
     .p2align 4
 Lfcb_71:
     and w0, w28, #0xFF
@@ -13748,18 +13794,18 @@ Lfcb_71:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1184
-L1185:
+    cbz x10, L1185
+L1186:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1184:
+L1185:
     mov w9, w24
     bl Lrd_slow
-    b L1185
+    b L1186
     .p2align 4
 Lfcb_72:
     lsr w0, w13, #8
@@ -13777,18 +13823,18 @@ Lfcb_72:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1186
-L1187:
+    cbz x10, L1187
+L1188:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1186:
+L1187:
     mov w9, w24
     bl Lrd_slow
-    b L1187
+    b L1188
     .p2align 4
 Lfcb_73:
     and w0, w13, #0xFF
@@ -13806,18 +13852,18 @@ Lfcb_73:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1188
-L1189:
+    cbz x10, L1189
+L1190:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1188:
+L1189:
     mov w9, w24
     bl Lrd_slow
-    b L1189
+    b L1190
     .p2align 4
 Lfcb_74:
     lsr w0, w14, #8
@@ -13835,18 +13881,18 @@ Lfcb_74:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1190
-L1191:
+    cbz x10, L1191
+L1192:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1190:
+L1191:
     mov w9, w24
     bl Lrd_slow
-    b L1191
+    b L1192
     .p2align 4
 Lfcb_75:
     and w0, w14, #0xFF
@@ -13864,26 +13910,26 @@ Lfcb_75:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1192
-L1193:
+    cbz x10, L1193
+L1194:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1192:
+L1193:
     mov w9, w24
     bl Lrd_slow
-    b L1193
+    b L1194
     .p2align 4
 Lfcb_76:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1194
-L1195:
+    cbz x10, L1195
+L1196:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #64
     cset w1, eq
@@ -13899,21 +13945,21 @@ L1195:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1196
-L1197:
+    cbz x10, L1197
+L1198:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1194:
+L1195:
     bl Lrd_slow
-    b L1195
-L1196:
+    b L1196
+L1197:
     mov w9, w24
     bl Lrd_slow
-    b L1197
+    b L1198
     .p2align 4
 Lfcb_77:
     tst w26, #64
@@ -13930,18 +13976,18 @@ Lfcb_77:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1198
-L1199:
+    cbz x10, L1199
+L1200:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1198:
+L1199:
     mov w9, w24
     bl Lrd_slow
-    b L1199
+    b L1200
     .p2align 4
 Lfcb_78:
     lsr w0, w28, #8
@@ -13959,18 +14005,18 @@ Lfcb_78:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1200
-L1201:
+    cbz x10, L1201
+L1202:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1200:
+L1201:
     mov w9, w24
     bl Lrd_slow
-    b L1201
+    b L1202
     .p2align 4
 Lfcb_79:
     and w0, w28, #0xFF
@@ -13988,18 +14034,18 @@ Lfcb_79:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1202
-L1203:
+    cbz x10, L1203
+L1204:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1202:
+L1203:
     mov w9, w24
     bl Lrd_slow
-    b L1203
+    b L1204
     .p2align 4
 Lfcb_7A:
     lsr w0, w13, #8
@@ -14017,18 +14063,18 @@ Lfcb_7A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1204
-L1205:
+    cbz x10, L1205
+L1206:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1204:
+L1205:
     mov w9, w24
     bl Lrd_slow
-    b L1205
+    b L1206
     .p2align 4
 Lfcb_7B:
     and w0, w13, #0xFF
@@ -14046,18 +14092,18 @@ Lfcb_7B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1206
-L1207:
+    cbz x10, L1207
+L1208:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1206:
+L1207:
     mov w9, w24
     bl Lrd_slow
-    b L1207
+    b L1208
     .p2align 4
 Lfcb_7C:
     lsr w0, w14, #8
@@ -14075,18 +14121,18 @@ Lfcb_7C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1208
-L1209:
+    cbz x10, L1209
+L1210:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1208:
+L1209:
     mov w9, w24
     bl Lrd_slow
-    b L1209
+    b L1210
     .p2align 4
 Lfcb_7D:
     and w0, w14, #0xFF
@@ -14104,26 +14150,26 @@ Lfcb_7D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1210
-L1211:
+    cbz x10, L1211
+L1212:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1210:
+L1211:
     mov w9, w24
     bl Lrd_slow
-    b L1211
+    b L1212
     .p2align 4
 Lfcb_7E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1212
-L1213:
+    cbz x10, L1213
+L1214:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #128
     cset w1, eq
@@ -14139,21 +14185,21 @@ L1213:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1214
-L1215:
+    cbz x10, L1215
+L1216:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1212:
+L1213:
     bl Lrd_slow
-    b L1213
-L1214:
+    b L1214
+L1215:
     mov w9, w24
     bl Lrd_slow
-    b L1215
+    b L1216
     .p2align 4
 Lfcb_7F:
     tst w26, #128
@@ -14170,18 +14216,18 @@ Lfcb_7F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1216
-L1217:
+    cbz x10, L1217
+L1218:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1216:
+L1217:
     mov w9, w24
     bl Lrd_slow
-    b L1217
+    b L1218
     .p2align 4
 Lfcb_80:
     lsr w0, w28, #8
@@ -14196,18 +14242,18 @@ Lfcb_80:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1218
-L1219:
+    cbz x10, L1219
+L1220:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1218:
+L1219:
     mov w9, w24
     bl Lrd_slow
-    b L1219
+    b L1220
     .p2align 4
 Lfcb_81:
     and w0, w28, #0xFF
@@ -14222,18 +14268,18 @@ Lfcb_81:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1220
-L1221:
+    cbz x10, L1221
+L1222:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1220:
+L1221:
     mov w9, w24
     bl Lrd_slow
-    b L1221
+    b L1222
     .p2align 4
 Lfcb_82:
     lsr w0, w13, #8
@@ -14248,18 +14294,18 @@ Lfcb_82:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1222
-L1223:
+    cbz x10, L1223
+L1224:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1222:
+L1223:
     mov w9, w24
     bl Lrd_slow
-    b L1223
+    b L1224
     .p2align 4
 Lfcb_83:
     and w0, w13, #0xFF
@@ -14274,18 +14320,18 @@ Lfcb_83:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1224
-L1225:
+    cbz x10, L1225
+L1226:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1224:
+L1225:
     mov w9, w24
     bl Lrd_slow
-    b L1225
+    b L1226
     .p2align 4
 Lfcb_84:
     lsr w0, w14, #8
@@ -14300,18 +14346,18 @@ Lfcb_84:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1226
-L1227:
+    cbz x10, L1227
+L1228:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1226:
+L1227:
     mov w9, w24
     bl Lrd_slow
-    b L1227
+    b L1228
     .p2align 4
 Lfcb_85:
     and w0, w14, #0xFF
@@ -14326,26 +14372,26 @@ Lfcb_85:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1228
-L1229:
+    cbz x10, L1229
+L1230:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1228:
+L1229:
     mov w9, w24
     bl Lrd_slow
-    b L1229
+    b L1230
     .p2align 4
 Lfcb_86:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1230
-L1231:
+    cbz x10, L1231
+L1232:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFE
     and w11, w2, #0xFF
@@ -14353,9 +14399,9 @@ L1231:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1232
+    cbz x10, L1233
     strb w11, [x10, w9, uxtw]
-L1233:
+L1234:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -14365,25 +14411,25 @@ L1233:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1234
-L1235:
+    cbz x10, L1235
+L1236:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1230:
+L1231:
     bl Lrd_slow
-    b L1231
-L1232:
+    b L1232
+L1233:
     mov w0, w11
     bl Lwr_slow
-    b L1233
-L1234:
+    b L1234
+L1235:
     mov w9, w24
     bl Lrd_slow
-    b L1235
+    b L1236
     .p2align 4
 Lfcb_87:
     and w2, w26, #0xFFFFFFFE
@@ -14397,18 +14443,18 @@ Lfcb_87:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1236
-L1237:
+    cbz x10, L1237
+L1238:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1236:
+L1237:
     mov w9, w24
     bl Lrd_slow
-    b L1237
+    b L1238
     .p2align 4
 Lfcb_88:
     lsr w0, w28, #8
@@ -14423,18 +14469,18 @@ Lfcb_88:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1238
-L1239:
+    cbz x10, L1239
+L1240:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1238:
+L1239:
     mov w9, w24
     bl Lrd_slow
-    b L1239
+    b L1240
     .p2align 4
 Lfcb_89:
     and w0, w28, #0xFF
@@ -14449,18 +14495,18 @@ Lfcb_89:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1240
-L1241:
+    cbz x10, L1241
+L1242:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1240:
+L1241:
     mov w9, w24
     bl Lrd_slow
-    b L1241
+    b L1242
     .p2align 4
 Lfcb_8A:
     lsr w0, w13, #8
@@ -14475,18 +14521,18 @@ Lfcb_8A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1242
-L1243:
+    cbz x10, L1243
+L1244:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1242:
+L1243:
     mov w9, w24
     bl Lrd_slow
-    b L1243
+    b L1244
     .p2align 4
 Lfcb_8B:
     and w0, w13, #0xFF
@@ -14501,18 +14547,18 @@ Lfcb_8B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1244
-L1245:
+    cbz x10, L1245
+L1246:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1244:
+L1245:
     mov w9, w24
     bl Lrd_slow
-    b L1245
+    b L1246
     .p2align 4
 Lfcb_8C:
     lsr w0, w14, #8
@@ -14527,18 +14573,18 @@ Lfcb_8C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1246
-L1247:
+    cbz x10, L1247
+L1248:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1246:
+L1247:
     mov w9, w24
     bl Lrd_slow
-    b L1247
+    b L1248
     .p2align 4
 Lfcb_8D:
     and w0, w14, #0xFF
@@ -14553,26 +14599,26 @@ Lfcb_8D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1248
-L1249:
+    cbz x10, L1249
+L1250:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1248:
+L1249:
     mov w9, w24
     bl Lrd_slow
-    b L1249
+    b L1250
     .p2align 4
 Lfcb_8E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1250
-L1251:
+    cbz x10, L1251
+L1252:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFD
     and w11, w2, #0xFF
@@ -14580,9 +14626,9 @@ L1251:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1252
+    cbz x10, L1253
     strb w11, [x10, w9, uxtw]
-L1253:
+L1254:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -14592,25 +14638,25 @@ L1253:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1254
-L1255:
+    cbz x10, L1255
+L1256:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1250:
+L1251:
     bl Lrd_slow
-    b L1251
-L1252:
+    b L1252
+L1253:
     mov w0, w11
     bl Lwr_slow
-    b L1253
-L1254:
+    b L1254
+L1255:
     mov w9, w24
     bl Lrd_slow
-    b L1255
+    b L1256
     .p2align 4
 Lfcb_8F:
     and w2, w26, #0xFFFFFFFD
@@ -14624,18 +14670,18 @@ Lfcb_8F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1256
-L1257:
+    cbz x10, L1257
+L1258:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1256:
+L1257:
     mov w9, w24
     bl Lrd_slow
-    b L1257
+    b L1258
     .p2align 4
 Lfcb_90:
     lsr w0, w28, #8
@@ -14650,18 +14696,18 @@ Lfcb_90:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1258
-L1259:
+    cbz x10, L1259
+L1260:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1258:
+L1259:
     mov w9, w24
     bl Lrd_slow
-    b L1259
+    b L1260
     .p2align 4
 Lfcb_91:
     and w0, w28, #0xFF
@@ -14676,18 +14722,18 @@ Lfcb_91:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1260
-L1261:
+    cbz x10, L1261
+L1262:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1260:
+L1261:
     mov w9, w24
     bl Lrd_slow
-    b L1261
+    b L1262
     .p2align 4
 Lfcb_92:
     lsr w0, w13, #8
@@ -14702,18 +14748,18 @@ Lfcb_92:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1262
-L1263:
+    cbz x10, L1263
+L1264:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1262:
+L1263:
     mov w9, w24
     bl Lrd_slow
-    b L1263
+    b L1264
     .p2align 4
 Lfcb_93:
     and w0, w13, #0xFF
@@ -14728,18 +14774,18 @@ Lfcb_93:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1264
-L1265:
+    cbz x10, L1265
+L1266:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1264:
+L1265:
     mov w9, w24
     bl Lrd_slow
-    b L1265
+    b L1266
     .p2align 4
 Lfcb_94:
     lsr w0, w14, #8
@@ -14754,18 +14800,18 @@ Lfcb_94:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1266
-L1267:
+    cbz x10, L1267
+L1268:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1266:
+L1267:
     mov w9, w24
     bl Lrd_slow
-    b L1267
+    b L1268
     .p2align 4
 Lfcb_95:
     and w0, w14, #0xFF
@@ -14780,26 +14826,26 @@ Lfcb_95:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1268
-L1269:
+    cbz x10, L1269
+L1270:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1268:
+L1269:
     mov w9, w24
     bl Lrd_slow
-    b L1269
+    b L1270
     .p2align 4
 Lfcb_96:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1270
-L1271:
+    cbz x10, L1271
+L1272:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFB
     and w11, w2, #0xFF
@@ -14807,9 +14853,9 @@ L1271:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1272
+    cbz x10, L1273
     strb w11, [x10, w9, uxtw]
-L1273:
+L1274:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -14819,25 +14865,25 @@ L1273:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1274
-L1275:
+    cbz x10, L1275
+L1276:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1270:
+L1271:
     bl Lrd_slow
-    b L1271
-L1272:
+    b L1272
+L1273:
     mov w0, w11
     bl Lwr_slow
-    b L1273
-L1274:
+    b L1274
+L1275:
     mov w9, w24
     bl Lrd_slow
-    b L1275
+    b L1276
     .p2align 4
 Lfcb_97:
     and w2, w26, #0xFFFFFFFB
@@ -14851,18 +14897,18 @@ Lfcb_97:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1276
-L1277:
+    cbz x10, L1277
+L1278:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1276:
+L1277:
     mov w9, w24
     bl Lrd_slow
-    b L1277
+    b L1278
     .p2align 4
 Lfcb_98:
     lsr w0, w28, #8
@@ -14877,18 +14923,18 @@ Lfcb_98:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1278
-L1279:
+    cbz x10, L1279
+L1280:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1278:
+L1279:
     mov w9, w24
     bl Lrd_slow
-    b L1279
+    b L1280
     .p2align 4
 Lfcb_99:
     and w0, w28, #0xFF
@@ -14903,18 +14949,18 @@ Lfcb_99:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1280
-L1281:
+    cbz x10, L1281
+L1282:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1280:
+L1281:
     mov w9, w24
     bl Lrd_slow
-    b L1281
+    b L1282
     .p2align 4
 Lfcb_9A:
     lsr w0, w13, #8
@@ -14929,18 +14975,18 @@ Lfcb_9A:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1282
-L1283:
+    cbz x10, L1283
+L1284:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1282:
+L1283:
     mov w9, w24
     bl Lrd_slow
-    b L1283
+    b L1284
     .p2align 4
 Lfcb_9B:
     and w0, w13, #0xFF
@@ -14955,18 +15001,18 @@ Lfcb_9B:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1284
-L1285:
+    cbz x10, L1285
+L1286:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1284:
+L1285:
     mov w9, w24
     bl Lrd_slow
-    b L1285
+    b L1286
     .p2align 4
 Lfcb_9C:
     lsr w0, w14, #8
@@ -14981,18 +15027,18 @@ Lfcb_9C:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1286
-L1287:
+    cbz x10, L1287
+L1288:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1286:
+L1287:
     mov w9, w24
     bl Lrd_slow
-    b L1287
+    b L1288
     .p2align 4
 Lfcb_9D:
     and w0, w14, #0xFF
@@ -15007,26 +15053,26 @@ Lfcb_9D:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1288
-L1289:
+    cbz x10, L1289
+L1290:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1288:
+L1289:
     mov w9, w24
     bl Lrd_slow
-    b L1289
+    b L1290
     .p2align 4
 Lfcb_9E:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1290
-L1291:
+    cbz x10, L1291
+L1292:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFF7
     and w11, w2, #0xFF
@@ -15034,9 +15080,9 @@ L1291:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1292
+    cbz x10, L1293
     strb w11, [x10, w9, uxtw]
-L1293:
+L1294:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -15046,25 +15092,25 @@ L1293:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1294
-L1295:
+    cbz x10, L1295
+L1296:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1290:
+L1291:
     bl Lrd_slow
-    b L1291
-L1292:
+    b L1292
+L1293:
     mov w0, w11
     bl Lwr_slow
-    b L1293
-L1294:
+    b L1294
+L1295:
     mov w9, w24
     bl Lrd_slow
-    b L1295
+    b L1296
     .p2align 4
 Lfcb_9F:
     and w2, w26, #0xFFFFFFF7
@@ -15078,18 +15124,18 @@ Lfcb_9F:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1296
-L1297:
+    cbz x10, L1297
+L1298:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1296:
+L1297:
     mov w9, w24
     bl Lrd_slow
-    b L1297
+    b L1298
     .p2align 4
 Lfcb_A0:
     lsr w0, w28, #8
@@ -15104,18 +15150,18 @@ Lfcb_A0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1298
-L1299:
+    cbz x10, L1299
+L1300:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1298:
+L1299:
     mov w9, w24
     bl Lrd_slow
-    b L1299
+    b L1300
     .p2align 4
 Lfcb_A1:
     and w0, w28, #0xFF
@@ -15130,18 +15176,18 @@ Lfcb_A1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1300
-L1301:
+    cbz x10, L1301
+L1302:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1300:
+L1301:
     mov w9, w24
     bl Lrd_slow
-    b L1301
+    b L1302
     .p2align 4
 Lfcb_A2:
     lsr w0, w13, #8
@@ -15156,18 +15202,18 @@ Lfcb_A2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1302
-L1303:
+    cbz x10, L1303
+L1304:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1302:
+L1303:
     mov w9, w24
     bl Lrd_slow
-    b L1303
+    b L1304
     .p2align 4
 Lfcb_A3:
     and w0, w13, #0xFF
@@ -15182,18 +15228,18 @@ Lfcb_A3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1304
-L1305:
+    cbz x10, L1305
+L1306:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1304:
+L1305:
     mov w9, w24
     bl Lrd_slow
-    b L1305
+    b L1306
     .p2align 4
 Lfcb_A4:
     lsr w0, w14, #8
@@ -15208,18 +15254,18 @@ Lfcb_A4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1306
-L1307:
+    cbz x10, L1307
+L1308:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1306:
+L1307:
     mov w9, w24
     bl Lrd_slow
-    b L1307
+    b L1308
     .p2align 4
 Lfcb_A5:
     and w0, w14, #0xFF
@@ -15234,26 +15280,26 @@ Lfcb_A5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1308
-L1309:
+    cbz x10, L1309
+L1310:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1308:
+L1309:
     mov w9, w24
     bl Lrd_slow
-    b L1309
+    b L1310
     .p2align 4
 Lfcb_A6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1310
-L1311:
+    cbz x10, L1311
+L1312:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFEF
     and w11, w2, #0xFF
@@ -15261,9 +15307,9 @@ L1311:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1312
+    cbz x10, L1313
     strb w11, [x10, w9, uxtw]
-L1313:
+L1314:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -15273,25 +15319,25 @@ L1313:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1314
-L1315:
+    cbz x10, L1315
+L1316:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1310:
+L1311:
     bl Lrd_slow
-    b L1311
-L1312:
+    b L1312
+L1313:
     mov w0, w11
     bl Lwr_slow
-    b L1313
-L1314:
+    b L1314
+L1315:
     mov w9, w24
     bl Lrd_slow
-    b L1315
+    b L1316
     .p2align 4
 Lfcb_A7:
     and w2, w26, #0xFFFFFFEF
@@ -15305,18 +15351,18 @@ Lfcb_A7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1316
-L1317:
+    cbz x10, L1317
+L1318:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1316:
+L1317:
     mov w9, w24
     bl Lrd_slow
-    b L1317
+    b L1318
     .p2align 4
 Lfcb_A8:
     lsr w0, w28, #8
@@ -15331,18 +15377,18 @@ Lfcb_A8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1318
-L1319:
+    cbz x10, L1319
+L1320:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1318:
+L1319:
     mov w9, w24
     bl Lrd_slow
-    b L1319
+    b L1320
     .p2align 4
 Lfcb_A9:
     and w0, w28, #0xFF
@@ -15357,18 +15403,18 @@ Lfcb_A9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1320
-L1321:
+    cbz x10, L1321
+L1322:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1320:
+L1321:
     mov w9, w24
     bl Lrd_slow
-    b L1321
+    b L1322
     .p2align 4
 Lfcb_AA:
     lsr w0, w13, #8
@@ -15383,18 +15429,18 @@ Lfcb_AA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1322
-L1323:
+    cbz x10, L1323
+L1324:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1322:
+L1323:
     mov w9, w24
     bl Lrd_slow
-    b L1323
+    b L1324
     .p2align 4
 Lfcb_AB:
     and w0, w13, #0xFF
@@ -15409,18 +15455,18 @@ Lfcb_AB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1324
-L1325:
+    cbz x10, L1325
+L1326:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1324:
+L1325:
     mov w9, w24
     bl Lrd_slow
-    b L1325
+    b L1326
     .p2align 4
 Lfcb_AC:
     lsr w0, w14, #8
@@ -15435,18 +15481,18 @@ Lfcb_AC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1326
-L1327:
+    cbz x10, L1327
+L1328:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1326:
+L1327:
     mov w9, w24
     bl Lrd_slow
-    b L1327
+    b L1328
     .p2align 4
 Lfcb_AD:
     and w0, w14, #0xFF
@@ -15461,26 +15507,26 @@ Lfcb_AD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1328
-L1329:
+    cbz x10, L1329
+L1330:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1328:
+L1329:
     mov w9, w24
     bl Lrd_slow
-    b L1329
+    b L1330
     .p2align 4
 Lfcb_AE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1330
-L1331:
+    cbz x10, L1331
+L1332:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFDF
     and w11, w2, #0xFF
@@ -15488,9 +15534,9 @@ L1331:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1332
+    cbz x10, L1333
     strb w11, [x10, w9, uxtw]
-L1333:
+L1334:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -15500,25 +15546,25 @@ L1333:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1334
-L1335:
+    cbz x10, L1335
+L1336:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1330:
+L1331:
     bl Lrd_slow
-    b L1331
-L1332:
+    b L1332
+L1333:
     mov w0, w11
     bl Lwr_slow
-    b L1333
-L1334:
+    b L1334
+L1335:
     mov w9, w24
     bl Lrd_slow
-    b L1335
+    b L1336
     .p2align 4
 Lfcb_AF:
     and w2, w26, #0xFFFFFFDF
@@ -15532,18 +15578,18 @@ Lfcb_AF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1336
-L1337:
+    cbz x10, L1337
+L1338:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1336:
+L1337:
     mov w9, w24
     bl Lrd_slow
-    b L1337
+    b L1338
     .p2align 4
 Lfcb_B0:
     lsr w0, w28, #8
@@ -15558,18 +15604,18 @@ Lfcb_B0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1338
-L1339:
+    cbz x10, L1339
+L1340:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1338:
+L1339:
     mov w9, w24
     bl Lrd_slow
-    b L1339
+    b L1340
     .p2align 4
 Lfcb_B1:
     and w0, w28, #0xFF
@@ -15584,18 +15630,18 @@ Lfcb_B1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1340
-L1341:
+    cbz x10, L1341
+L1342:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1340:
+L1341:
     mov w9, w24
     bl Lrd_slow
-    b L1341
+    b L1342
     .p2align 4
 Lfcb_B2:
     lsr w0, w13, #8
@@ -15610,18 +15656,18 @@ Lfcb_B2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1342
-L1343:
+    cbz x10, L1343
+L1344:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1342:
+L1343:
     mov w9, w24
     bl Lrd_slow
-    b L1343
+    b L1344
     .p2align 4
 Lfcb_B3:
     and w0, w13, #0xFF
@@ -15636,18 +15682,18 @@ Lfcb_B3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1344
-L1345:
+    cbz x10, L1345
+L1346:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1344:
+L1345:
     mov w9, w24
     bl Lrd_slow
-    b L1345
+    b L1346
     .p2align 4
 Lfcb_B4:
     lsr w0, w14, #8
@@ -15662,18 +15708,18 @@ Lfcb_B4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1346
-L1347:
+    cbz x10, L1347
+L1348:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1346:
+L1347:
     mov w9, w24
     bl Lrd_slow
-    b L1347
+    b L1348
     .p2align 4
 Lfcb_B5:
     and w0, w14, #0xFF
@@ -15688,26 +15734,26 @@ Lfcb_B5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1348
-L1349:
+    cbz x10, L1349
+L1350:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1348:
+L1349:
     mov w9, w24
     bl Lrd_slow
-    b L1349
+    b L1350
     .p2align 4
 Lfcb_B6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1350
-L1351:
+    cbz x10, L1351
+L1352:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFBF
     and w11, w2, #0xFF
@@ -15715,9 +15761,9 @@ L1351:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1352
+    cbz x10, L1353
     strb w11, [x10, w9, uxtw]
-L1353:
+L1354:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -15727,25 +15773,25 @@ L1353:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1354
-L1355:
+    cbz x10, L1355
+L1356:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1350:
+L1351:
     bl Lrd_slow
-    b L1351
-L1352:
+    b L1352
+L1353:
     mov w0, w11
     bl Lwr_slow
-    b L1353
-L1354:
+    b L1354
+L1355:
     mov w9, w24
     bl Lrd_slow
-    b L1355
+    b L1356
     .p2align 4
 Lfcb_B7:
     and w2, w26, #0xFFFFFFBF
@@ -15759,18 +15805,18 @@ Lfcb_B7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1356
-L1357:
+    cbz x10, L1357
+L1358:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1356:
+L1357:
     mov w9, w24
     bl Lrd_slow
-    b L1357
+    b L1358
     .p2align 4
 Lfcb_B8:
     lsr w0, w28, #8
@@ -15785,18 +15831,18 @@ Lfcb_B8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1358
-L1359:
+    cbz x10, L1359
+L1360:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1358:
+L1359:
     mov w9, w24
     bl Lrd_slow
-    b L1359
+    b L1360
     .p2align 4
 Lfcb_B9:
     and w0, w28, #0xFF
@@ -15811,18 +15857,18 @@ Lfcb_B9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1360
-L1361:
+    cbz x10, L1361
+L1362:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1360:
+L1361:
     mov w9, w24
     bl Lrd_slow
-    b L1361
+    b L1362
     .p2align 4
 Lfcb_BA:
     lsr w0, w13, #8
@@ -15837,18 +15883,18 @@ Lfcb_BA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1362
-L1363:
+    cbz x10, L1363
+L1364:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1362:
+L1363:
     mov w9, w24
     bl Lrd_slow
-    b L1363
+    b L1364
     .p2align 4
 Lfcb_BB:
     and w0, w13, #0xFF
@@ -15863,18 +15909,18 @@ Lfcb_BB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1364
-L1365:
+    cbz x10, L1365
+L1366:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1364:
+L1365:
     mov w9, w24
     bl Lrd_slow
-    b L1365
+    b L1366
     .p2align 4
 Lfcb_BC:
     lsr w0, w14, #8
@@ -15889,18 +15935,18 @@ Lfcb_BC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1366
-L1367:
+    cbz x10, L1367
+L1368:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1366:
+L1367:
     mov w9, w24
     bl Lrd_slow
-    b L1367
+    b L1368
     .p2align 4
 Lfcb_BD:
     and w0, w14, #0xFF
@@ -15915,26 +15961,26 @@ Lfcb_BD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1368
-L1369:
+    cbz x10, L1369
+L1370:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1368:
+L1369:
     mov w9, w24
     bl Lrd_slow
-    b L1369
+    b L1370
     .p2align 4
 Lfcb_BE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1370
-L1371:
+    cbz x10, L1371
+L1372:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFF7F
     and w11, w2, #0xFF
@@ -15942,9 +15988,9 @@ L1371:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1372
+    cbz x10, L1373
     strb w11, [x10, w9, uxtw]
-L1373:
+L1374:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -15954,25 +16000,25 @@ L1373:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1374
-L1375:
+    cbz x10, L1375
+L1376:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1370:
+L1371:
     bl Lrd_slow
-    b L1371
-L1372:
+    b L1372
+L1373:
     mov w0, w11
     bl Lwr_slow
-    b L1373
-L1374:
+    b L1374
+L1375:
     mov w9, w24
     bl Lrd_slow
-    b L1375
+    b L1376
     .p2align 4
 Lfcb_BF:
     and w2, w26, #0xFFFFFF7F
@@ -15986,18 +16032,18 @@ Lfcb_BF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1376
-L1377:
+    cbz x10, L1377
+L1378:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1376:
+L1377:
     mov w9, w24
     bl Lrd_slow
-    b L1377
+    b L1378
     .p2align 4
 Lfcb_C0:
     lsr w0, w28, #8
@@ -16012,18 +16058,18 @@ Lfcb_C0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1378
-L1379:
+    cbz x10, L1379
+L1380:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1378:
+L1379:
     mov w9, w24
     bl Lrd_slow
-    b L1379
+    b L1380
     .p2align 4
 Lfcb_C1:
     and w0, w28, #0xFF
@@ -16038,18 +16084,18 @@ Lfcb_C1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1380
-L1381:
+    cbz x10, L1381
+L1382:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1380:
+L1381:
     mov w9, w24
     bl Lrd_slow
-    b L1381
+    b L1382
     .p2align 4
 Lfcb_C2:
     lsr w0, w13, #8
@@ -16064,18 +16110,18 @@ Lfcb_C2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1382
-L1383:
+    cbz x10, L1383
+L1384:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1382:
+L1383:
     mov w9, w24
     bl Lrd_slow
-    b L1383
+    b L1384
     .p2align 4
 Lfcb_C3:
     and w0, w13, #0xFF
@@ -16090,18 +16136,18 @@ Lfcb_C3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1384
-L1385:
+    cbz x10, L1385
+L1386:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1384:
+L1385:
     mov w9, w24
     bl Lrd_slow
-    b L1385
+    b L1386
     .p2align 4
 Lfcb_C4:
     lsr w0, w14, #8
@@ -16116,18 +16162,18 @@ Lfcb_C4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1386
-L1387:
+    cbz x10, L1387
+L1388:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1386:
+L1387:
     mov w9, w24
     bl Lrd_slow
-    b L1387
+    b L1388
     .p2align 4
 Lfcb_C5:
     and w0, w14, #0xFF
@@ -16142,26 +16188,26 @@ Lfcb_C5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1388
-L1389:
+    cbz x10, L1389
+L1390:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1388:
+L1389:
     mov w9, w24
     bl Lrd_slow
-    b L1389
+    b L1390
     .p2align 4
 Lfcb_C6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1390
-L1391:
+    cbz x10, L1391
+L1392:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #1
     and w11, w2, #0xFF
@@ -16169,9 +16215,9 @@ L1391:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1392
+    cbz x10, L1393
     strb w11, [x10, w9, uxtw]
-L1393:
+L1394:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -16181,25 +16227,25 @@ L1393:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1394
-L1395:
+    cbz x10, L1395
+L1396:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1390:
+L1391:
     bl Lrd_slow
-    b L1391
-L1392:
+    b L1392
+L1393:
     mov w0, w11
     bl Lwr_slow
-    b L1393
-L1394:
+    b L1394
+L1395:
     mov w9, w24
     bl Lrd_slow
-    b L1395
+    b L1396
     .p2align 4
 Lfcb_C7:
     orr w2, w26, #1
@@ -16213,18 +16259,18 @@ Lfcb_C7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1396
-L1397:
+    cbz x10, L1397
+L1398:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1396:
+L1397:
     mov w9, w24
     bl Lrd_slow
-    b L1397
+    b L1398
     .p2align 4
 Lfcb_C8:
     lsr w0, w28, #8
@@ -16239,18 +16285,18 @@ Lfcb_C8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1398
-L1399:
+    cbz x10, L1399
+L1400:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1398:
+L1399:
     mov w9, w24
     bl Lrd_slow
-    b L1399
+    b L1400
     .p2align 4
 Lfcb_C9:
     and w0, w28, #0xFF
@@ -16265,18 +16311,18 @@ Lfcb_C9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1400
-L1401:
+    cbz x10, L1401
+L1402:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1400:
+L1401:
     mov w9, w24
     bl Lrd_slow
-    b L1401
+    b L1402
     .p2align 4
 Lfcb_CA:
     lsr w0, w13, #8
@@ -16291,18 +16337,18 @@ Lfcb_CA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1402
-L1403:
+    cbz x10, L1403
+L1404:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1402:
+L1403:
     mov w9, w24
     bl Lrd_slow
-    b L1403
+    b L1404
     .p2align 4
 Lfcb_CB:
     and w0, w13, #0xFF
@@ -16317,18 +16363,18 @@ Lfcb_CB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1404
-L1405:
+    cbz x10, L1405
+L1406:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1404:
+L1405:
     mov w9, w24
     bl Lrd_slow
-    b L1405
+    b L1406
     .p2align 4
 Lfcb_CC:
     lsr w0, w14, #8
@@ -16343,18 +16389,18 @@ Lfcb_CC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1406
-L1407:
+    cbz x10, L1407
+L1408:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1406:
+L1407:
     mov w9, w24
     bl Lrd_slow
-    b L1407
+    b L1408
     .p2align 4
 Lfcb_CD:
     and w0, w14, #0xFF
@@ -16369,26 +16415,26 @@ Lfcb_CD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1408
-L1409:
+    cbz x10, L1409
+L1410:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1408:
+L1409:
     mov w9, w24
     bl Lrd_slow
-    b L1409
+    b L1410
     .p2align 4
 Lfcb_CE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1410
-L1411:
+    cbz x10, L1411
+L1412:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #2
     and w11, w2, #0xFF
@@ -16396,9 +16442,9 @@ L1411:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1412
+    cbz x10, L1413
     strb w11, [x10, w9, uxtw]
-L1413:
+L1414:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -16408,25 +16454,25 @@ L1413:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1414
-L1415:
+    cbz x10, L1415
+L1416:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1410:
+L1411:
     bl Lrd_slow
-    b L1411
-L1412:
+    b L1412
+L1413:
     mov w0, w11
     bl Lwr_slow
-    b L1413
-L1414:
+    b L1414
+L1415:
     mov w9, w24
     bl Lrd_slow
-    b L1415
+    b L1416
     .p2align 4
 Lfcb_CF:
     orr w2, w26, #2
@@ -16440,18 +16486,18 @@ Lfcb_CF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1416
-L1417:
+    cbz x10, L1417
+L1418:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1416:
+L1417:
     mov w9, w24
     bl Lrd_slow
-    b L1417
+    b L1418
     .p2align 4
 Lfcb_D0:
     lsr w0, w28, #8
@@ -16466,18 +16512,18 @@ Lfcb_D0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1418
-L1419:
+    cbz x10, L1419
+L1420:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1418:
+L1419:
     mov w9, w24
     bl Lrd_slow
-    b L1419
+    b L1420
     .p2align 4
 Lfcb_D1:
     and w0, w28, #0xFF
@@ -16492,18 +16538,18 @@ Lfcb_D1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1420
-L1421:
+    cbz x10, L1421
+L1422:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1420:
+L1421:
     mov w9, w24
     bl Lrd_slow
-    b L1421
+    b L1422
     .p2align 4
 Lfcb_D2:
     lsr w0, w13, #8
@@ -16518,18 +16564,18 @@ Lfcb_D2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1422
-L1423:
+    cbz x10, L1423
+L1424:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1422:
+L1423:
     mov w9, w24
     bl Lrd_slow
-    b L1423
+    b L1424
     .p2align 4
 Lfcb_D3:
     and w0, w13, #0xFF
@@ -16544,18 +16590,18 @@ Lfcb_D3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1424
-L1425:
+    cbz x10, L1425
+L1426:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1424:
+L1425:
     mov w9, w24
     bl Lrd_slow
-    b L1425
+    b L1426
     .p2align 4
 Lfcb_D4:
     lsr w0, w14, #8
@@ -16570,18 +16616,18 @@ Lfcb_D4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1426
-L1427:
+    cbz x10, L1427
+L1428:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1426:
+L1427:
     mov w9, w24
     bl Lrd_slow
-    b L1427
+    b L1428
     .p2align 4
 Lfcb_D5:
     and w0, w14, #0xFF
@@ -16596,26 +16642,26 @@ Lfcb_D5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1428
-L1429:
+    cbz x10, L1429
+L1430:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1428:
+L1429:
     mov w9, w24
     bl Lrd_slow
-    b L1429
+    b L1430
     .p2align 4
 Lfcb_D6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1430
-L1431:
+    cbz x10, L1431
+L1432:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #4
     and w11, w2, #0xFF
@@ -16623,9 +16669,9 @@ L1431:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1432
+    cbz x10, L1433
     strb w11, [x10, w9, uxtw]
-L1433:
+L1434:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -16635,25 +16681,25 @@ L1433:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1434
-L1435:
+    cbz x10, L1435
+L1436:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1430:
+L1431:
     bl Lrd_slow
-    b L1431
-L1432:
+    b L1432
+L1433:
     mov w0, w11
     bl Lwr_slow
-    b L1433
-L1434:
+    b L1434
+L1435:
     mov w9, w24
     bl Lrd_slow
-    b L1435
+    b L1436
     .p2align 4
 Lfcb_D7:
     orr w2, w26, #4
@@ -16667,18 +16713,18 @@ Lfcb_D7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1436
-L1437:
+    cbz x10, L1437
+L1438:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1436:
+L1437:
     mov w9, w24
     bl Lrd_slow
-    b L1437
+    b L1438
     .p2align 4
 Lfcb_D8:
     lsr w0, w28, #8
@@ -16693,18 +16739,18 @@ Lfcb_D8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1438
-L1439:
+    cbz x10, L1439
+L1440:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1438:
+L1439:
     mov w9, w24
     bl Lrd_slow
-    b L1439
+    b L1440
     .p2align 4
 Lfcb_D9:
     and w0, w28, #0xFF
@@ -16719,18 +16765,18 @@ Lfcb_D9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1440
-L1441:
+    cbz x10, L1441
+L1442:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1440:
+L1441:
     mov w9, w24
     bl Lrd_slow
-    b L1441
+    b L1442
     .p2align 4
 Lfcb_DA:
     lsr w0, w13, #8
@@ -16745,18 +16791,18 @@ Lfcb_DA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1442
-L1443:
+    cbz x10, L1443
+L1444:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1442:
+L1443:
     mov w9, w24
     bl Lrd_slow
-    b L1443
+    b L1444
     .p2align 4
 Lfcb_DB:
     and w0, w13, #0xFF
@@ -16771,18 +16817,18 @@ Lfcb_DB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1444
-L1445:
+    cbz x10, L1445
+L1446:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1444:
+L1445:
     mov w9, w24
     bl Lrd_slow
-    b L1445
+    b L1446
     .p2align 4
 Lfcb_DC:
     lsr w0, w14, #8
@@ -16797,18 +16843,18 @@ Lfcb_DC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1446
-L1447:
+    cbz x10, L1447
+L1448:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1446:
+L1447:
     mov w9, w24
     bl Lrd_slow
-    b L1447
+    b L1448
     .p2align 4
 Lfcb_DD:
     and w0, w14, #0xFF
@@ -16823,26 +16869,26 @@ Lfcb_DD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1448
-L1449:
+    cbz x10, L1449
+L1450:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1448:
+L1449:
     mov w9, w24
     bl Lrd_slow
-    b L1449
+    b L1450
     .p2align 4
 Lfcb_DE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1450
-L1451:
+    cbz x10, L1451
+L1452:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #8
     and w11, w2, #0xFF
@@ -16850,9 +16896,9 @@ L1451:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1452
+    cbz x10, L1453
     strb w11, [x10, w9, uxtw]
-L1453:
+L1454:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -16862,25 +16908,25 @@ L1453:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1454
-L1455:
+    cbz x10, L1455
+L1456:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1450:
+L1451:
     bl Lrd_slow
-    b L1451
-L1452:
+    b L1452
+L1453:
     mov w0, w11
     bl Lwr_slow
-    b L1453
-L1454:
+    b L1454
+L1455:
     mov w9, w24
     bl Lrd_slow
-    b L1455
+    b L1456
     .p2align 4
 Lfcb_DF:
     orr w2, w26, #8
@@ -16894,18 +16940,18 @@ Lfcb_DF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1456
-L1457:
+    cbz x10, L1457
+L1458:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1456:
+L1457:
     mov w9, w24
     bl Lrd_slow
-    b L1457
+    b L1458
     .p2align 4
 Lfcb_E0:
     lsr w0, w28, #8
@@ -16920,18 +16966,18 @@ Lfcb_E0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1458
-L1459:
+    cbz x10, L1459
+L1460:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1458:
+L1459:
     mov w9, w24
     bl Lrd_slow
-    b L1459
+    b L1460
     .p2align 4
 Lfcb_E1:
     and w0, w28, #0xFF
@@ -16946,18 +16992,18 @@ Lfcb_E1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1460
-L1461:
+    cbz x10, L1461
+L1462:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1460:
+L1461:
     mov w9, w24
     bl Lrd_slow
-    b L1461
+    b L1462
     .p2align 4
 Lfcb_E2:
     lsr w0, w13, #8
@@ -16972,18 +17018,18 @@ Lfcb_E2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1462
-L1463:
+    cbz x10, L1463
+L1464:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1462:
+L1463:
     mov w9, w24
     bl Lrd_slow
-    b L1463
+    b L1464
     .p2align 4
 Lfcb_E3:
     and w0, w13, #0xFF
@@ -16998,18 +17044,18 @@ Lfcb_E3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1464
-L1465:
+    cbz x10, L1465
+L1466:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1464:
+L1465:
     mov w9, w24
     bl Lrd_slow
-    b L1465
+    b L1466
     .p2align 4
 Lfcb_E4:
     lsr w0, w14, #8
@@ -17024,18 +17070,18 @@ Lfcb_E4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1466
-L1467:
+    cbz x10, L1467
+L1468:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1466:
+L1467:
     mov w9, w24
     bl Lrd_slow
-    b L1467
+    b L1468
     .p2align 4
 Lfcb_E5:
     and w0, w14, #0xFF
@@ -17050,26 +17096,26 @@ Lfcb_E5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1468
-L1469:
+    cbz x10, L1469
+L1470:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1468:
+L1469:
     mov w9, w24
     bl Lrd_slow
-    b L1469
+    b L1470
     .p2align 4
 Lfcb_E6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1470
-L1471:
+    cbz x10, L1471
+L1472:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #16
     and w11, w2, #0xFF
@@ -17077,9 +17123,9 @@ L1471:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1472
+    cbz x10, L1473
     strb w11, [x10, w9, uxtw]
-L1473:
+L1474:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -17089,25 +17135,25 @@ L1473:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1474
-L1475:
+    cbz x10, L1475
+L1476:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1470:
+L1471:
     bl Lrd_slow
-    b L1471
-L1472:
+    b L1472
+L1473:
     mov w0, w11
     bl Lwr_slow
-    b L1473
-L1474:
+    b L1474
+L1475:
     mov w9, w24
     bl Lrd_slow
-    b L1475
+    b L1476
     .p2align 4
 Lfcb_E7:
     orr w2, w26, #16
@@ -17121,18 +17167,18 @@ Lfcb_E7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1476
-L1477:
+    cbz x10, L1477
+L1478:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1476:
+L1477:
     mov w9, w24
     bl Lrd_slow
-    b L1477
+    b L1478
     .p2align 4
 Lfcb_E8:
     lsr w0, w28, #8
@@ -17147,18 +17193,18 @@ Lfcb_E8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1478
-L1479:
+    cbz x10, L1479
+L1480:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1478:
+L1479:
     mov w9, w24
     bl Lrd_slow
-    b L1479
+    b L1480
     .p2align 4
 Lfcb_E9:
     and w0, w28, #0xFF
@@ -17173,18 +17219,18 @@ Lfcb_E9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1480
-L1481:
+    cbz x10, L1481
+L1482:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1480:
+L1481:
     mov w9, w24
     bl Lrd_slow
-    b L1481
+    b L1482
     .p2align 4
 Lfcb_EA:
     lsr w0, w13, #8
@@ -17199,18 +17245,18 @@ Lfcb_EA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1482
-L1483:
+    cbz x10, L1483
+L1484:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1482:
+L1483:
     mov w9, w24
     bl Lrd_slow
-    b L1483
+    b L1484
     .p2align 4
 Lfcb_EB:
     and w0, w13, #0xFF
@@ -17225,18 +17271,18 @@ Lfcb_EB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1484
-L1485:
+    cbz x10, L1485
+L1486:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1484:
+L1485:
     mov w9, w24
     bl Lrd_slow
-    b L1485
+    b L1486
     .p2align 4
 Lfcb_EC:
     lsr w0, w14, #8
@@ -17251,18 +17297,18 @@ Lfcb_EC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1486
-L1487:
+    cbz x10, L1487
+L1488:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1486:
+L1487:
     mov w9, w24
     bl Lrd_slow
-    b L1487
+    b L1488
     .p2align 4
 Lfcb_ED:
     and w0, w14, #0xFF
@@ -17277,26 +17323,26 @@ Lfcb_ED:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1488
-L1489:
+    cbz x10, L1489
+L1490:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1488:
+L1489:
     mov w9, w24
     bl Lrd_slow
-    b L1489
+    b L1490
     .p2align 4
 Lfcb_EE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1490
-L1491:
+    cbz x10, L1491
+L1492:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #32
     and w11, w2, #0xFF
@@ -17304,9 +17350,9 @@ L1491:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1492
+    cbz x10, L1493
     strb w11, [x10, w9, uxtw]
-L1493:
+L1494:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -17316,25 +17362,25 @@ L1493:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1494
-L1495:
+    cbz x10, L1495
+L1496:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1490:
+L1491:
     bl Lrd_slow
-    b L1491
-L1492:
+    b L1492
+L1493:
     mov w0, w11
     bl Lwr_slow
-    b L1493
-L1494:
+    b L1494
+L1495:
     mov w9, w24
     bl Lrd_slow
-    b L1495
+    b L1496
     .p2align 4
 Lfcb_EF:
     orr w2, w26, #32
@@ -17348,18 +17394,18 @@ Lfcb_EF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1496
-L1497:
+    cbz x10, L1497
+L1498:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1496:
+L1497:
     mov w9, w24
     bl Lrd_slow
-    b L1497
+    b L1498
     .p2align 4
 Lfcb_F0:
     lsr w0, w28, #8
@@ -17374,18 +17420,18 @@ Lfcb_F0:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1498
-L1499:
+    cbz x10, L1499
+L1500:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1498:
+L1499:
     mov w9, w24
     bl Lrd_slow
-    b L1499
+    b L1500
     .p2align 4
 Lfcb_F1:
     and w0, w28, #0xFF
@@ -17400,18 +17446,18 @@ Lfcb_F1:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1500
-L1501:
+    cbz x10, L1501
+L1502:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1500:
+L1501:
     mov w9, w24
     bl Lrd_slow
-    b L1501
+    b L1502
     .p2align 4
 Lfcb_F2:
     lsr w0, w13, #8
@@ -17426,18 +17472,18 @@ Lfcb_F2:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1502
-L1503:
+    cbz x10, L1503
+L1504:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1502:
+L1503:
     mov w9, w24
     bl Lrd_slow
-    b L1503
+    b L1504
     .p2align 4
 Lfcb_F3:
     and w0, w13, #0xFF
@@ -17452,18 +17498,18 @@ Lfcb_F3:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1504
-L1505:
+    cbz x10, L1505
+L1506:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1504:
+L1505:
     mov w9, w24
     bl Lrd_slow
-    b L1505
+    b L1506
     .p2align 4
 Lfcb_F4:
     lsr w0, w14, #8
@@ -17478,18 +17524,18 @@ Lfcb_F4:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1506
-L1507:
+    cbz x10, L1507
+L1508:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1506:
+L1507:
     mov w9, w24
     bl Lrd_slow
-    b L1507
+    b L1508
     .p2align 4
 Lfcb_F5:
     and w0, w14, #0xFF
@@ -17504,26 +17550,26 @@ Lfcb_F5:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1508
-L1509:
+    cbz x10, L1509
+L1510:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1508:
+L1509:
     mov w9, w24
     bl Lrd_slow
-    b L1509
+    b L1510
     .p2align 4
 Lfcb_F6:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1510
-L1511:
+    cbz x10, L1511
+L1512:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #64
     and w11, w2, #0xFF
@@ -17531,9 +17577,9 @@ L1511:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1512
+    cbz x10, L1513
     strb w11, [x10, w9, uxtw]
-L1513:
+L1514:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -17543,25 +17589,25 @@ L1513:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1514
-L1515:
+    cbz x10, L1515
+L1516:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1510:
+L1511:
     bl Lrd_slow
-    b L1511
-L1512:
+    b L1512
+L1513:
     mov w0, w11
     bl Lwr_slow
-    b L1513
-L1514:
+    b L1514
+L1515:
     mov w9, w24
     bl Lrd_slow
-    b L1515
+    b L1516
     .p2align 4
 Lfcb_F7:
     orr w2, w26, #64
@@ -17575,18 +17621,18 @@ Lfcb_F7:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1516
-L1517:
+    cbz x10, L1517
+L1518:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1516:
+L1517:
     mov w9, w24
     bl Lrd_slow
-    b L1517
+    b L1518
     .p2align 4
 Lfcb_F8:
     lsr w0, w28, #8
@@ -17601,18 +17647,18 @@ Lfcb_F8:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1518
-L1519:
+    cbz x10, L1519
+L1520:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1518:
+L1519:
     mov w9, w24
     bl Lrd_slow
-    b L1519
+    b L1520
     .p2align 4
 Lfcb_F9:
     and w0, w28, #0xFF
@@ -17627,18 +17673,18 @@ Lfcb_F9:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1520
-L1521:
+    cbz x10, L1521
+L1522:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1520:
+L1521:
     mov w9, w24
     bl Lrd_slow
-    b L1521
+    b L1522
     .p2align 4
 Lfcb_FA:
     lsr w0, w13, #8
@@ -17653,18 +17699,18 @@ Lfcb_FA:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1522
-L1523:
+    cbz x10, L1523
+L1524:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1522:
+L1523:
     mov w9, w24
     bl Lrd_slow
-    b L1523
+    b L1524
     .p2align 4
 Lfcb_FB:
     and w0, w13, #0xFF
@@ -17679,18 +17725,18 @@ Lfcb_FB:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1524
-L1525:
+    cbz x10, L1525
+L1526:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1524:
+L1525:
     mov w9, w24
     bl Lrd_slow
-    b L1525
+    b L1526
     .p2align 4
 Lfcb_FC:
     lsr w0, w14, #8
@@ -17705,18 +17751,18 @@ Lfcb_FC:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1526
-L1527:
+    cbz x10, L1527
+L1528:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1526:
+L1527:
     mov w9, w24
     bl Lrd_slow
-    b L1527
+    b L1528
     .p2align 4
 Lfcb_FD:
     and w0, w14, #0xFF
@@ -17731,26 +17777,26 @@ Lfcb_FD:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1528
-L1529:
+    cbz x10, L1529
+L1530:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1528:
+L1529:
     mov w9, w24
     bl Lrd_slow
-    b L1529
+    b L1530
     .p2align 4
 Lfcb_FE:
     mov w9, w14
     add x21, x21, #4
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1530
-L1531:
+    cbz x10, L1531
+L1532:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #128
     and w11, w2, #0xFF
@@ -17758,9 +17804,9 @@ L1531:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1532
+    cbz x10, L1533
     strb w11, [x10, w9, uxtw]
-L1533:
+L1534:
     cmp x21, x22
     b.hs Lslow_top
     ldrb w17, [x15, w24, uxtw]
@@ -17770,25 +17816,25 @@ L1533:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1534
-L1535:
+    cbz x10, L1535
+L1536:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1530:
+L1531:
     bl Lrd_slow
-    b L1531
-L1532:
+    b L1532
+L1533:
     mov w0, w11
     bl Lwr_slow
-    b L1533
-L1534:
+    b L1534
+L1535:
     mov w9, w24
     bl Lrd_slow
-    b L1535
+    b L1536
     .p2align 4
 Lfcb_FF:
     orr w2, w26, #128
@@ -17802,18 +17848,18 @@ Lfcb_FF:
     add x21, x21, #4
     lsr w10, w24, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1536
-L1537:
+    cbz x10, L1537
+L1538:
     ldrb w9, [x10, w24, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     ldrsw x17, [x16, x9, lsl #2]
     add x17, x16, x17
     br x17
-L1536:
+L1537:
     mov w9, w24
     bl Lrd_slow
-    b L1537
+    b L1538
     .p2align 4
 Lc_00:
     b Lnext
@@ -17823,12 +17869,12 @@ Lc_01:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1538
-L1539:
+    b.hs L1539
+L1540:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1540
-L1541:
+    cbz x10, L1541
+L1542:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -17836,52 +17882,52 @@ L1541:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1542
-L1543:
+    b.hs L1543
+L1544:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1544
-L1545:
+    cbz x10, L1545
+L1546:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w28, w12
     b Lnext
-L1538:
+L1539:
     bl Ltick_slow4
-    b L1539
-L1540:
+    b L1540
+L1541:
     bl Lrd_slow
-    b L1541
-L1542:
+    b L1542
+L1543:
     bl Ltick_slow4
-    b L1543
-L1544:
+    b L1544
+L1545:
     bl Lrd_slow
-    b L1545
+    b L1546
     .p2align 4
 Lc_02:
     mov w9, w28
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1546
-L1547:
+    b.hs L1547
+L1548:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1548
+    cbz x10, L1549
     strb w26, [x10, w9, uxtw]
-L1549:
+L1550:
     b Lnext
-L1546:
+L1547:
     bl Ltick_slow4
-    b L1547
-L1548:
+    b L1548
+L1549:
     mov w0, w26
     bl Lwr_slow
-    b L1549
+    b L1550
     .p2align 4
 Lc_03:
     add w28, w28, #1
@@ -17889,12 +17935,12 @@ Lc_03:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1550
-L1551:
+    b.hs L1551
+L1552:
     b Lnext
-L1550:
+L1551:
     bl Ltick_slow4
-    b L1551
+    b L1552
     .p2align 4
 Lc_04:
     lsr w0, w28, #8
@@ -17932,23 +17978,23 @@ Lc_06:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1552
-L1553:
+    b.hs L1553
+L1554:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1554
-L1555:
+    cbz x10, L1555
+L1556:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #8, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1552:
+L1553:
     bl Ltick_slow4
-    b L1553
-L1554:
+    b L1554
+L1555:
     bl Lrd_slow
-    b L1555
+    b L1556
     .p2align 4
 Lc_07:
     lsr w0, w26, #7
@@ -17963,12 +18009,12 @@ Lc_08:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1556
-L1557:
+    b.hs L1557
+L1558:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1558
-L1559:
+    cbz x10, L1559
+L1560:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -17976,12 +18022,12 @@ L1559:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1560
-L1561:
+    b.hs L1561
+L1562:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1562
-L1563:
+    cbz x10, L1563
+L1564:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -17991,55 +18037,55 @@ L1563:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1564
-L1565:
+    b.hs L1565
+L1566:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1566
+    cbz x10, L1567
     strb w11, [x10, w9, uxtw]
-L1567:
+L1568:
     add w9, w12, #1
     and w9, w9, #0xFFFF
     lsr w11, w25, #8
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1568
-L1569:
+    b.hs L1569
+L1570:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1570
+    cbz x10, L1571
     strb w11, [x10, w9, uxtw]
-L1571:
+L1572:
     b Lnext
-L1556:
+L1557:
     bl Ltick_slow4
-    b L1557
-L1558:
+    b L1558
+L1559:
     bl Lrd_slow
-    b L1559
-L1560:
+    b L1560
+L1561:
     bl Ltick_slow4
-    b L1561
-L1562:
+    b L1562
+L1563:
     bl Lrd_slow
-    b L1563
-L1564:
+    b L1564
+L1565:
     bl Ltick_slow4
-    b L1565
-L1566:
+    b L1566
+L1567:
     mov w0, w11
     bl Lwr_slow
-    b L1567
-L1568:
+    b L1568
+L1569:
     bl Ltick_slow4
-    b L1569
-L1570:
+    b L1570
+L1571:
     mov w0, w11
     bl Lwr_slow
-    b L1571
+    b L1572
     .p2align 4
 Lc_09:
     add w0, w14, w28
@@ -18054,32 +18100,32 @@ Lc_09:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1572
-L1573:
+    b.hs L1573
+L1574:
     b Lnext
-L1572:
+L1573:
     bl Ltick_slow4
-    b L1573
+    b L1574
     .p2align 4
 Lc_0A:
     mov w9, w28
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1574
-L1575:
+    b.hs L1575
+L1576:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1576
-L1577:
+    cbz x10, L1577
+L1578:
     ldrb w26, [x10, w9, uxtw]
     b Lnext
-L1574:
+L1575:
     bl Ltick_slow4
-    b L1575
-L1576:
+    b L1576
+L1577:
     bl Lrd_slow
-    b L1577
+    b L1578
     .p2align 4
 Lc_0B:
     sub w28, w28, #1
@@ -18087,12 +18133,12 @@ Lc_0B:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1578
-L1579:
+    b.hs L1579
+L1580:
     b Lnext
-L1578:
+L1579:
     bl Ltick_slow4
-    b L1579
+    b L1580
     .p2align 4
 Lc_0C:
     and w0, w28, #0xFF
@@ -18130,23 +18176,23 @@ Lc_0E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1580
-L1581:
+    b.hs L1581
+L1582:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1582
-L1583:
+    cbz x10, L1583
+L1584:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #0, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1580:
+L1581:
     bl Ltick_slow4
-    b L1581
-L1582:
+    b L1582
+L1583:
     bl Lrd_slow
-    b L1583
+    b L1584
     .p2align 4
 Lc_0F:
     and w0, w26, #1
@@ -18160,34 +18206,69 @@ Lc_10:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1584
-L1585:
+    b.hs L1585
+L1586:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1586
-L1587:
+    cbz x10, L1587
+L1588:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
+    strb w26, [x19, #24]
+    strb w27, [x19, #25]
+    rev16 w17, w28
+    strh w17, [x19, #26]
+    rev16 w17, w13
+    strh w17, [x19, #28]
+    rev16 w17, w14
+    strh w17, [x19, #30]
+    strh w25, [x19, #32]
+    strh w24, [x19, #34]
+    ldrb w17, [x20, #371]
+    cbnz w17, L1589
+    str x21, [x19, #40]
+    ldrh w17, [x20, #368]
+    add w17, w17, w21
+    add x16, x19, #16, lsl #12
+    strh w17, [x16, #322]
+L1589:
+    mov x0, x19
+    mov w1, #16
+    bl SYM(gbc_asm_op)
+    ldrb w26, [x19, #24]
+    ldrb w27, [x19, #25]
+    ldrh w17, [x19, #26]
+    rev16 w28, w17
+    ldrh w17, [x19, #28]
+    rev16 w13, w17
+    ldrh w17, [x19, #30]
+    rev16 w14, w17
+    ldrh w25, [x19, #32]
+    ldrh w24, [x19, #34]
+    ldr x21, [x19, #40]
+    ldr x22, [x20, #320]
+    ldr x15, [x20, #288]
+    adr x16, Ljt_f
     b Lnext
-L1584:
+L1585:
     bl Ltick_slow4
-    b L1585
-L1586:
+    b L1586
+L1587:
     bl Lrd_slow
-    b L1587
+    b L1588
     .p2align 4
 Lc_11:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1588
-L1589:
+    b.hs L1590
+L1591:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1590
-L1591:
+    cbz x10, L1592
+L1593:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -18195,52 +18276,52 @@ L1591:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1592
-L1593:
+    b.hs L1594
+L1595:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1594
-L1595:
+    cbz x10, L1596
+L1597:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w13, w12
     b Lnext
-L1588:
-    bl Ltick_slow4
-    b L1589
 L1590:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1591
 L1592:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1593
 L1594:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1595
+L1596:
+    bl Lrd_slow
+    b L1597
     .p2align 4
 Lc_12:
     mov w9, w13
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1596
-L1597:
+    b.hs L1598
+L1599:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1598
+    cbz x10, L1600
     strb w26, [x10, w9, uxtw]
-L1599:
+L1601:
     b Lnext
-L1596:
-    bl Ltick_slow4
-    b L1597
 L1598:
+    bl Ltick_slow4
+    b L1599
+L1600:
     mov w0, w26
     bl Lwr_slow
-    b L1599
+    b L1601
     .p2align 4
 Lc_13:
     add w13, w13, #1
@@ -18248,12 +18329,12 @@ Lc_13:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1600
-L1601:
+    b.hs L1602
+L1603:
     b Lnext
-L1600:
+L1602:
     bl Ltick_slow4
-    b L1601
+    b L1603
     .p2align 4
 Lc_14:
     lsr w0, w13, #8
@@ -18291,23 +18372,23 @@ Lc_16:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1602
-L1603:
+    b.hs L1604
+L1605:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1604
-L1605:
+    cbz x10, L1606
+L1607:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #8, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1602:
-    bl Ltick_slow4
-    b L1603
 L1604:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1605
+L1606:
+    bl Lrd_slow
+    b L1607
     .p2align 4
 Lc_17:
     lsr w0, w26, #7
@@ -18323,12 +18404,12 @@ Lc_18:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1606
-L1607:
+    b.hs L1608
+L1609:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1608
-L1609:
+    cbz x10, L1610
+L1611:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -18338,19 +18419,19 @@ L1609:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1611
+    b.hs L1613
+L1614:
 L1612:
-L1610:
     b Lnext
-L1606:
-    bl Ltick_slow4
-    b L1607
 L1608:
-    bl Lrd_slow
-    b L1609
-L1611:
     bl Ltick_slow4
-    b L1612
+    b L1609
+L1610:
+    bl Lrd_slow
+    b L1611
+L1613:
+    bl Ltick_slow4
+    b L1614
     .p2align 4
 Lc_19:
     add w0, w14, w13
@@ -18365,32 +18446,32 @@ Lc_19:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1613
-L1614:
+    b.hs L1615
+L1616:
     b Lnext
-L1613:
+L1615:
     bl Ltick_slow4
-    b L1614
+    b L1616
     .p2align 4
 Lc_1A:
     mov w9, w13
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1615
-L1616:
+    b.hs L1617
+L1618:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1617
-L1618:
+    cbz x10, L1619
+L1620:
     ldrb w26, [x10, w9, uxtw]
     b Lnext
-L1615:
-    bl Ltick_slow4
-    b L1616
 L1617:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1618
+L1619:
+    bl Lrd_slow
+    b L1620
     .p2align 4
 Lc_1B:
     sub w13, w13, #1
@@ -18398,12 +18479,12 @@ Lc_1B:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1619
-L1620:
+    b.hs L1621
+L1622:
     b Lnext
-L1619:
+L1621:
     bl Ltick_slow4
-    b L1620
+    b L1622
     .p2align 4
 Lc_1C:
     and w0, w13, #0xFF
@@ -18441,23 +18522,23 @@ Lc_1E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1621
-L1622:
+    b.hs L1623
+L1624:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1623
-L1624:
+    cbz x10, L1625
+L1626:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #0, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1621:
-    bl Ltick_slow4
-    b L1622
 L1623:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1624
+L1625:
+    bl Lrd_slow
+    b L1626
     .p2align 4
 Lc_1F:
     and w0, w26, #1
@@ -18472,47 +18553,47 @@ Lc_20:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1625
-L1626:
+    b.hs L1627
+L1628:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1627
-L1628:
+    cbz x10, L1629
+L1630:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbnz w27, #7, L1629
+    tbnz w27, #7, L1631
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1630
+    b.hs L1632
+L1633:
 L1631:
-L1629:
     b Lnext
-L1625:
-    bl Ltick_slow4
-    b L1626
 L1627:
-    bl Lrd_slow
-    b L1628
-L1630:
     bl Ltick_slow4
-    b L1631
+    b L1628
+L1629:
+    bl Lrd_slow
+    b L1630
+L1632:
+    bl Ltick_slow4
+    b L1633
     .p2align 4
 Lc_21:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1632
-L1633:
+    b.hs L1634
+L1635:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1634
-L1635:
+    cbz x10, L1636
+L1637:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -18520,54 +18601,54 @@ L1635:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1636
-L1637:
+    b.hs L1638
+L1639:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1638
-L1639:
+    cbz x10, L1640
+L1641:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w14, w12
     b Lnext
-L1632:
-    bl Ltick_slow4
-    b L1633
 L1634:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1635
 L1636:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1637
 L1638:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1639
+L1640:
+    bl Lrd_slow
+    b L1641
     .p2align 4
 Lc_22:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1640
-L1641:
+    b.hs L1642
+L1643:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1642
+    cbz x10, L1644
     strb w26, [x10, w9, uxtw]
-L1643:
+L1645:
     add w14, w9, #1
     and w14, w14, #0xFFFF
     b Lnext
-L1640:
-    bl Ltick_slow4
-    b L1641
 L1642:
+    bl Ltick_slow4
+    b L1643
+L1644:
     mov w0, w26
     bl Lwr_slow
-    b L1643
+    b L1645
     .p2align 4
 Lc_23:
     add w14, w14, #1
@@ -18575,12 +18656,12 @@ Lc_23:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1644
-L1645:
+    b.hs L1646
+L1647:
     b Lnext
-L1644:
+L1646:
     bl Ltick_slow4
-    b L1645
+    b L1647
     .p2align 4
 Lc_24:
     lsr w0, w14, #8
@@ -18618,49 +18699,49 @@ Lc_26:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1646
-L1647:
+    b.hs L1648
+L1649:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1648
-L1649:
+    cbz x10, L1650
+L1651:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #8, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1646:
-    bl Ltick_slow4
-    b L1647
 L1648:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1649
+L1650:
+    bl Lrd_slow
+    b L1651
     .p2align 4
 Lc_27:
     mov w0, w26
     ubfx w1, w27, #4, #1
-    tbz w27, #6, L1650
-    tbz w27, #5, L1651
+    tbz w27, #6, L1652
+    tbz w27, #5, L1653
     sub w0, w0, #6
-L1651:
-    cbz w1, L1655
-    sub w0, w0, #0x60
-    b L1655
-L1650:
-    cbnz w1, L1652
-    cmp w0, #0x99
-    b.ls L1653
-L1652:
-    add w0, w0, #0x60
-    mov w1, #1
 L1653:
-    tbnz w27, #5, L1654
-    and w2, w0, #0xF
-    cmp w2, #9
+    cbz w1, L1657
+    sub w0, w0, #0x60
+    b L1657
+L1652:
+    cbnz w1, L1654
+    cmp w0, #0x99
     b.ls L1655
 L1654:
-    add w0, w0, #6
+    add w0, w0, #0x60
+    mov w1, #1
 L1655:
+    tbnz w27, #5, L1656
+    and w2, w0, #0xF
+    cmp w2, #9
+    b.ls L1657
+L1656:
+    add w0, w0, #6
+L1657:
     and w26, w0, #0xFF
     and w27, w27, #0x40
     orr w27, w27, w1, lsl #4
@@ -18674,35 +18755,35 @@ Lc_28:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1657
-L1658:
+    b.hs L1659
+L1660:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1659
-L1660:
+    cbz x10, L1661
+L1662:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbz w27, #7, L1661
+    tbz w27, #7, L1663
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1662
+    b.hs L1664
+L1665:
 L1663:
-L1661:
     b Lnext
-L1657:
-    bl Ltick_slow4
-    b L1658
 L1659:
-    bl Lrd_slow
-    b L1660
-L1662:
     bl Ltick_slow4
-    b L1663
+    b L1660
+L1661:
+    bl Lrd_slow
+    b L1662
+L1664:
+    bl Ltick_slow4
+    b L1665
     .p2align 4
 Lc_29:
     add w0, w14, w14
@@ -18717,34 +18798,34 @@ Lc_29:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1664
-L1665:
+    b.hs L1666
+L1667:
     b Lnext
-L1664:
+L1666:
     bl Ltick_slow4
-    b L1665
+    b L1667
     .p2align 4
 Lc_2A:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1666
-L1667:
+    b.hs L1668
+L1669:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1668
-L1669:
+    cbz x10, L1670
+L1671:
     ldrb w26, [x10, w9, uxtw]
     add w14, w9, #1
     and w14, w14, #0xFFFF
     b Lnext
-L1666:
-    bl Ltick_slow4
-    b L1667
 L1668:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1669
+L1670:
+    bl Lrd_slow
+    b L1671
     .p2align 4
 Lc_2B:
     sub w14, w14, #1
@@ -18752,12 +18833,12 @@ Lc_2B:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1670
-L1671:
+    b.hs L1672
+L1673:
     b Lnext
-L1670:
+L1672:
     bl Ltick_slow4
-    b L1671
+    b L1673
     .p2align 4
 Lc_2C:
     and w0, w14, #0xFF
@@ -18795,23 +18876,23 @@ Lc_2E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1672
-L1673:
+    b.hs L1674
+L1675:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1674
-L1675:
+    cbz x10, L1676
+L1677:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #0, #8
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1672:
-    bl Ltick_slow4
-    b L1673
 L1674:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1675
+L1676:
+    bl Lrd_slow
+    b L1677
     .p2align 4
 Lc_2F:
     eor w26, w26, #0xFF
@@ -18823,47 +18904,47 @@ Lc_30:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1676
-L1677:
+    b.hs L1678
+L1679:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1678
-L1679:
+    cbz x10, L1680
+L1681:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbnz w27, #4, L1680
+    tbnz w27, #4, L1682
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1681
+    b.hs L1683
+L1684:
 L1682:
-L1680:
     b Lnext
-L1676:
-    bl Ltick_slow4
-    b L1677
 L1678:
-    bl Lrd_slow
-    b L1679
-L1681:
     bl Ltick_slow4
-    b L1682
+    b L1679
+L1680:
+    bl Lrd_slow
+    b L1681
+L1683:
+    bl Ltick_slow4
+    b L1684
     .p2align 4
 Lc_31:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1683
-L1684:
+    b.hs L1685
+L1686:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1685
-L1686:
+    cbz x10, L1687
+L1688:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -18871,54 +18952,54 @@ L1686:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1687
-L1688:
+    b.hs L1689
+L1690:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1689
-L1690:
+    cbz x10, L1691
+L1692:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w25, w12
     b Lnext
-L1683:
-    bl Ltick_slow4
-    b L1684
 L1685:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1686
 L1687:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1688
 L1689:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1690
+L1691:
+    bl Lrd_slow
+    b L1692
     .p2align 4
 Lc_32:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1691
-L1692:
+    b.hs L1693
+L1694:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1693
+    cbz x10, L1695
     strb w26, [x10, w9, uxtw]
-L1694:
+L1696:
     sub w14, w9, #1
     and w14, w14, #0xFFFF
     b Lnext
-L1691:
-    bl Ltick_slow4
-    b L1692
 L1693:
+    bl Ltick_slow4
+    b L1694
+L1695:
     mov w0, w26
     bl Lwr_slow
-    b L1694
+    b L1696
     .p2align 4
 Lc_33:
     add w25, w25, #1
@@ -18926,24 +19007,24 @@ Lc_33:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1695
-L1696:
+    b.hs L1697
+L1698:
     b Lnext
-L1695:
+L1697:
     bl Ltick_slow4
-    b L1696
+    b L1698
     .p2align 4
 Lc_34:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1697
-L1698:
+    b.hs L1699
+L1700:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1699
-L1700:
+    cbz x10, L1701
+L1702:
     ldrb w11, [x10, w9, uxtw]
     add w1, w11, #1
     and w1, w1, #0xFF
@@ -18959,40 +19040,40 @@ L1700:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1701
-L1702:
+    b.hs L1703
+L1704:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1703
+    cbz x10, L1705
     strb w11, [x10, w9, uxtw]
-L1704:
+L1706:
     b Lnext
-L1697:
-    bl Ltick_slow4
-    b L1698
 L1699:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1700
 L1701:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1702
 L1703:
+    bl Ltick_slow4
+    b L1704
+L1705:
     mov w0, w11
     bl Lwr_slow
-    b L1704
+    b L1706
     .p2align 4
 Lc_35:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1705
-L1706:
+    b.hs L1707
+L1708:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1707
-L1708:
+    cbz x10, L1709
+L1710:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w11, #1
     and w1, w1, #0xFF
@@ -19009,40 +19090,40 @@ L1708:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1709
-L1710:
+    b.hs L1711
+L1712:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1711
+    cbz x10, L1713
     strb w11, [x10, w9, uxtw]
-L1712:
+L1714:
     b Lnext
-L1705:
-    bl Ltick_slow4
-    b L1706
 L1707:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1708
 L1709:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1710
 L1711:
+    bl Ltick_slow4
+    b L1712
+L1713:
     mov w0, w11
     bl Lwr_slow
-    b L1712
+    b L1714
     .p2align 4
 Lc_36:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1713
-L1714:
+    b.hs L1715
+L1716:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1715
-L1716:
+    cbz x10, L1717
+L1718:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -19050,28 +19131,28 @@ L1716:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1717
-L1718:
+    b.hs L1719
+L1720:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1719
+    cbz x10, L1721
     strb w11, [x10, w9, uxtw]
-L1720:
+L1722:
     b Lnext
-L1713:
-    bl Ltick_slow4
-    b L1714
 L1715:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1716
 L1717:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1718
 L1719:
+    bl Ltick_slow4
+    b L1720
+L1721:
     mov w0, w11
     bl Lwr_slow
-    b L1720
+    b L1722
     .p2align 4
 Lc_37:
     and w27, w27, #0x80
@@ -19083,35 +19164,35 @@ Lc_38:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1721
-L1722:
+    b.hs L1723
+L1724:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1723
-L1724:
+    cbz x10, L1725
+L1726:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
-    tbz w27, #4, L1725
+    tbz w27, #4, L1727
     sxtb w0, w11
     add w24, w24, w0
     and w24, w24, #0xFFFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1726
+    b.hs L1728
+L1729:
 L1727:
-L1725:
     b Lnext
-L1721:
-    bl Ltick_slow4
-    b L1722
 L1723:
-    bl Lrd_slow
-    b L1724
-L1726:
     bl Ltick_slow4
-    b L1727
+    b L1724
+L1725:
+    bl Lrd_slow
+    b L1726
+L1728:
+    bl Ltick_slow4
+    b L1729
     .p2align 4
 Lc_39:
     add w0, w14, w25
@@ -19126,34 +19207,34 @@ Lc_39:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1728
-L1729:
+    b.hs L1730
+L1731:
     b Lnext
-L1728:
+L1730:
     bl Ltick_slow4
-    b L1729
+    b L1731
     .p2align 4
 Lc_3A:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1730
-L1731:
+    b.hs L1732
+L1733:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1732
-L1733:
+    cbz x10, L1734
+L1735:
     ldrb w26, [x10, w9, uxtw]
     sub w14, w9, #1
     and w14, w14, #0xFFFF
     b Lnext
-L1730:
-    bl Ltick_slow4
-    b L1731
 L1732:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1733
+L1734:
+    bl Lrd_slow
+    b L1735
     .p2align 4
 Lc_3B:
     sub w25, w25, #1
@@ -19161,12 +19242,12 @@ Lc_3B:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1734
-L1735:
+    b.hs L1736
+L1737:
     b Lnext
-L1734:
+L1736:
     bl Ltick_slow4
-    b L1735
+    b L1737
     .p2align 4
 Lc_3C:
     add w1, w26, #1
@@ -19202,22 +19283,22 @@ Lc_3E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1736
-L1737:
+    b.hs L1738
+L1739:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1738
-L1739:
+    cbz x10, L1740
+L1741:
     ldrb w26, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     b Lnext
-L1736:
-    bl Ltick_slow4
-    b L1737
 L1738:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1739
+L1740:
+    bl Lrd_slow
+    b L1741
     .p2align 4
 Lc_3F:
     mov w0, #0x90
@@ -19258,21 +19339,21 @@ Lc_46:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1740
-L1741:
+    b.hs L1742
+L1743:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1742
-L1743:
+    cbz x10, L1744
+L1745:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #8, #8
     b Lnext
-L1740:
-    bl Ltick_slow4
-    b L1741
 L1742:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1743
+L1744:
+    bl Lrd_slow
+    b L1745
     .p2align 4
 Lc_47:
     bfi w28, w26, #8, #8
@@ -19311,21 +19392,21 @@ Lc_4E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1744
-L1745:
+    b.hs L1746
+L1747:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1746
-L1747:
+    cbz x10, L1748
+L1749:
     ldrb w0, [x10, w9, uxtw]
     bfi w28, w0, #0, #8
     b Lnext
-L1744:
-    bl Ltick_slow4
-    b L1745
 L1746:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1747
+L1748:
+    bl Lrd_slow
+    b L1749
     .p2align 4
 Lc_4F:
     bfi w28, w26, #0, #8
@@ -19364,21 +19445,21 @@ Lc_56:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1748
-L1749:
+    b.hs L1750
+L1751:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1750
-L1751:
+    cbz x10, L1752
+L1753:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #8, #8
     b Lnext
-L1748:
-    bl Ltick_slow4
-    b L1749
 L1750:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1751
+L1752:
+    bl Lrd_slow
+    b L1753
     .p2align 4
 Lc_57:
     bfi w13, w26, #8, #8
@@ -19417,21 +19498,21 @@ Lc_5E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1752
-L1753:
+    b.hs L1754
+L1755:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1754
-L1755:
+    cbz x10, L1756
+L1757:
     ldrb w0, [x10, w9, uxtw]
     bfi w13, w0, #0, #8
     b Lnext
-L1752:
-    bl Ltick_slow4
-    b L1753
 L1754:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1755
+L1756:
+    bl Lrd_slow
+    b L1757
     .p2align 4
 Lc_5F:
     bfi w13, w26, #0, #8
@@ -19470,21 +19551,21 @@ Lc_66:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1756
-L1757:
+    b.hs L1758
+L1759:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1758
-L1759:
+    cbz x10, L1760
+L1761:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #8, #8
     b Lnext
-L1756:
-    bl Ltick_slow4
-    b L1757
 L1758:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1759
+L1760:
+    bl Lrd_slow
+    b L1761
     .p2align 4
 Lc_67:
     bfi w14, w26, #8, #8
@@ -19523,21 +19604,21 @@ Lc_6E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1760
-L1761:
+    b.hs L1762
+L1763:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1762
-L1763:
+    cbz x10, L1764
+L1765:
     ldrb w0, [x10, w9, uxtw]
     bfi w14, w0, #0, #8
     b Lnext
-L1760:
-    bl Ltick_slow4
-    b L1761
 L1762:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1763
+L1764:
+    bl Lrd_slow
+    b L1765
     .p2align 4
 Lc_6F:
     bfi w14, w26, #0, #8
@@ -19548,132 +19629,132 @@ Lc_70:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1764
-L1765:
+    b.hs L1766
+L1767:
     lsr w0, w28, #8
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1766
+    cbz x10, L1768
     strb w0, [x10, w9, uxtw]
-L1767:
+L1769:
     b Lnext
-L1764:
-    bl Ltick_slow4
-    b L1765
 L1766:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1767
+L1768:
+    bl Lwr_slow
+    b L1769
     .p2align 4
 Lc_71:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1768
-L1769:
+    b.hs L1770
+L1771:
     and w0, w28, #0xFF
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1770
+    cbz x10, L1772
     strb w0, [x10, w9, uxtw]
-L1771:
+L1773:
     b Lnext
-L1768:
-    bl Ltick_slow4
-    b L1769
 L1770:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1771
+L1772:
+    bl Lwr_slow
+    b L1773
     .p2align 4
 Lc_72:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1772
-L1773:
+    b.hs L1774
+L1775:
     lsr w0, w13, #8
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1774
+    cbz x10, L1776
     strb w0, [x10, w9, uxtw]
-L1775:
+L1777:
     b Lnext
-L1772:
-    bl Ltick_slow4
-    b L1773
 L1774:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1775
+L1776:
+    bl Lwr_slow
+    b L1777
     .p2align 4
 Lc_73:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1776
-L1777:
+    b.hs L1778
+L1779:
     and w0, w13, #0xFF
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1778
+    cbz x10, L1780
     strb w0, [x10, w9, uxtw]
-L1779:
+L1781:
     b Lnext
-L1776:
-    bl Ltick_slow4
-    b L1777
 L1778:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1779
+L1780:
+    bl Lwr_slow
+    b L1781
     .p2align 4
 Lc_74:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1780
-L1781:
+    b.hs L1782
+L1783:
     lsr w0, w14, #8
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1782
+    cbz x10, L1784
     strb w0, [x10, w9, uxtw]
-L1783:
+L1785:
     b Lnext
-L1780:
-    bl Ltick_slow4
-    b L1781
 L1782:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1783
+L1784:
+    bl Lwr_slow
+    b L1785
     .p2align 4
 Lc_75:
     mov w9, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1784
-L1785:
+    b.hs L1786
+L1787:
     and w0, w14, #0xFF
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1786
+    cbz x10, L1788
     strb w0, [x10, w9, uxtw]
-L1787:
+L1789:
     b Lnext
-L1784:
-    bl Ltick_slow4
-    b L1785
 L1786:
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1787
+L1788:
+    bl Lwr_slow
+    b L1789
     .p2align 4
 Lc_76:
     strb w26, [x19, #24]
@@ -19687,16 +19768,16 @@ Lc_76:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L1788
+    cbnz w17, L1790
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L1788:
+L1790:
     mov x0, x19
     mov w1, #118
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -19718,22 +19799,22 @@ Lc_77:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1789
-L1790:
+    b.hs L1791
+L1792:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1791
+    cbz x10, L1793
     strb w26, [x10, w9, uxtw]
-L1792:
+L1794:
     b Lnext
-L1789:
-    bl Ltick_slow4
-    b L1790
 L1791:
+    bl Ltick_slow4
+    b L1792
+L1793:
     mov w0, w26
     bl Lwr_slow
-    b L1792
+    b L1794
     .p2align 4
 Lc_78:
     lsr w26, w28, #8
@@ -19764,20 +19845,20 @@ Lc_7E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1793
-L1794:
+    b.hs L1795
+L1796:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1795
-L1796:
+    cbz x10, L1797
+L1798:
     ldrb w26, [x10, w9, uxtw]
     b Lnext
-L1793:
-    bl Ltick_slow4
-    b L1794
 L1795:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1796
+L1797:
+    bl Lrd_slow
+    b L1798
     .p2align 4
 Lc_7F:
     b Lnext
@@ -19877,12 +19958,12 @@ Lc_86:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1797
-L1798:
+    b.hs L1799
+L1800:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1799
-L1800:
+    cbz x10, L1801
+L1802:
     ldrb w11, [x10, w9, uxtw]
     add w1, w26, w11
     eor w2, w26, w11
@@ -19896,12 +19977,12 @@ L1800:
     cset w3, eq
     orr w27, w27, w3, lsl #7
     b Lnext
-L1797:
-    bl Ltick_slow4
-    b L1798
 L1799:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1800
+L1801:
+    bl Lrd_slow
+    b L1802
     .p2align 4
 Lc_87:
     add w1, w26, w26
@@ -20024,12 +20105,12 @@ Lc_8E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1801
-L1802:
+    b.hs L1803
+L1804:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1803
-L1804:
+    cbz x10, L1805
+L1806:
     ldrb w11, [x10, w9, uxtw]
     ubfx w2, w27, #4, #1
     add w1, w26, w11
@@ -20045,12 +20126,12 @@ L1804:
     cset w3, eq
     orr w27, w27, w3, lsl #7
     b Lnext
-L1801:
-    bl Ltick_slow4
-    b L1802
 L1803:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1804
+L1805:
+    bl Lrd_slow
+    b L1806
     .p2align 4
 Lc_8F:
     ubfx w2, w27, #4, #1
@@ -20169,12 +20250,12 @@ Lc_96:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1805
-L1806:
+    b.hs L1807
+L1808:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1807
-L1808:
+    cbz x10, L1809
+L1810:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w26, w11
     eor w2, w26, w11
@@ -20189,12 +20270,12 @@ L1808:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L1805:
-    bl Ltick_slow4
-    b L1806
 L1807:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1808
+L1809:
+    bl Lrd_slow
+    b L1810
     .p2align 4
 Lc_97:
     sub w1, w26, w26
@@ -20324,12 +20405,12 @@ Lc_9E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1809
-L1810:
+    b.hs L1811
+L1812:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1811
-L1812:
+    cbz x10, L1813
+L1814:
     ldrb w11, [x10, w9, uxtw]
     ubfx w2, w27, #4, #1
     sub w1, w26, w11
@@ -20346,12 +20427,12 @@ L1812:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L1809:
-    bl Ltick_slow4
-    b L1810
 L1811:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1812
+L1813:
+    bl Lrd_slow
+    b L1814
     .p2align 4
 Lc_9F:
     ubfx w2, w27, #4, #1
@@ -20429,12 +20510,12 @@ Lc_A6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1813
-L1814:
+    b.hs L1815
+L1816:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1815
-L1816:
+    cbz x10, L1817
+L1818:
     ldrb w11, [x10, w9, uxtw]
     and w26, w26, w11
     cmp w26, #0
@@ -20442,12 +20523,12 @@ L1816:
     lsl w27, w27, #7
     orr w27, w27, #0x20
     b Lnext
-L1813:
-    bl Ltick_slow4
-    b L1814
 L1815:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1816
+L1817:
+    bl Lrd_slow
+    b L1818
     .p2align 4
 Lc_A7:
     and w26, w26, w26
@@ -20510,24 +20591,24 @@ Lc_AE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1817
-L1818:
+    b.hs L1819
+L1820:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1819
-L1820:
+    cbz x10, L1821
+L1822:
     ldrb w11, [x10, w9, uxtw]
     eor w26, w26, w11
     cmp w26, #0
     cset w27, eq
     lsl w27, w27, #7
     b Lnext
-L1817:
-    bl Ltick_slow4
-    b L1818
 L1819:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1820
+L1821:
+    bl Lrd_slow
+    b L1822
     .p2align 4
 Lc_AF:
     eor w26, w26, w26
@@ -20589,24 +20670,24 @@ Lc_B6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1821
-L1822:
+    b.hs L1823
+L1824:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1823
-L1824:
+    cbz x10, L1825
+L1826:
     ldrb w11, [x10, w9, uxtw]
     orr w26, w26, w11
     cmp w26, #0
     cset w27, eq
     lsl w27, w27, #7
     b Lnext
-L1821:
-    bl Ltick_slow4
-    b L1822
 L1823:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1824
+L1825:
+    bl Lrd_slow
+    b L1826
     .p2align 4
 Lc_B7:
     orr w26, w26, w26
@@ -20710,12 +20791,12 @@ Lc_BE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1825
-L1826:
+    b.hs L1827
+L1828:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1827
-L1828:
+    cbz x10, L1829
+L1830:
     ldrb w11, [x10, w9, uxtw]
     sub w1, w26, w11
     eor w2, w26, w11
@@ -20729,12 +20810,12 @@ L1828:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L1825:
-    bl Ltick_slow4
-    b L1826
 L1827:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1828
+L1829:
+    bl Lrd_slow
+    b L1830
     .p2align 4
 Lc_BF:
     sub w1, w26, w26
@@ -20754,19 +20835,19 @@ Lc_C0:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1829
-L1830:
-    tbnz w27, #7, L1831
+    b.hs L1831
+L1832:
+    tbnz w27, #7, L1833
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1832
-L1833:
+    b.hs L1834
+L1835:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1834
-L1835:
+    cbz x10, L1836
+L1837:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -20774,12 +20855,12 @@ L1835:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1836
-L1837:
+    b.hs L1838
+L1839:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1838
-L1839:
+    cbz x10, L1840
+L1841:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -20788,40 +20869,40 @@ L1839:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1840
-L1841:
-L1831:
+    b.hs L1842
+L1843:
+L1833:
     b Lnext
-L1829:
+L1831:
     bl Ltick_slow4
-    b L1830
-L1832:
-    bl Ltick_slow4
-    b L1833
+    b L1832
 L1834:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1835
 L1836:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1837
 L1838:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1839
 L1840:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1841
+L1842:
+    bl Ltick_slow4
+    b L1843
     .p2align 4
 Lc_C1:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1842
-L1843:
+    b.hs L1844
+L1845:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1844
-L1845:
+    cbz x10, L1846
+L1847:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -20829,42 +20910,42 @@ L1845:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1846
-L1847:
+    b.hs L1848
+L1849:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1848
-L1849:
+    cbz x10, L1850
+L1851:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w28, w12
     b Lnext
-L1842:
-    bl Ltick_slow4
-    b L1843
 L1844:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1845
 L1846:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1847
 L1848:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1849
+L1850:
+    bl Lrd_slow
+    b L1851
     .p2align 4
 Lc_C2:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1850
-L1851:
+    b.hs L1852
+L1853:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1852
-L1853:
+    cbz x10, L1854
+L1855:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -20872,52 +20953,52 @@ L1853:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1854
-L1855:
+    b.hs L1856
+L1857:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1856
-L1857:
+    cbz x10, L1858
+L1859:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #7, L1858
+    tbnz w27, #7, L1860
     mov w24, w12
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1859
+    b.hs L1861
+L1862:
 L1860:
-L1858:
     b Lnext
-L1850:
-    bl Ltick_slow4
-    b L1851
 L1852:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1853
 L1854:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1855
 L1856:
-    bl Lrd_slow
-    b L1857
-L1859:
     bl Ltick_slow4
-    b L1860
+    b L1857
+L1858:
+    bl Lrd_slow
+    b L1859
+L1861:
+    bl Ltick_slow4
+    b L1862
     .p2align 4
 Lc_C3:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1861
-L1862:
+    b.hs L1863
+L1864:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1863
-L1864:
+    cbz x10, L1865
+L1866:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -20925,12 +21006,12 @@ L1864:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1865
-L1866:
+    b.hs L1867
+L1868:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1867
-L1868:
+    cbz x10, L1869
+L1870:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -20939,37 +21020,37 @@ L1868:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1870
+    b.hs L1872
+L1873:
 L1871:
-L1869:
     b Lnext
-L1861:
-    bl Ltick_slow4
-    b L1862
 L1863:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1864
 L1865:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1866
 L1867:
-    bl Lrd_slow
-    b L1868
-L1870:
     bl Ltick_slow4
-    b L1871
+    b L1868
+L1869:
+    bl Lrd_slow
+    b L1870
+L1872:
+    bl Ltick_slow4
+    b L1873
     .p2align 4
 Lc_C4:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1872
-L1873:
+    b.hs L1874
+L1875:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1874
-L1875:
+    cbz x10, L1876
+L1877:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -20977,22 +21058,22 @@ L1875:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1876
-L1877:
+    b.hs L1878
+L1879:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1878
-L1879:
+    cbz x10, L1880
+L1881:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #7, L1880
+    tbnz w27, #7, L1882
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1881
-L1882:
+    b.hs L1883
+L1884:
     str w12, [sp, #104]
     mov w12, w24
     sub w25, w25, #1
@@ -21002,67 +21083,67 @@ L1882:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1883
-L1884:
+    b.hs L1885
+L1886:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1885
+    cbz x10, L1887
     strb w11, [x10, w9, uxtw]
-L1886:
+L1888:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1887
-L1888:
+    b.hs L1889
+L1890:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1889
+    cbz x10, L1891
     strb w12, [x10, w9, uxtw]
-L1890:
+L1892:
     ldr w24, [sp, #104]
-L1880:
+L1882:
     b Lnext
-L1872:
-    bl Ltick_slow4
-    b L1873
 L1874:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1875
 L1876:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1877
 L1878:
-    bl Lrd_slow
-    b L1879
-L1881:
     bl Ltick_slow4
-    b L1882
+    b L1879
+L1880:
+    bl Lrd_slow
+    b L1881
 L1883:
     bl Ltick_slow4
     b L1884
 L1885:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1886
 L1887:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L1888
 L1889:
+    bl Ltick_slow4
+    b L1890
+L1891:
     mov w0, w12
     bl Lwr_slow
-    b L1890
+    b L1892
     .p2align 4
 Lc_C5:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1891
-L1892:
+    b.hs L1893
+L1894:
     mov w12, w28
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21071,58 +21152,58 @@ L1892:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1893
-L1894:
+    b.hs L1895
+L1896:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1895
+    cbz x10, L1897
     strb w11, [x10, w9, uxtw]
-L1896:
+L1898:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1897
-L1898:
+    b.hs L1899
+L1900:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1899
+    cbz x10, L1901
     strb w12, [x10, w9, uxtw]
-L1900:
+L1902:
     b Lnext
-L1891:
-    bl Ltick_slow4
-    b L1892
 L1893:
     bl Ltick_slow4
     b L1894
 L1895:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1896
 L1897:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L1898
 L1899:
+    bl Ltick_slow4
+    b L1900
+L1901:
     mov w0, w12
     bl Lwr_slow
-    b L1900
+    b L1902
     .p2align 4
 Lc_C6:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1901
-L1902:
+    b.hs L1903
+L1904:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1903
-L1904:
+    cbz x10, L1905
+L1906:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21138,19 +21219,19 @@ L1904:
     cset w3, eq
     orr w27, w27, w3, lsl #7
     b Lnext
-L1901:
-    bl Ltick_slow4
-    b L1902
 L1903:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1904
+L1905:
+    bl Lrd_slow
+    b L1906
     .p2align 4
 Lc_C7:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1905
-L1906:
+    b.hs L1907
+L1908:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21159,65 +21240,65 @@ L1906:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1907
-L1908:
+    b.hs L1909
+L1910:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1909
+    cbz x10, L1911
     strb w11, [x10, w9, uxtw]
-L1910:
+L1912:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1911
-L1912:
+    b.hs L1913
+L1914:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1913
+    cbz x10, L1915
     strb w12, [x10, w9, uxtw]
-L1914:
+L1916:
     mov w24, #0
     b Lnext
-L1905:
-    bl Ltick_slow4
-    b L1906
 L1907:
     bl Ltick_slow4
     b L1908
 L1909:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1910
 L1911:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L1912
 L1913:
+    bl Ltick_slow4
+    b L1914
+L1915:
     mov w0, w12
     bl Lwr_slow
-    b L1914
+    b L1916
     .p2align 4
 Lc_C8:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1915
-L1916:
-    tbz w27, #7, L1917
+    b.hs L1917
+L1918:
+    tbz w27, #7, L1919
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1918
-L1919:
+    b.hs L1920
+L1921:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1920
-L1921:
+    cbz x10, L1922
+L1923:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21225,12 +21306,12 @@ L1921:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1922
-L1923:
+    b.hs L1924
+L1925:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1924
-L1925:
+    cbz x10, L1926
+L1927:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21239,40 +21320,40 @@ L1925:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1926
-L1927:
-L1917:
+    b.hs L1928
+L1929:
+L1919:
     b Lnext
-L1915:
+L1917:
     bl Ltick_slow4
-    b L1916
-L1918:
-    bl Ltick_slow4
-    b L1919
+    b L1918
 L1920:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1921
 L1922:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1923
 L1924:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1925
 L1926:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1927
+L1928:
+    bl Ltick_slow4
+    b L1929
     .p2align 4
 Lc_C9:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1928
-L1929:
+    b.hs L1930
+L1931:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1930
-L1931:
+    cbz x10, L1932
+L1933:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21280,12 +21361,12 @@ L1931:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1932
-L1933:
+    b.hs L1934
+L1935:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1934
-L1935:
+    cbz x10, L1936
+L1937:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21294,36 +21375,36 @@ L1935:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1936
-L1937:
+    b.hs L1938
+L1939:
     b Lnext
-L1928:
-    bl Ltick_slow4
-    b L1929
 L1930:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1931
 L1932:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1933
 L1934:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1935
 L1936:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1937
+L1938:
+    bl Ltick_slow4
+    b L1939
     .p2align 4
 Lc_CA:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1938
-L1939:
+    b.hs L1940
+L1941:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1940
-L1941:
+    cbz x10, L1942
+L1943:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21331,52 +21412,52 @@ L1941:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1942
-L1943:
+    b.hs L1944
+L1945:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1944
-L1945:
+    cbz x10, L1946
+L1947:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #7, L1946
+    tbz w27, #7, L1948
     mov w24, w12
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1947
+    b.hs L1949
+L1950:
 L1948:
-L1946:
     b Lnext
-L1938:
-    bl Ltick_slow4
-    b L1939
 L1940:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1941
 L1942:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1943
 L1944:
-    bl Lrd_slow
-    b L1945
-L1947:
     bl Ltick_slow4
-    b L1948
+    b L1945
+L1946:
+    bl Lrd_slow
+    b L1947
+L1949:
+    bl Ltick_slow4
+    b L1950
     .p2align 4
 Lc_CB:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1949
-L1950:
+    b.hs L1951
+L1952:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1951
-L1952:
+    cbz x10, L1953
+L1954:
     ldrb w9, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21384,24 +21465,24 @@ L1952:
     ldrsw x0, [x17, x9, lsl #2]
     add x17, x17, x0
     br x17
-L1949:
-    bl Ltick_slow4
-    b L1950
 L1951:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1952
+L1953:
+    bl Lrd_slow
+    b L1954
     .p2align 4
 Lc_CC:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1953
-L1954:
+    b.hs L1955
+L1956:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1955
-L1956:
+    cbz x10, L1957
+L1958:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21409,22 +21490,22 @@ L1956:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1957
-L1958:
+    b.hs L1959
+L1960:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1959
-L1960:
+    cbz x10, L1961
+L1962:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #7, L1961
+    tbz w27, #7, L1963
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1962
-L1963:
+    b.hs L1964
+L1965:
     str w12, [sp, #104]
     mov w12, w24
     sub w25, w25, #1
@@ -21434,72 +21515,72 @@ L1963:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1964
-L1965:
+    b.hs L1966
+L1967:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1966
+    cbz x10, L1968
     strb w11, [x10, w9, uxtw]
-L1967:
+L1969:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1968
-L1969:
+    b.hs L1970
+L1971:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1970
+    cbz x10, L1972
     strb w12, [x10, w9, uxtw]
-L1971:
+L1973:
     ldr w24, [sp, #104]
-L1961:
+L1963:
     b Lnext
-L1953:
-    bl Ltick_slow4
-    b L1954
 L1955:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1956
 L1957:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1958
 L1959:
-    bl Lrd_slow
-    b L1960
-L1962:
     bl Ltick_slow4
-    b L1963
+    b L1960
+L1961:
+    bl Lrd_slow
+    b L1962
 L1964:
     bl Ltick_slow4
     b L1965
 L1966:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1967
 L1968:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L1969
 L1970:
+    bl Ltick_slow4
+    b L1971
+L1972:
     mov w0, w12
     bl Lwr_slow
-    b L1971
+    b L1973
     .p2align 4
 Lc_CD:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1972
-L1973:
+    b.hs L1974
+L1975:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1974
-L1975:
+    cbz x10, L1976
+L1977:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21507,12 +21588,12 @@ L1975:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1976
-L1977:
+    b.hs L1978
+L1979:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1978
-L1979:
+    cbz x10, L1980
+L1981:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21520,8 +21601,8 @@ L1979:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1981
-L1982:
+    b.hs L1983
+L1984:
     str w12, [sp, #104]
     mov w12, w24
     sub w25, w25, #1
@@ -21531,72 +21612,72 @@ L1982:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1983
-L1984:
+    b.hs L1985
+L1986:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1985
+    cbz x10, L1987
     strb w11, [x10, w9, uxtw]
-L1986:
+L1988:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1987
-L1988:
+    b.hs L1989
+L1990:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1989
+    cbz x10, L1991
     strb w12, [x10, w9, uxtw]
-L1990:
+L1992:
     ldr w24, [sp, #104]
-L1980:
+L1982:
     b Lnext
-L1972:
-    bl Ltick_slow4
-    b L1973
 L1974:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1975
 L1976:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L1977
 L1978:
-    bl Lrd_slow
-    b L1979
-L1981:
     bl Ltick_slow4
-    b L1982
+    b L1979
+L1980:
+    bl Lrd_slow
+    b L1981
 L1983:
     bl Ltick_slow4
     b L1984
 L1985:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L1986
 L1987:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L1988
 L1989:
+    bl Ltick_slow4
+    b L1990
+L1991:
     mov w0, w12
     bl Lwr_slow
-    b L1990
+    b L1992
     .p2align 4
 Lc_CE:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1991
-L1992:
+    b.hs L1993
+L1994:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L1993
-L1994:
+    cbz x10, L1995
+L1996:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21614,19 +21695,19 @@ L1994:
     cset w3, eq
     orr w27, w27, w3, lsl #7
     b Lnext
-L1991:
-    bl Ltick_slow4
-    b L1992
 L1993:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L1994
+L1995:
+    bl Lrd_slow
+    b L1996
     .p2align 4
 Lc_CF:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1995
-L1996:
+    b.hs L1997
+L1998:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21635,65 +21716,65 @@ L1996:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L1997
-L1998:
+    b.hs L1999
+L2000:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L1999
+    cbz x10, L2001
     strb w11, [x10, w9, uxtw]
-L2000:
+L2002:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2001
-L2002:
+    b.hs L2003
+L2004:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2003
+    cbz x10, L2005
     strb w12, [x10, w9, uxtw]
-L2004:
+L2006:
     mov w24, #8
     b Lnext
-L1995:
-    bl Ltick_slow4
-    b L1996
 L1997:
     bl Ltick_slow4
     b L1998
 L1999:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2000
 L2001:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2002
 L2003:
+    bl Ltick_slow4
+    b L2004
+L2005:
     mov w0, w12
     bl Lwr_slow
-    b L2004
+    b L2006
     .p2align 4
 Lc_D0:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2005
-L2006:
-    tbnz w27, #4, L2007
+    b.hs L2007
+L2008:
+    tbnz w27, #4, L2009
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2008
-L2009:
+    b.hs L2010
+L2011:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2010
-L2011:
+    cbz x10, L2012
+L2013:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21701,12 +21782,12 @@ L2011:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2012
-L2013:
+    b.hs L2014
+L2015:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2014
-L2015:
+    cbz x10, L2016
+L2017:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21715,40 +21796,40 @@ L2015:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2016
-L2017:
-L2007:
+    b.hs L2018
+L2019:
+L2009:
     b Lnext
-L2005:
+L2007:
     bl Ltick_slow4
-    b L2006
-L2008:
-    bl Ltick_slow4
-    b L2009
+    b L2008
 L2010:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2011
 L2012:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2013
 L2014:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2015
 L2016:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2017
+L2018:
+    bl Ltick_slow4
+    b L2019
     .p2align 4
 Lc_D1:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2018
-L2019:
+    b.hs L2020
+L2021:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2020
-L2021:
+    cbz x10, L2022
+L2023:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21756,42 +21837,42 @@ L2021:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2022
-L2023:
+    b.hs L2024
+L2025:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2024
-L2025:
+    cbz x10, L2026
+L2027:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w13, w12
     b Lnext
-L2018:
-    bl Ltick_slow4
-    b L2019
 L2020:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2021
 L2022:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2023
 L2024:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2025
+L2026:
+    bl Lrd_slow
+    b L2027
     .p2align 4
 Lc_D2:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2026
-L2027:
+    b.hs L2028
+L2029:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2028
-L2029:
+    cbz x10, L2030
+L2031:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21799,40 +21880,40 @@ L2029:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2030
-L2031:
+    b.hs L2032
+L2033:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2032
-L2033:
+    cbz x10, L2034
+L2035:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #4, L2034
+    tbnz w27, #4, L2036
     mov w24, w12
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2035
+    b.hs L2037
+L2038:
 L2036:
-L2034:
     b Lnext
-L2026:
-    bl Ltick_slow4
-    b L2027
 L2028:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2029
 L2030:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2031
 L2032:
-    bl Lrd_slow
-    b L2033
-L2035:
     bl Ltick_slow4
-    b L2036
+    b L2033
+L2034:
+    bl Lrd_slow
+    b L2035
+L2037:
+    bl Ltick_slow4
+    b L2038
     .p2align 4
 Lc_D3:
     b Lnext
@@ -21842,12 +21923,12 @@ Lc_D4:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2037
-L2038:
+    b.hs L2039
+L2040:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2039
-L2040:
+    cbz x10, L2041
+L2042:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -21855,22 +21936,22 @@ L2040:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2041
-L2042:
+    b.hs L2043
+L2044:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2043
-L2044:
+    cbz x10, L2045
+L2046:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbnz w27, #4, L2045
+    tbnz w27, #4, L2047
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2046
-L2047:
+    b.hs L2048
+L2049:
     str w12, [sp, #104]
     mov w12, w24
     sub w25, w25, #1
@@ -21880,67 +21961,67 @@ L2047:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2048
-L2049:
+    b.hs L2050
+L2051:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2050
+    cbz x10, L2052
     strb w11, [x10, w9, uxtw]
-L2051:
+L2053:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2052
-L2053:
+    b.hs L2054
+L2055:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2054
+    cbz x10, L2056
     strb w12, [x10, w9, uxtw]
-L2055:
+L2057:
     ldr w24, [sp, #104]
-L2045:
+L2047:
     b Lnext
-L2037:
-    bl Ltick_slow4
-    b L2038
 L2039:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2040
 L2041:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2042
 L2043:
-    bl Lrd_slow
-    b L2044
-L2046:
     bl Ltick_slow4
-    b L2047
+    b L2044
+L2045:
+    bl Lrd_slow
+    b L2046
 L2048:
     bl Ltick_slow4
     b L2049
 L2050:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2051
 L2052:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2053
 L2054:
+    bl Ltick_slow4
+    b L2055
+L2056:
     mov w0, w12
     bl Lwr_slow
-    b L2055
+    b L2057
     .p2align 4
 Lc_D5:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2056
-L2057:
+    b.hs L2058
+L2059:
     mov w12, w13
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -21949,58 +22030,58 @@ L2057:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2058
-L2059:
+    b.hs L2060
+L2061:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2060
+    cbz x10, L2062
     strb w11, [x10, w9, uxtw]
-L2061:
+L2063:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2062
-L2063:
+    b.hs L2064
+L2065:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2064
+    cbz x10, L2066
     strb w12, [x10, w9, uxtw]
-L2065:
+L2067:
     b Lnext
-L2056:
-    bl Ltick_slow4
-    b L2057
 L2058:
     bl Ltick_slow4
     b L2059
 L2060:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2061
 L2062:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2063
 L2064:
+    bl Ltick_slow4
+    b L2065
+L2066:
     mov w0, w12
     bl Lwr_slow
-    b L2065
+    b L2067
     .p2align 4
 Lc_D6:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2066
-L2067:
+    b.hs L2068
+L2069:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2068
-L2069:
+    cbz x10, L2070
+L2071:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22017,19 +22098,19 @@ L2069:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L2066:
-    bl Ltick_slow4
-    b L2067
 L2068:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2069
+L2070:
+    bl Lrd_slow
+    b L2071
     .p2align 4
 Lc_D7:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2070
-L2071:
+    b.hs L2072
+L2073:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22038,65 +22119,65 @@ L2071:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2072
-L2073:
+    b.hs L2074
+L2075:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2074
+    cbz x10, L2076
     strb w11, [x10, w9, uxtw]
-L2075:
+L2077:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2076
-L2077:
+    b.hs L2078
+L2079:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2078
+    cbz x10, L2080
     strb w12, [x10, w9, uxtw]
-L2079:
+L2081:
     mov w24, #16
     b Lnext
-L2070:
-    bl Ltick_slow4
-    b L2071
 L2072:
     bl Ltick_slow4
     b L2073
 L2074:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2075
 L2076:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2077
 L2078:
+    bl Ltick_slow4
+    b L2079
+L2080:
     mov w0, w12
     bl Lwr_slow
-    b L2079
+    b L2081
     .p2align 4
 Lc_D8:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2080
-L2081:
-    tbz w27, #4, L2082
+    b.hs L2082
+L2083:
+    tbz w27, #4, L2084
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2083
-L2084:
+    b.hs L2085
+L2086:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2085
-L2086:
+    cbz x10, L2087
+L2088:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22104,12 +22185,12 @@ L2086:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2087
-L2088:
+    b.hs L2089
+L2090:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2089
-L2090:
+    cbz x10, L2091
+L2092:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22118,40 +22199,40 @@ L2090:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2091
-L2092:
-L2082:
+    b.hs L2093
+L2094:
+L2084:
     b Lnext
-L2080:
+L2082:
     bl Ltick_slow4
-    b L2081
-L2083:
-    bl Ltick_slow4
-    b L2084
+    b L2083
 L2085:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2086
 L2087:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2088
 L2089:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2090
 L2091:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2092
+L2093:
+    bl Ltick_slow4
+    b L2094
     .p2align 4
 Lc_D9:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2093
-L2094:
+    b.hs L2095
+L2096:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2095
-L2096:
+    cbz x10, L2097
+L2098:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22159,12 +22240,12 @@ L2096:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2097
-L2098:
+    b.hs L2099
+L2100:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2099
-L2100:
+    cbz x10, L2101
+L2102:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22173,8 +22254,8 @@ L2100:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2101
-L2102:
+    b.hs L2103
+L2104:
     strb w26, [x19, #24]
     strb w27, [x19, #25]
     rev16 w17, w28
@@ -22186,16 +22267,16 @@ L2102:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L2103
+    cbnz w17, L2105
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L2103:
+L2105:
     mov x0, x19
     mov w1, #217
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -22211,33 +22292,33 @@ L2103:
     ldr x15, [x20, #288]
     adr x16, Ljt_f
     b Lnext
-L2093:
-    bl Ltick_slow4
-    b L2094
 L2095:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2096
 L2097:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2098
 L2099:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2100
 L2101:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2102
+L2103:
+    bl Ltick_slow4
+    b L2104
     .p2align 4
 Lc_DA:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2104
-L2105:
+    b.hs L2106
+L2107:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2106
-L2107:
+    cbz x10, L2108
+L2109:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22245,40 +22326,40 @@ L2107:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2108
-L2109:
+    b.hs L2110
+L2111:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2110
-L2111:
+    cbz x10, L2112
+L2113:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #4, L2112
+    tbz w27, #4, L2114
     mov w24, w12
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2113
+    b.hs L2115
+L2116:
 L2114:
-L2112:
     b Lnext
-L2104:
-    bl Ltick_slow4
-    b L2105
 L2106:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2107
 L2108:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2109
 L2110:
-    bl Lrd_slow
-    b L2111
-L2113:
     bl Ltick_slow4
-    b L2114
+    b L2111
+L2112:
+    bl Lrd_slow
+    b L2113
+L2115:
+    bl Ltick_slow4
+    b L2116
     .p2align 4
 Lc_DB:
     b Lnext
@@ -22288,12 +22369,12 @@ Lc_DC:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2115
-L2116:
+    b.hs L2117
+L2118:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2117
-L2118:
+    cbz x10, L2119
+L2120:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22301,22 +22382,22 @@ L2118:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2119
-L2120:
+    b.hs L2121
+L2122:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2121
-L2122:
+    cbz x10, L2123
+L2124:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     orr w12, w11, w12, lsl #8
-    tbz w27, #4, L2123
+    tbz w27, #4, L2125
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2124
-L2125:
+    b.hs L2126
+L2127:
     str w12, [sp, #104]
     mov w12, w24
     sub w25, w25, #1
@@ -22326,60 +22407,60 @@ L2125:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2126
-L2127:
+    b.hs L2128
+L2129:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2128
+    cbz x10, L2130
     strb w11, [x10, w9, uxtw]
-L2129:
+L2131:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2130
-L2131:
+    b.hs L2132
+L2133:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2132
+    cbz x10, L2134
     strb w12, [x10, w9, uxtw]
-L2133:
+L2135:
     ldr w24, [sp, #104]
-L2123:
+L2125:
     b Lnext
-L2115:
-    bl Ltick_slow4
-    b L2116
 L2117:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2118
 L2119:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2120
 L2121:
-    bl Lrd_slow
-    b L2122
-L2124:
     bl Ltick_slow4
-    b L2125
+    b L2122
+L2123:
+    bl Lrd_slow
+    b L2124
 L2126:
     bl Ltick_slow4
     b L2127
 L2128:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2129
 L2130:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2131
 L2132:
+    bl Ltick_slow4
+    b L2133
+L2134:
     mov w0, w12
     bl Lwr_slow
-    b L2133
+    b L2135
     .p2align 4
 Lc_DD:
     b Lnext
@@ -22389,12 +22470,12 @@ Lc_DE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2134
-L2135:
+    b.hs L2136
+L2137:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2136
-L2137:
+    cbz x10, L2138
+L2139:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22413,19 +22494,19 @@ L2137:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L2134:
-    bl Ltick_slow4
-    b L2135
 L2136:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2137
+L2138:
+    bl Lrd_slow
+    b L2139
     .p2align 4
 Lc_DF:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2138
-L2139:
+    b.hs L2140
+L2141:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22434,119 +22515,119 @@ L2139:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2140
-L2141:
+    b.hs L2142
+L2143:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2142
+    cbz x10, L2144
     strb w11, [x10, w9, uxtw]
-L2143:
+L2145:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2144
-L2145:
+    b.hs L2146
+L2147:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2146
+    cbz x10, L2148
     strb w12, [x10, w9, uxtw]
-L2147:
+L2149:
     mov w24, #24
     b Lnext
-L2138:
-    bl Ltick_slow4
-    b L2139
 L2140:
     bl Ltick_slow4
     b L2141
 L2142:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2143
 L2144:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2145
 L2146:
+    bl Ltick_slow4
+    b L2147
+L2148:
     mov w0, w12
     bl Lwr_slow
-    b L2147
+    b L2149
     .p2align 4
 Lc_E0:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2150
-L2151:
+    b.hs L2152
+L2153:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2152
-L2153:
+    cbz x10, L2154
+L2155:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     cmp w11, #0x80
-    b.lo L2148
+    b.lo L2150
     cmp w11, #0xFF
-    b.eq L2148
-    add x21, x21, #4
-    ldr x17, [x20, #296]
-    cmp x21, x17
-    b.hs L2154
-L2155:
-    ldr x10, [x20, #272]
-    orr w0, w11, #0xFF00
-    strb w26, [x10, w0, uxtw]
-    b L2149
-L2148:
-    mov w9, w11
-    orr w9, w9, #0xFF00
+    b.eq L2150
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
     b.hs L2156
 L2157:
+    ldr x10, [x20, #272]
+    orr w0, w11, #0xFF00
+    strb w26, [x10, w0, uxtw]
+    b L2151
+L2150:
+    mov w9, w11
+    orr w9, w9, #0xFF00
+    add x21, x21, #4
+    ldr x17, [x20, #296]
+    cmp x21, x17
+    b.hs L2158
+L2159:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2158
+    cbz x10, L2160
     strb w26, [x10, w9, uxtw]
-L2159:
-L2149:
+L2161:
+L2151:
     b Lnext
-L2150:
-    bl Ltick_slow4
-    b L2151
 L2152:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2153
 L2154:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2155
 L2156:
     bl Ltick_slow4
     b L2157
 L2158:
+    bl Ltick_slow4
+    b L2159
+L2160:
     mov w0, w26
     bl Lwr_slow
-    b L2159
+    b L2161
     .p2align 4
 Lc_E1:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2160
-L2161:
+    b.hs L2162
+L2163:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2162
-L2163:
+    cbz x10, L2164
+L2165:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22554,30 +22635,30 @@ L2163:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2164
-L2165:
+    b.hs L2166
+L2167:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2166
-L2167:
+    cbz x10, L2168
+L2169:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
     orr w12, w11, w12, lsl #8
     mov w14, w12
     b Lnext
-L2160:
-    bl Ltick_slow4
-    b L2161
 L2162:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2163
 L2164:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2165
 L2166:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2167
+L2168:
+    bl Lrd_slow
+    b L2169
     .p2align 4
 Lc_E2:
     and w9, w28, #0xFF
@@ -22585,22 +22666,22 @@ Lc_E2:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2168
-L2169:
+    b.hs L2170
+L2171:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2170
+    cbz x10, L2172
     strb w26, [x10, w9, uxtw]
-L2171:
+L2173:
     b Lnext
-L2168:
-    bl Ltick_slow4
-    b L2169
 L2170:
+    bl Ltick_slow4
+    b L2171
+L2172:
     mov w0, w26
     bl Lwr_slow
-    b L2171
+    b L2173
     .p2align 4
 Lc_E3:
     b Lnext
@@ -22612,8 +22693,8 @@ Lc_E5:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2172
-L2173:
+    b.hs L2174
+L2175:
     mov w12, w14
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22622,58 +22703,58 @@ L2173:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2174
-L2175:
+    b.hs L2176
+L2177:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2176
+    cbz x10, L2178
     strb w11, [x10, w9, uxtw]
-L2177:
+L2179:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2178
-L2179:
+    b.hs L2180
+L2181:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2180
+    cbz x10, L2182
     strb w12, [x10, w9, uxtw]
-L2181:
+L2183:
     b Lnext
-L2172:
-    bl Ltick_slow4
-    b L2173
 L2174:
     bl Ltick_slow4
     b L2175
 L2176:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2177
 L2178:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2179
 L2180:
+    bl Ltick_slow4
+    b L2181
+L2182:
     mov w0, w12
     bl Lwr_slow
-    b L2181
+    b L2183
     .p2align 4
 Lc_E6:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2182
-L2183:
+    b.hs L2184
+L2185:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2184
-L2185:
+    cbz x10, L2186
+L2187:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22683,19 +22764,19 @@ L2185:
     lsl w27, w27, #7
     orr w27, w27, #0x20
     b Lnext
-L2182:
-    bl Ltick_slow4
-    b L2183
 L2184:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2185
+L2186:
+    bl Lrd_slow
+    b L2187
     .p2align 4
 Lc_E7:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2186
-L2187:
+    b.hs L2188
+L2189:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22704,59 +22785,59 @@ L2187:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2188
-L2189:
+    b.hs L2190
+L2191:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2190
+    cbz x10, L2192
     strb w11, [x10, w9, uxtw]
-L2191:
+L2193:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2192
-L2193:
+    b.hs L2194
+L2195:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2194
+    cbz x10, L2196
     strb w12, [x10, w9, uxtw]
-L2195:
+L2197:
     mov w24, #32
     b Lnext
-L2186:
-    bl Ltick_slow4
-    b L2187
 L2188:
     bl Ltick_slow4
     b L2189
 L2190:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2191
 L2192:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2193
 L2194:
+    bl Ltick_slow4
+    b L2195
+L2196:
     mov w0, w12
     bl Lwr_slow
-    b L2195
+    b L2197
     .p2align 4
 Lc_E8:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2196
-L2197:
+    b.hs L2198
+L2199:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2198
-L2199:
+    cbz x10, L2200
+L2201:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22775,18 +22856,18 @@ L2199:
     add x21, x21, #8
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2200
-L2201:
+    b.hs L2202
+L2203:
     b Lnext
-L2196:
-    bl Ltick_slow4
-    b L2197
 L2198:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2199
 L2200:
-    bl Ltick_slow8
+    bl Lrd_slow
     b L2201
+L2202:
+    bl Ltick_slow8
+    b L2203
     .p2align 4
 Lc_E9:
     mov w24, w14
@@ -22797,12 +22878,12 @@ Lc_EA:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2202
-L2203:
+    b.hs L2204
+L2205:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2204
-L2205:
+    cbz x10, L2206
+L2207:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22810,12 +22891,12 @@ L2205:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2206
-L2207:
+    b.hs L2208
+L2209:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2208
-L2209:
+    cbz x10, L2210
+L2211:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22824,34 +22905,34 @@ L2209:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2210
-L2211:
+    b.hs L2212
+L2213:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2212
+    cbz x10, L2214
     strb w26, [x10, w9, uxtw]
-L2213:
+L2215:
     b Lnext
-L2202:
-    bl Ltick_slow4
-    b L2203
 L2204:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2205
 L2206:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2207
 L2208:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2209
 L2210:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2211
 L2212:
+    bl Ltick_slow4
+    b L2213
+L2214:
     mov w0, w26
     bl Lwr_slow
-    b L2213
+    b L2215
     .p2align 4
 Lc_EB:
     b Lnext
@@ -22867,12 +22948,12 @@ Lc_EE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2214
-L2215:
+    b.hs L2216
+L2217:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2216
-L2217:
+    cbz x10, L2218
+L2219:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -22881,19 +22962,19 @@ L2217:
     cset w27, eq
     lsl w27, w27, #7
     b Lnext
-L2214:
-    bl Ltick_slow4
-    b L2215
 L2216:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2217
+L2218:
+    bl Lrd_slow
+    b L2219
     .p2align 4
 Lc_EF:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2218
-L2219:
+    b.hs L2220
+L2221:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -22902,117 +22983,117 @@ L2219:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2220
-L2221:
+    b.hs L2222
+L2223:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2222
+    cbz x10, L2224
     strb w11, [x10, w9, uxtw]
-L2223:
+L2225:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2224
-L2225:
+    b.hs L2226
+L2227:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2226
+    cbz x10, L2228
     strb w12, [x10, w9, uxtw]
-L2227:
+L2229:
     mov w24, #40
     b Lnext
-L2218:
-    bl Ltick_slow4
-    b L2219
 L2220:
     bl Ltick_slow4
     b L2221
 L2222:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2223
 L2224:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2225
 L2226:
+    bl Ltick_slow4
+    b L2227
+L2228:
     mov w0, w12
     bl Lwr_slow
-    b L2227
+    b L2229
     .p2align 4
 Lc_F0:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2230
-L2231:
+    b.hs L2232
+L2233:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2232
-L2233:
+    cbz x10, L2234
+L2235:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
     cmp w11, #0x80
-    b.lo L2228
+    b.lo L2230
     cmp w11, #0xFF
-    b.eq L2228
-    add x21, x21, #4
-    ldr x17, [x20, #296]
-    cmp x21, x17
-    b.hs L2234
-L2235:
-    ldr x10, [x20, #272]
-    orr w0, w11, #0xFF00
-    ldrb w26, [x10, w0, uxtw]
-    b L2229
-L2228:
-    mov w9, w11
-    orr w9, w9, #0xFF00
+    b.eq L2230
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
     b.hs L2236
 L2237:
+    ldr x10, [x20, #272]
+    orr w0, w11, #0xFF00
+    ldrb w26, [x10, w0, uxtw]
+    b L2231
+L2230:
+    mov w9, w11
+    orr w9, w9, #0xFF00
+    add x21, x21, #4
+    ldr x17, [x20, #296]
+    cmp x21, x17
+    b.hs L2238
+L2239:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2238
-L2239:
+    cbz x10, L2240
+L2241:
     ldrb w26, [x10, w9, uxtw]
-L2229:
+L2231:
     b Lnext
-L2230:
-    bl Ltick_slow4
-    b L2231
 L2232:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2233
 L2234:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2235
 L2236:
     bl Ltick_slow4
     b L2237
 L2238:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2239
+L2240:
+    bl Lrd_slow
+    b L2241
     .p2align 4
 Lc_F1:
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2240
-L2241:
+    b.hs L2242
+L2243:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2242
-L2243:
+    cbz x10, L2244
+L2245:
     ldrb w11, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -23020,12 +23101,12 @@ L2243:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2244
-L2245:
+    b.hs L2246
+L2247:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2246
-L2247:
+    cbz x10, L2248
+L2249:
     ldrb w12, [x10, w9, uxtw]
     add w25, w25, #1
     and w25, w25, #0xFFFF
@@ -23033,18 +23114,18 @@ L2247:
     lsr w26, w12, #8
     and w27, w12, #0xF0
     b Lnext
-L2240:
-    bl Ltick_slow4
-    b L2241
 L2242:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2243
 L2244:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2245
 L2246:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2247
+L2248:
+    bl Lrd_slow
+    b L2249
     .p2align 4
 Lc_F2:
     and w9, w28, #0xFF
@@ -23052,20 +23133,20 @@ Lc_F2:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2248
-L2249:
+    b.hs L2250
+L2251:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2250
-L2251:
+    cbz x10, L2252
+L2253:
     ldrb w26, [x10, w9, uxtw]
     b Lnext
-L2248:
-    bl Ltick_slow4
-    b L2249
 L2250:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2251
+L2252:
+    bl Lrd_slow
+    b L2253
     .p2align 4
 Lc_F3:
     strb w26, [x19, #24]
@@ -23079,16 +23160,16 @@ Lc_F3:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L2252
+    cbnz w17, L2254
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L2252:
+L2254:
     mov x0, x19
     mov w1, #243
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -23112,8 +23193,8 @@ Lc_F5:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2253
-L2254:
+    b.hs L2255
+L2256:
     orr w12, w27, w26, lsl #8
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -23122,58 +23203,58 @@ L2254:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2255
-L2256:
+    b.hs L2257
+L2258:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2257
+    cbz x10, L2259
     strb w11, [x10, w9, uxtw]
-L2258:
+L2260:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2259
-L2260:
+    b.hs L2261
+L2262:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2261
+    cbz x10, L2263
     strb w12, [x10, w9, uxtw]
-L2262:
+L2264:
     b Lnext
-L2253:
-    bl Ltick_slow4
-    b L2254
 L2255:
     bl Ltick_slow4
     b L2256
 L2257:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2258
 L2259:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2260
 L2261:
+    bl Ltick_slow4
+    b L2262
+L2263:
     mov w0, w12
     bl Lwr_slow
-    b L2262
+    b L2264
     .p2align 4
 Lc_F6:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2263
-L2264:
+    b.hs L2265
+L2266:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2265
-L2266:
+    cbz x10, L2267
+L2268:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -23182,19 +23263,19 @@ L2266:
     cset w27, eq
     lsl w27, w27, #7
     b Lnext
-L2263:
-    bl Ltick_slow4
-    b L2264
 L2265:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2266
+L2267:
+    bl Lrd_slow
+    b L2268
     .p2align 4
 Lc_F7:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2267
-L2268:
+    b.hs L2269
+L2270:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -23203,59 +23284,59 @@ L2268:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2269
-L2270:
+    b.hs L2271
+L2272:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2271
+    cbz x10, L2273
     strb w11, [x10, w9, uxtw]
-L2272:
+L2274:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2273
-L2274:
+    b.hs L2275
+L2276:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2275
+    cbz x10, L2277
     strb w12, [x10, w9, uxtw]
-L2276:
+L2278:
     mov w24, #48
     b Lnext
-L2267:
-    bl Ltick_slow4
-    b L2268
 L2269:
     bl Ltick_slow4
     b L2270
 L2271:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2272
 L2273:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2274
 L2275:
+    bl Ltick_slow4
+    b L2276
+L2277:
     mov w0, w12
     bl Lwr_slow
-    b L2276
+    b L2278
     .p2align 4
 Lc_F8:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2277
-L2278:
+    b.hs L2279
+L2280:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2279
-L2280:
+    cbz x10, L2281
+L2282:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -23274,42 +23355,42 @@ L2280:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2281
-L2282:
+    b.hs L2283
+L2284:
     b Lnext
-L2277:
-    bl Ltick_slow4
-    b L2278
 L2279:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2280
 L2281:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2282
+L2283:
+    bl Ltick_slow4
+    b L2284
     .p2align 4
 Lc_F9:
     mov w25, w14
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2283
-L2284:
+    b.hs L2285
+L2286:
     b Lnext
-L2283:
+L2285:
     bl Ltick_slow4
-    b L2284
+    b L2286
     .p2align 4
 Lc_FA:
     mov w9, w24
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2285
-L2286:
+    b.hs L2287
+L2288:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2287
-L2288:
+    cbz x10, L2289
+L2290:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -23317,12 +23398,12 @@ L2288:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2289
-L2290:
+    b.hs L2291
+L2292:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2291
-L2292:
+    cbz x10, L2293
+L2294:
     ldrb w12, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -23331,32 +23412,32 @@ L2292:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2293
-L2294:
+    b.hs L2295
+L2296:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2295
-L2296:
+    cbz x10, L2297
+L2298:
     ldrb w26, [x10, w9, uxtw]
     b Lnext
-L2285:
-    bl Ltick_slow4
-    b L2286
 L2287:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2288
 L2289:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2290
 L2291:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2292
 L2293:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2294
 L2295:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2296
+L2297:
+    bl Lrd_slow
+    b L2298
     .p2align 4
 Lc_FB:
     strb w26, [x19, #24]
@@ -23370,16 +23451,16 @@ Lc_FB:
     strh w25, [x19, #32]
     strh w24, [x19, #34]
     ldrb w17, [x20, #371]
-    cbnz w17, L2297
+    cbnz w17, L2299
     str x21, [x19, #40]
     ldrh w17, [x20, #368]
     add w17, w17, w21
     add x16, x19, #16, lsl #12
     strh w17, [x16, #322]
-L2297:
+L2299:
     mov x0, x19
     mov w1, #251
-    bl gbc_asm_op
+    bl SYM(gbc_asm_op)
     ldrb w26, [x19, #24]
     ldrb w27, [x19, #25]
     ldrh w17, [x19, #26]
@@ -23407,12 +23488,12 @@ Lc_FE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2298
-L2299:
+    b.hs L2300
+L2301:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2300
-L2301:
+    cbz x10, L2302
+L2303:
     ldrb w11, [x10, w9, uxtw]
     add w24, w24, #1
     and w24, w24, #0xFFFF
@@ -23428,19 +23509,19 @@ L2301:
     orr w27, w27, w3, lsl #7
     orr w27, w27, #0x40
     b Lnext
-L2298:
-    bl Ltick_slow4
-    b L2299
 L2300:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2301
+L2302:
+    bl Lrd_slow
+    b L2303
     .p2align 4
 Lc_FF:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2302
-L2303:
+    b.hs L2304
+L2305:
     mov w12, w24
     sub w25, w25, #1
     and w25, w25, #0xFFFF
@@ -23449,47 +23530,47 @@ L2303:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2304
-L2305:
+    b.hs L2306
+L2307:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2306
+    cbz x10, L2308
     strb w11, [x10, w9, uxtw]
-L2307:
+L2309:
     sub w25, w25, #1
     and w25, w25, #0xFFFF
     mov w9, w25
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2308
-L2309:
+    b.hs L2310
+L2311:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2310
+    cbz x10, L2312
     strb w12, [x10, w9, uxtw]
-L2311:
+L2313:
     mov w24, #56
     b Lnext
-L2302:
-    bl Ltick_slow4
-    b L2303
 L2304:
     bl Ltick_slow4
     b L2305
 L2306:
-    mov w0, w11
-    bl Lwr_slow
+    bl Ltick_slow4
     b L2307
 L2308:
-    bl Ltick_slow4
+    mov w0, w11
+    bl Lwr_slow
     b L2309
 L2310:
+    bl Ltick_slow4
+    b L2311
+L2312:
     mov w0, w12
     bl Lwr_slow
-    b L2311
+    b L2313
     .p2align 4
 Lccb_00:
     lsr w0, w28, #8
@@ -23574,12 +23655,12 @@ Lccb_06:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2312
-L2313:
+    b.hs L2314
+L2315:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2314
-L2315:
+    cbz x10, L2316
+L2317:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     lsl w2, w11, #1
@@ -23593,28 +23674,28 @@ L2315:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2316
-L2317:
+    b.hs L2318
+L2319:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2318
+    cbz x10, L2320
     strb w11, [x10, w9, uxtw]
-L2319:
+L2321:
     b Lnext
-L2312:
-    bl Ltick_slow4
-    b L2313
 L2314:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2315
 L2316:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2317
 L2318:
+    bl Ltick_slow4
+    b L2319
+L2320:
     mov w0, w11
     bl Lwr_slow
-    b L2319
+    b L2321
     .p2align 4
 Lccb_07:
     lsr w1, w26, #7
@@ -23705,12 +23786,12 @@ Lccb_0E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2320
-L2321:
+    b.hs L2322
+L2323:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2322
-L2323:
+    cbz x10, L2324
+L2325:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     lsr w2, w11, #1
@@ -23723,28 +23804,28 @@ L2323:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2324
-L2325:
+    b.hs L2326
+L2327:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2326
+    cbz x10, L2328
     strb w11, [x10, w9, uxtw]
-L2327:
+L2329:
     b Lnext
-L2320:
-    bl Ltick_slow4
-    b L2321
 L2322:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2323
 L2324:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2325
 L2326:
+    bl Ltick_slow4
+    b L2327
+L2328:
     mov w0, w11
     bl Lwr_slow
-    b L2327
+    b L2329
     .p2align 4
 Lccb_0F:
     and w1, w26, #1
@@ -23846,12 +23927,12 @@ Lccb_16:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2328
-L2329:
+    b.hs L2330
+L2331:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2330
-L2331:
+    cbz x10, L2332
+L2333:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     ubfx w3, w27, #4, #1
@@ -23866,28 +23947,28 @@ L2331:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2332
-L2333:
+    b.hs L2334
+L2335:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2334
+    cbz x10, L2336
     strb w11, [x10, w9, uxtw]
-L2335:
+L2337:
     b Lnext
-L2328:
-    bl Ltick_slow4
-    b L2329
 L2330:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2331
 L2332:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2333
 L2334:
+    bl Ltick_slow4
+    b L2335
+L2336:
     mov w0, w11
     bl Lwr_slow
-    b L2335
+    b L2337
     .p2align 4
 Lccb_17:
     lsr w1, w26, #7
@@ -23985,12 +24066,12 @@ Lccb_1E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2336
-L2337:
+    b.hs L2338
+L2339:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2338
-L2339:
+    cbz x10, L2340
+L2341:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     ubfx w3, w27, #4, #1
@@ -24004,28 +24085,28 @@ L2339:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2340
-L2341:
+    b.hs L2342
+L2343:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2342
+    cbz x10, L2344
     strb w11, [x10, w9, uxtw]
-L2343:
+L2345:
     b Lnext
-L2336:
-    bl Ltick_slow4
-    b L2337
 L2338:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2339
 L2340:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2341
 L2342:
+    bl Ltick_slow4
+    b L2343
+L2344:
     mov w0, w11
     bl Lwr_slow
-    b L2343
+    b L2345
     .p2align 4
 Lccb_1F:
     and w1, w26, #1
@@ -24116,12 +24197,12 @@ Lccb_26:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2344
-L2345:
+    b.hs L2346
+L2347:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2346
-L2347:
+    cbz x10, L2348
+L2349:
     ldrb w11, [x10, w9, uxtw]
     lsr w1, w11, #7
     lsl w2, w11, #1
@@ -24134,28 +24215,28 @@ L2347:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2348
-L2349:
+    b.hs L2350
+L2351:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2350
+    cbz x10, L2352
     strb w11, [x10, w9, uxtw]
-L2351:
+L2353:
     b Lnext
-L2344:
-    bl Ltick_slow4
-    b L2345
 L2346:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2347
 L2348:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2349
 L2350:
+    bl Ltick_slow4
+    b L2351
+L2352:
     mov w0, w11
     bl Lwr_slow
-    b L2351
+    b L2353
     .p2align 4
 Lccb_27:
     lsr w1, w26, #7
@@ -24251,12 +24332,12 @@ Lccb_2E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2352
-L2353:
+    b.hs L2354
+L2355:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2354
-L2355:
+    cbz x10, L2356
+L2357:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     and w3, w11, #0x80
@@ -24270,28 +24351,28 @@ L2355:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2356
-L2357:
+    b.hs L2358
+L2359:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2358
+    cbz x10, L2360
     strb w11, [x10, w9, uxtw]
-L2359:
+L2361:
     b Lnext
-L2352:
-    bl Ltick_slow4
-    b L2353
 L2354:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2355
 L2356:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2357
 L2358:
+    bl Ltick_slow4
+    b L2359
+L2360:
     mov w0, w11
     bl Lwr_slow
-    b L2359
+    b L2361
     .p2align 4
 Lccb_2F:
     and w1, w26, #1
@@ -24388,12 +24469,12 @@ Lccb_36:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2360
-L2361:
+    b.hs L2362
+L2363:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2362
-L2363:
+    cbz x10, L2364
+L2365:
     ldrb w11, [x10, w9, uxtw]
     mov w1, #0
     lsl w2, w11, #4
@@ -24407,28 +24488,28 @@ L2363:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2364
-L2365:
+    b.hs L2366
+L2367:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2366
+    cbz x10, L2368
     strb w11, [x10, w9, uxtw]
-L2367:
+L2369:
     b Lnext
-L2360:
-    bl Ltick_slow4
-    b L2361
 L2362:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2363
 L2364:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2365
 L2366:
+    bl Ltick_slow4
+    b L2367
+L2368:
     mov w0, w11
     bl Lwr_slow
-    b L2367
+    b L2369
     .p2align 4
 Lccb_37:
     mov w1, #0
@@ -24513,12 +24594,12 @@ Lccb_3E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2368
-L2369:
+    b.hs L2370
+L2371:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2370
-L2371:
+    cbz x10, L2372
+L2373:
     ldrb w11, [x10, w9, uxtw]
     and w1, w11, #1
     lsr w2, w11, #1
@@ -24530,28 +24611,28 @@ L2371:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2372
-L2373:
+    b.hs L2374
+L2375:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2374
+    cbz x10, L2376
     strb w11, [x10, w9, uxtw]
-L2375:
+L2377:
     b Lnext
-L2368:
-    bl Ltick_slow4
-    b L2369
 L2370:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2371
 L2372:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2373
 L2374:
+    bl Ltick_slow4
+    b L2375
+L2376:
     mov w0, w11
     bl Lwr_slow
-    b L2375
+    b L2377
     .p2align 4
 Lccb_3F:
     and w1, w26, #1
@@ -24622,12 +24703,12 @@ Lccb_46:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2376
-L2377:
+    b.hs L2378
+L2379:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2378
-L2379:
+    cbz x10, L2380
+L2381:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #1
     cset w1, eq
@@ -24635,12 +24716,12 @@ L2379:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2376:
-    bl Ltick_slow4
-    b L2377
 L2378:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2379
+L2380:
+    bl Lrd_slow
+    b L2381
     .p2align 4
 Lccb_47:
     tst w26, #1
@@ -24709,12 +24790,12 @@ Lccb_4E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2380
-L2381:
+    b.hs L2382
+L2383:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2382
-L2383:
+    cbz x10, L2384
+L2385:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #2
     cset w1, eq
@@ -24722,12 +24803,12 @@ L2383:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2380:
-    bl Ltick_slow4
-    b L2381
 L2382:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2383
+L2384:
+    bl Lrd_slow
+    b L2385
     .p2align 4
 Lccb_4F:
     tst w26, #2
@@ -24796,12 +24877,12 @@ Lccb_56:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2384
-L2385:
+    b.hs L2386
+L2387:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2386
-L2387:
+    cbz x10, L2388
+L2389:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #4
     cset w1, eq
@@ -24809,12 +24890,12 @@ L2387:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2384:
-    bl Ltick_slow4
-    b L2385
 L2386:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2387
+L2388:
+    bl Lrd_slow
+    b L2389
     .p2align 4
 Lccb_57:
     tst w26, #4
@@ -24883,12 +24964,12 @@ Lccb_5E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2388
-L2389:
+    b.hs L2390
+L2391:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2390
-L2391:
+    cbz x10, L2392
+L2393:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #8
     cset w1, eq
@@ -24896,12 +24977,12 @@ L2391:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2388:
-    bl Ltick_slow4
-    b L2389
 L2390:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2391
+L2392:
+    bl Lrd_slow
+    b L2393
     .p2align 4
 Lccb_5F:
     tst w26, #8
@@ -24970,12 +25051,12 @@ Lccb_66:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2392
-L2393:
+    b.hs L2394
+L2395:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2394
-L2395:
+    cbz x10, L2396
+L2397:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #16
     cset w1, eq
@@ -24983,12 +25064,12 @@ L2395:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2392:
-    bl Ltick_slow4
-    b L2393
 L2394:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2395
+L2396:
+    bl Lrd_slow
+    b L2397
     .p2align 4
 Lccb_67:
     tst w26, #16
@@ -25057,12 +25138,12 @@ Lccb_6E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2396
-L2397:
+    b.hs L2398
+L2399:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2398
-L2399:
+    cbz x10, L2400
+L2401:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #32
     cset w1, eq
@@ -25070,12 +25151,12 @@ L2399:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2396:
-    bl Ltick_slow4
-    b L2397
 L2398:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2399
+L2400:
+    bl Lrd_slow
+    b L2401
     .p2align 4
 Lccb_6F:
     tst w26, #32
@@ -25144,12 +25225,12 @@ Lccb_76:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2400
-L2401:
+    b.hs L2402
+L2403:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2402
-L2403:
+    cbz x10, L2404
+L2405:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #64
     cset w1, eq
@@ -25157,12 +25238,12 @@ L2403:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2400:
-    bl Ltick_slow4
-    b L2401
 L2402:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2403
+L2404:
+    bl Lrd_slow
+    b L2405
     .p2align 4
 Lccb_77:
     tst w26, #64
@@ -25231,12 +25312,12 @@ Lccb_7E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2404
-L2405:
+    b.hs L2406
+L2407:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2406
-L2407:
+    cbz x10, L2408
+L2409:
     ldrb w11, [x10, w9, uxtw]
     tst w11, #128
     cset w1, eq
@@ -25244,12 +25325,12 @@ L2407:
     orr w27, w27, #0x20
     orr w27, w27, w1, lsl #7
     b Lnext
-L2404:
-    bl Ltick_slow4
-    b L2405
 L2406:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2407
+L2408:
+    bl Lrd_slow
+    b L2409
     .p2align 4
 Lccb_7F:
     tst w26, #128
@@ -25300,40 +25381,40 @@ Lccb_86:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2408
-L2409:
+    b.hs L2410
+L2411:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2410
-L2411:
+    cbz x10, L2412
+L2413:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFE
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2412
-L2413:
+    b.hs L2414
+L2415:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2414
+    cbz x10, L2416
     strb w11, [x10, w9, uxtw]
-L2415:
+L2417:
     b Lnext
-L2408:
-    bl Ltick_slow4
-    b L2409
 L2410:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2411
 L2412:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2413
 L2414:
+    bl Ltick_slow4
+    b L2415
+L2416:
     mov w0, w11
     bl Lwr_slow
-    b L2415
+    b L2417
     .p2align 4
 Lccb_87:
     and w2, w26, #0xFFFFFFFE
@@ -25381,40 +25462,40 @@ Lccb_8E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2416
-L2417:
+    b.hs L2418
+L2419:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2418
-L2419:
+    cbz x10, L2420
+L2421:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFD
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2420
-L2421:
+    b.hs L2422
+L2423:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2422
+    cbz x10, L2424
     strb w11, [x10, w9, uxtw]
-L2423:
+L2425:
     b Lnext
-L2416:
-    bl Ltick_slow4
-    b L2417
 L2418:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2419
 L2420:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2421
 L2422:
+    bl Ltick_slow4
+    b L2423
+L2424:
     mov w0, w11
     bl Lwr_slow
-    b L2423
+    b L2425
     .p2align 4
 Lccb_8F:
     and w2, w26, #0xFFFFFFFD
@@ -25462,40 +25543,40 @@ Lccb_96:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2424
-L2425:
+    b.hs L2426
+L2427:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2426
-L2427:
+    cbz x10, L2428
+L2429:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFFB
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2428
-L2429:
+    b.hs L2430
+L2431:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2430
+    cbz x10, L2432
     strb w11, [x10, w9, uxtw]
-L2431:
+L2433:
     b Lnext
-L2424:
-    bl Ltick_slow4
-    b L2425
 L2426:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2427
 L2428:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2429
 L2430:
+    bl Ltick_slow4
+    b L2431
+L2432:
     mov w0, w11
     bl Lwr_slow
-    b L2431
+    b L2433
     .p2align 4
 Lccb_97:
     and w2, w26, #0xFFFFFFFB
@@ -25543,40 +25624,40 @@ Lccb_9E:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2432
-L2433:
+    b.hs L2434
+L2435:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2434
-L2435:
+    cbz x10, L2436
+L2437:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFF7
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2436
-L2437:
+    b.hs L2438
+L2439:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2438
+    cbz x10, L2440
     strb w11, [x10, w9, uxtw]
-L2439:
+L2441:
     b Lnext
-L2432:
-    bl Ltick_slow4
-    b L2433
 L2434:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2435
 L2436:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2437
 L2438:
+    bl Ltick_slow4
+    b L2439
+L2440:
     mov w0, w11
     bl Lwr_slow
-    b L2439
+    b L2441
     .p2align 4
 Lccb_9F:
     and w2, w26, #0xFFFFFFF7
@@ -25624,40 +25705,40 @@ Lccb_A6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2440
-L2441:
+    b.hs L2442
+L2443:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2442
-L2443:
+    cbz x10, L2444
+L2445:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFEF
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2444
-L2445:
+    b.hs L2446
+L2447:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2446
+    cbz x10, L2448
     strb w11, [x10, w9, uxtw]
-L2447:
+L2449:
     b Lnext
-L2440:
-    bl Ltick_slow4
-    b L2441
 L2442:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2443
 L2444:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2445
 L2446:
+    bl Ltick_slow4
+    b L2447
+L2448:
     mov w0, w11
     bl Lwr_slow
-    b L2447
+    b L2449
     .p2align 4
 Lccb_A7:
     and w2, w26, #0xFFFFFFEF
@@ -25705,40 +25786,40 @@ Lccb_AE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2448
-L2449:
+    b.hs L2450
+L2451:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2450
-L2451:
+    cbz x10, L2452
+L2453:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFDF
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2452
-L2453:
+    b.hs L2454
+L2455:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2454
+    cbz x10, L2456
     strb w11, [x10, w9, uxtw]
-L2455:
+L2457:
     b Lnext
-L2448:
-    bl Ltick_slow4
-    b L2449
 L2450:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2451
 L2452:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2453
 L2454:
+    bl Ltick_slow4
+    b L2455
+L2456:
     mov w0, w11
     bl Lwr_slow
-    b L2455
+    b L2457
     .p2align 4
 Lccb_AF:
     and w2, w26, #0xFFFFFFDF
@@ -25786,40 +25867,40 @@ Lccb_B6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2456
-L2457:
+    b.hs L2458
+L2459:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2458
-L2459:
+    cbz x10, L2460
+L2461:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFFBF
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2460
-L2461:
+    b.hs L2462
+L2463:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2462
+    cbz x10, L2464
     strb w11, [x10, w9, uxtw]
-L2463:
+L2465:
     b Lnext
-L2456:
-    bl Ltick_slow4
-    b L2457
 L2458:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2459
 L2460:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2461
 L2462:
+    bl Ltick_slow4
+    b L2463
+L2464:
     mov w0, w11
     bl Lwr_slow
-    b L2463
+    b L2465
     .p2align 4
 Lccb_B7:
     and w2, w26, #0xFFFFFFBF
@@ -25867,40 +25948,40 @@ Lccb_BE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2464
-L2465:
+    b.hs L2466
+L2467:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2466
-L2467:
+    cbz x10, L2468
+L2469:
     ldrb w11, [x10, w9, uxtw]
     and w2, w11, #0xFFFFFF7F
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2468
-L2469:
+    b.hs L2470
+L2471:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2470
+    cbz x10, L2472
     strb w11, [x10, w9, uxtw]
-L2471:
+L2473:
     b Lnext
-L2464:
-    bl Ltick_slow4
-    b L2465
 L2466:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2467
 L2468:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2469
 L2470:
+    bl Ltick_slow4
+    b L2471
+L2472:
     mov w0, w11
     bl Lwr_slow
-    b L2471
+    b L2473
     .p2align 4
 Lccb_BF:
     and w2, w26, #0xFFFFFF7F
@@ -25948,40 +26029,40 @@ Lccb_C6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2472
-L2473:
+    b.hs L2474
+L2475:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2474
-L2475:
+    cbz x10, L2476
+L2477:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #1
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2476
-L2477:
+    b.hs L2478
+L2479:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2478
+    cbz x10, L2480
     strb w11, [x10, w9, uxtw]
-L2479:
+L2481:
     b Lnext
-L2472:
-    bl Ltick_slow4
-    b L2473
 L2474:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2475
 L2476:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2477
 L2478:
+    bl Ltick_slow4
+    b L2479
+L2480:
     mov w0, w11
     bl Lwr_slow
-    b L2479
+    b L2481
     .p2align 4
 Lccb_C7:
     orr w2, w26, #1
@@ -26029,40 +26110,40 @@ Lccb_CE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2480
-L2481:
+    b.hs L2482
+L2483:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2482
-L2483:
+    cbz x10, L2484
+L2485:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #2
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2484
-L2485:
+    b.hs L2486
+L2487:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2486
+    cbz x10, L2488
     strb w11, [x10, w9, uxtw]
-L2487:
+L2489:
     b Lnext
-L2480:
-    bl Ltick_slow4
-    b L2481
 L2482:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2483
 L2484:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2485
 L2486:
+    bl Ltick_slow4
+    b L2487
+L2488:
     mov w0, w11
     bl Lwr_slow
-    b L2487
+    b L2489
     .p2align 4
 Lccb_CF:
     orr w2, w26, #2
@@ -26110,40 +26191,40 @@ Lccb_D6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2488
-L2489:
+    b.hs L2490
+L2491:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2490
-L2491:
+    cbz x10, L2492
+L2493:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #4
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2492
-L2493:
+    b.hs L2494
+L2495:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2494
+    cbz x10, L2496
     strb w11, [x10, w9, uxtw]
-L2495:
+L2497:
     b Lnext
-L2488:
-    bl Ltick_slow4
-    b L2489
 L2490:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2491
 L2492:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2493
 L2494:
+    bl Ltick_slow4
+    b L2495
+L2496:
     mov w0, w11
     bl Lwr_slow
-    b L2495
+    b L2497
     .p2align 4
 Lccb_D7:
     orr w2, w26, #4
@@ -26191,40 +26272,40 @@ Lccb_DE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2496
-L2497:
+    b.hs L2498
+L2499:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2498
-L2499:
+    cbz x10, L2500
+L2501:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #8
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2500
-L2501:
+    b.hs L2502
+L2503:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2502
+    cbz x10, L2504
     strb w11, [x10, w9, uxtw]
-L2503:
+L2505:
     b Lnext
-L2496:
-    bl Ltick_slow4
-    b L2497
 L2498:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2499
 L2500:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2501
 L2502:
+    bl Ltick_slow4
+    b L2503
+L2504:
     mov w0, w11
     bl Lwr_slow
-    b L2503
+    b L2505
     .p2align 4
 Lccb_DF:
     orr w2, w26, #8
@@ -26272,40 +26353,40 @@ Lccb_E6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2504
-L2505:
+    b.hs L2506
+L2507:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2506
-L2507:
+    cbz x10, L2508
+L2509:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #16
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2508
-L2509:
+    b.hs L2510
+L2511:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2510
+    cbz x10, L2512
     strb w11, [x10, w9, uxtw]
-L2511:
+L2513:
     b Lnext
-L2504:
-    bl Ltick_slow4
-    b L2505
 L2506:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2507
 L2508:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2509
 L2510:
+    bl Ltick_slow4
+    b L2511
+L2512:
     mov w0, w11
     bl Lwr_slow
-    b L2511
+    b L2513
     .p2align 4
 Lccb_E7:
     orr w2, w26, #16
@@ -26353,40 +26434,40 @@ Lccb_EE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2512
-L2513:
+    b.hs L2514
+L2515:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2514
-L2515:
+    cbz x10, L2516
+L2517:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #32
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2516
-L2517:
+    b.hs L2518
+L2519:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2518
+    cbz x10, L2520
     strb w11, [x10, w9, uxtw]
-L2519:
+L2521:
     b Lnext
-L2512:
-    bl Ltick_slow4
-    b L2513
 L2514:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2515
 L2516:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2517
 L2518:
+    bl Ltick_slow4
+    b L2519
+L2520:
     mov w0, w11
     bl Lwr_slow
-    b L2519
+    b L2521
     .p2align 4
 Lccb_EF:
     orr w2, w26, #32
@@ -26434,40 +26515,40 @@ Lccb_F6:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2520
-L2521:
+    b.hs L2522
+L2523:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2522
-L2523:
+    cbz x10, L2524
+L2525:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #64
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2524
-L2525:
+    b.hs L2526
+L2527:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2526
+    cbz x10, L2528
     strb w11, [x10, w9, uxtw]
-L2527:
+L2529:
     b Lnext
-L2520:
-    bl Ltick_slow4
-    b L2521
 L2522:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2523
 L2524:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2525
 L2526:
+    bl Ltick_slow4
+    b L2527
+L2528:
     mov w0, w11
     bl Lwr_slow
-    b L2527
+    b L2529
     .p2align 4
 Lccb_F7:
     orr w2, w26, #64
@@ -26515,40 +26596,40 @@ Lccb_FE:
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2528
-L2529:
+    b.hs L2530
+L2531:
     lsr w10, w9, #12
     ldr x10, [x20, x10, lsl #3]
-    cbz x10, L2530
-L2531:
+    cbz x10, L2532
+L2533:
     ldrb w11, [x10, w9, uxtw]
     orr w2, w11, #128
     and w11, w2, #0xFF
     add x21, x21, #4
     ldr x17, [x20, #296]
     cmp x21, x17
-    b.hs L2532
-L2533:
+    b.hs L2534
+L2535:
     lsr w10, w9, #8
     add x10, x20, x10, lsl #3
     ldr x10, [x10, #1944]
-    cbz x10, L2534
+    cbz x10, L2536
     strb w11, [x10, w9, uxtw]
-L2535:
+L2537:
     b Lnext
-L2528:
-    bl Ltick_slow4
-    b L2529
 L2530:
-    bl Lrd_slow
+    bl Ltick_slow4
     b L2531
 L2532:
-    bl Ltick_slow4
+    bl Lrd_slow
     b L2533
 L2534:
+    bl Ltick_slow4
+    b L2535
+L2536:
     mov w0, w11
     bl Lwr_slow
-    b L2535
+    b L2537
     .p2align 4
 Lccb_FF:
     orr w2, w26, #128
@@ -27587,4 +27668,6 @@ Ljt_ccb:
     .word Lccb_FE - Ljt_ccb
     .word Lccb_FF - Ljt_ccb
 
+#ifndef __APPLE__
     .section .note.GNU-stack,"",%progbits
+#endif

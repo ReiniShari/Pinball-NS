@@ -4,7 +4,8 @@ rem for Windows machines without mingw-w64 / make.
 rem
 rem   tools\build_msvc.bat            the tools and PinballNS.exe  (into build\)
 rem   tools\build_msvc.bat pbrun      only one target (pbrun, pbdebug, uisim, audiotest, testrom, cpucheck,
-rem                                   pacetest, motiontest, refreshtest, ndicon, exe; pbprof, gencpu: not in "all")
+rem                                   pacetest, motiontest, refreshtest, ndicon, desktest, exe; pbprof, gencpu, mkzip,
+rem                                   iosmock: not in "all")
 setlocal
 cd /d "%~dp0\.."
 
@@ -13,7 +14,7 @@ where cl >nul 2>nul
 if not errorlevel 1 goto have_cl
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSDIR=%%i"
-if not defined VSDIR echo Visual Studio C++ introuvable & exit /b 1
+if not defined VSDIR echo Visual Studio C++ not found & exit /b 1
 call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul 2>nul || exit /b 1
 :have_cl
 
@@ -56,14 +57,14 @@ rem the mobile code (app.c, ui.c) with the touch interface simulator; POSIX bits
 rem APP_PROF: the time of the parts of a frame (perf:N:SEED)
 if not exist build\obj\uisim mkdir build\obj\uisim
 cl %CFLAGS% /DAPP_PROF /experimental:c11atomics /Itools\msvc /FIunistd.h /wd4996 /Fobuild\obj\uisim\ /Fe:build\uisim.exe ^
-   tools\uisim.c platform\mobile\app.c platform\mobile\ui.c platform\mobile\design.c %GAME% %CORE% || exit /b 1
+   tools\uisim.c platform\mobile\app.c platform\mobile\ui.c platform\mobile\design.c platform\mobile\screen.c %GAME% %CORE% || exit /b 1
 if not "%T%"=="all" goto end
 
 :audiotest
 if not exist build\obj\audiotest mkdir build\obj\audiotest
 if not exist build\audiotest_data mkdir build\audiotest_data
 cl %CFLAGS% /experimental:c11atomics /Itools\msvc /FIunistd.h /wd4996 /Fobuild\obj\audiotest\ /Fe:build\audiotest.exe ^
-   tools\audiotest.c platform\mobile\app.c platform\mobile\ui.c platform\mobile\design.c %GAME% %CORE% || exit /b 1
+   tools\audiotest.c platform\mobile\app.c platform\mobile\ui.c platform\mobile\design.c platform\mobile\screen.c %GAME% %CORE% || exit /b 1
 if not "%T%"=="all" goto end
 
 :testrom
@@ -100,6 +101,14 @@ rem the icon of Pinball NS, drawn by the screen of the Android version (platform
 if not exist build\obj\ndicon mkdir build\obj\ndicon
 cl %CFLAGS% /Fobuild\obj\ndicon\ /Fe:build\ndicon.exe tools\ndicon.c platform\mobile\design.c %GAME% %CORE% || exit /b 1
 if not "%T%"=="all" goto end
+goto desktest
+
+:desktest
+rem the core of the desktop versions without a window (platform\desktop\desk.c): pictures, keys, clicks
+if not exist build\obj\desktest mkdir build\obj\desktest
+cl %CFLAGS% /Fobuild\obj\desktest\ /Fe:build\desktest.exe tools\desktest.c platform\desktop\desk.c platform\mobile\ui.c ^
+   platform\mobile\design.c platform\mobile\screen.c %GAME% %CORE% || exit /b 1
+if not "%T%"=="all" goto end
 goto exe
 
 :gencpu
@@ -109,12 +118,28 @@ cl /nologo /O2 /std:c11 /W3 /D_CRT_SECURE_NO_WARNINGS /Fobuild\obj\gencpu\ /Fe:b
 build\gencpu.exe src\core || exit /b 1
 goto end
 
+:iosmock
+rem the iPhone version (platform\ios) on a simulated iOS: build\iosmock HOME ROM SCENARIO OUTDIR; not part of "all"
+if not exist build\obj\iosmock mkdir build\obj\iosmock
+ml64 /nologo /c /Fobuild\obj\iosmock\msgsend_x64.obj tools\iosmock\msgsend_x64.asm || exit /b 1
+cl %CFLAGS% /Zc:preprocessor /experimental:c11atomics /DPNS_MOCK /Iplatform\apple\sdk\include /Itools\iosmock\include ^
+   /Itools\msvc /FIunistd.h /wd4996 /Fobuild\obj\iosmock\ /Fe:build\iosmock.exe tools\iosmock\iosmock.c ^
+   platform\ios\main_ios.c platform\ios\metal_render.c platform\mobile\app.c platform\mobile\ui.c platform\mobile\design.c ^
+   platform\mobile\screen.c %GAME% %CORE% build\obj\iosmock\msgsend_x64.obj || exit /b 1
+goto end
+
+:mkzip
+rem the zip of the macOS app, keeping the executable's mode (platform\macos\build_mac.sh)
+if not exist build\obj\mkzip mkdir build\obj\mkzip
+cl %CFLAGS% /Fobuild\obj\mkzip\ /Fe:build\mkzip.exe tools\mkzip.c || exit /b 1
+goto end
+
 :exe
 if not exist build\ndicon.exe call "%~f0" ndicon || exit /b 1
 build\ndicon.exe -ico build\pinball.ico || exit /b 1
 if not exist build\obj\exe mkdir build\obj\exe
 rc /nologo /i build /fo build\obj\exe\pinball.res platform\windows\pinball.rc || exit /b 1
-cl %CFLAGS% /DUNICODE /D_UNICODE /Fobuild\obj\exe\ /Fe:build\PinballNS.exe platform\windows\main_win32.c %GAME% %CORE% ^
+cl %CFLAGS% /DUNICODE /D_UNICODE /Fobuild\obj\exe\ /Fe:build\PinballNS.exe platform\windows\main_win32.c platform\desktop\desk.c platform\mobile\ui.c platform\mobile\design.c platform\mobile\screen.c %GAME% %CORE% ^
    build\obj\exe\pinball.res /link /SUBSYSTEM:WINDOWS gdi32.lib winmm.lib comdlg32.lib shell32.lib user32.lib || exit /b 1
 
 :end

@@ -1,11 +1,14 @@
 /*
  * main_win32.c - Windows front-end of Pinball NS (Pokemon Pinball, the whole table on one screen).
  *
- * Pure Win32 (GDI, waveOut, XInput loaded at run time): a single .exe, nothing to
- * install. The ROM is never included: the player gives the program the ROM dumped
- * from their own cartridge (command line, drag and drop, or a file dialog).
+ * Pure Win32 (GDI, waveOut, XInput and hid.dll loaded at run time): a single .exe, nothing to
+ * install. The ROM is never included: the player gives the program the ROM dumped from their
+ * own cartridge (command line, drag and drop, or a file dialog). What the desktop versions share
+ * (the game, its saves, the settings and controls, the pictures, the function keys) is in
+ * platform/desktop/desk.c; this file is the window, the sound, the keys, the mouse and touches,
+ * the gamepads, and the windows of the controls and of "about".
  *
- * Default controls (keyboard)               (Xbox-compatible gamepad)
+ * Default controls (keyboard)               (gamepad: Xbox, PlayStation, Switch Pro, others)
  *   left flipper   Left Shift, Z, W, Left     LB, LT, D-pad left
  *   right flipper  Right Shift, X, Space      RB, RT, A
  *   tilt           Down (left), C (right),    D-pad down, B / X, Y / Back
@@ -13,9 +16,12 @@
  *   menus          arrows, X / Enter / C      D-pad, A, B
  *   pause menu     Enter (Start)              Start
  * F2 (or the window menu) changes them: the input mapping tool.
- *   F11 or Alt+Enter: full screen   F10: sharp/smooth scaling   P: pause   F1: about
- *   F8: the table at its original width (the launch lane scrolls in) or whole
- *   F5: save state  F9: load state  Esc: leave full screen
+ *   F3: handheld mode (the screen of the Android version: its touch keys with the mouse or the
+ *   fingers, a touch screen)   F4: its keys hidden in a game   F11 or Alt+Enter: full screen
+ *   F10: sharp/smooth scaling   P: pause   F1: about   F8: the table at its original width or whole
+ *   F6: screen filter (none, dots, LCD)   F7: colours (original, black and white, Game Boy green)
+ *   F5: save state  F9: load state  Esc: leave full screen (handheld: the menu)
+ * The ROM: Pokemon Pinball (US), or Pokemon Pinball Generations 1.6 (its four tables, unified too).
  *
  * Test: PinballNS.exe -selftest SECONDS ROM REPORT.txt plays SECONDS seconds with the window hidden
  * and the sound at volume 0 (A pressed now and then), then writes the pace it kept in REPORT.txt.
@@ -35,35 +41,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include "../../src/game/pinball.h"
+#include "../desktop/desk.h"
 #include "../../src/front/pacing.h"
-#include "../../src/front/deflicker.h"
 #include "refresh_win.h"
 
 #define APP_TITLE   L"Pinball NS"
-#define APP_VERSION L"2.7"
-#define AUDIO_RATE  48000
+#define APP_VERSION L"2.9"
+#define AUDIO_RATE  DESK_RATE
 #define NBUF        12
 #define BUF_FRAMES  512
 #define AUDIO_TARGET 2048             /* frames kept ahead of the sound card (~43 ms) */
 
 /* ------------------------------------------------------------------ state */
 
-static Pinball *pb;
-static uint8_t *rom_data;
-static size_t rom_size;
-static wchar_t rom_path[MAX_PATH], sav_path[MAX_PATH], state_path[MAX_PATH], ini_path[MAX_PATH], cfg_path[MAX_PATH];
-static uint8_t sav_last[0x8000];
-static size_t sav_last_size;
-static DWORD sav_check_tick;
+static Desk D;                        /* the game, its settings and controls, the pictures (desk.h) */
+static wchar_t exe_dir[MAX_PATH], ini_path[MAX_PATH], old_ini_path[MAX_PATH];
 
 static HWND hwnd;
-static bool running = true, paused, fullscreen, smooth, narrow;
+static bool running = true, fullscreen;
 static WINDOWPLACEMENT prev_place;
-static wchar_t osd[128];
-static DWORD osd_until;
-
-static uint8_t kb_buttons, pad_buttons;
 static HWND ctl_wnd;                  /* the input mapping tool, when open */
 
 /* audio */
@@ -81,322 +77,42 @@ static SoundPacer snd;                /* the sound follows the frames (pacing.h)
 
 /* pace: the refreshes of the display set it (wait_refresh, pacing.h) */
 static Pacer pacer;
-
-/* the picture shown: the game's 30 Hz flicker mixed (deflicker.h), made again for each new frame */
-static Deflicker defl;
-static uint32_t frame_seq, shown_seq;
-static const uint32_t *shown_px;
+static uint32_t frame_seq;
 
 /* -selftest: the pace kept, written at the end */
 static struct {
     double secs, start, last, work_max, work_sum, dt_max, flush_max, level_min, level_max;
-    long refreshes, frames, odd, starving, pads, flushes, sram_writes;
+    long refreshes, frames, odd, starving, pads, flushes;
     wchar_t report[MAX_PATH];
 } st;
 static bool selftest;
 
-/* the cartridge save, written by a thread of its own (the disk can take tens of milliseconds) */
-static HANDLE io_event;
-static volatile LONG io_state;        /* 0: free, 1: waiting for the writer, 2: being written */
-static volatile LONG io_failed;
-static uint8_t io_data[0x8000];
-static size_t io_size;
-
 /* ------------------------------------------------------------------ helpers */
 
-static void show_osd(const wchar_t *msg)
+static void to_utf8(const wchar_t *w, char *out, int n) { WideCharToMultiByte(CP_UTF8, 0, w, -1, out, n, NULL, NULL); }
+static void to_wide(const char *s, wchar_t *out, int n) { MultiByteToWideChar(CP_UTF8, 0, s, -1, out, n); }
+
+static void set_title(void)
 {
-    wcsncpy(osd, msg, 127);
-    osd[127] = 0;
-    osd_until = GetTickCount() + 2000;
-}
-
-static bool read_file(const wchar_t *path, uint8_t **data, size_t *size, size_t max)
-{
-    FILE *f = _wfopen(path, L"rb");
-    if (!f) return false;
-    fseek(f, 0, SEEK_END);
-    long n = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (n <= 0 || (size_t)n > max) { fclose(f); return false; }
-    uint8_t *buf = (uint8_t *)malloc((size_t)n);
-    if (!buf) { fclose(f); return false; }
-    size_t r = fread(buf, 1, (size_t)n, f);
-    fclose(f);
-    if (r != (size_t)n) { free(buf); return false; }
-    *data = buf;
-    *size = (size_t)n;
-    return true;
-}
-
-/* write through a temporary file, so that a crash never leaves half a save */
-static bool write_file(const wchar_t *path, const void *data, size_t size)
-{
-    wchar_t tmp[MAX_PATH + 8];
-    swprintf(tmp, MAX_PATH + 8, L"%ls.tmp", path);
-    FILE *f = _wfopen(tmp, L"wb");
-    if (!f) return false;
-    bool ok = fwrite(data, 1, size, f) == size;
-    ok = (fclose(f) == 0) && ok;
-    if (!ok) { DeleteFileW(tmp); return false; }
-    return MoveFileExW(tmp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
-}
-
-static void replace_ext(wchar_t *dst, const wchar_t *src, const wchar_t *ext)
-{
-    wcsncpy(dst, src, MAX_PATH - 1);
-    dst[MAX_PATH - 1] = 0;
-    wchar_t *dot = wcsrchr(dst, L'.'), *sl = wcsrchr(dst, L'\\');
-    if (dot && (!sl || dot > sl)) *dot = 0;
-    if (wcslen(dst) + wcslen(ext) < MAX_PATH) wcscat(dst, ext);
-}
-
-/* ------------------------------------------------------------------ save data */
-
-static void sram_load(void)
-{
-    uint8_t *d; size_t n;
-    if (read_file(sav_path, &d, &n, 0x8000)) {
-        pb_load_sram(pb, d, n);
-        free(d);
-    }
-    const uint8_t *s = pb_sram(pb, &sav_last_size);
-    memcpy(sav_last, s, sav_last_size);
-}
-
-static DWORD WINAPI io_main(LPVOID arg)
-{
-    (void)arg;
-    for (;;) {
-        WaitForSingleObject(io_event, INFINITE);
-        if (InterlockedCompareExchange(&io_state, 2, 1) == 1) {
-            bool ok = write_file(sav_path, io_data, io_size);
-            InterlockedExchange(&io_failed, ok ? 0 : 1);
-            InterlockedExchange(&io_state, 0);
-        }
-    }
-}
-
-static void io_start(void)
-{
-    io_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    HANDLE t = io_event ? CreateThread(NULL, 0, io_main, NULL, 0, NULL) : NULL;
-    if (t) CloseHandle(t);
-    else if (io_event) { CloseHandle(io_event); io_event = NULL; }
-}
-
-/* until the writer has nothing left (before another ROM, the end, a forced write) */
-static void io_wait(void)
-{
-    for (int i = 0; i < 3000 && io_state; i++) Sleep(1);
-}
-
-/* the cartridge save if it changed (force: in any case); `later`: by the writer thread */
-static void sram_flush_mode(bool force, bool later)
-{
-    size_t n;
-    const uint8_t *s = pb_sram(pb, &n);
-    if (n == 0 || n > sizeof sav_last) return;
-    if (InterlockedExchange(&io_failed, 0)) sav_last_size = 0;        /* it failed: again */
-    if (!force && n == sav_last_size && memcmp(s, sav_last, n) == 0) return;
-    if (later && io_event) {
-        if (io_state) return;                                       /* the previous one first */
-        memcpy(io_data, s, n);
-        io_size = n;
-        InterlockedExchange(&io_state, 1);
-        SetEvent(io_event);
-    } else {
-        io_wait();
-        if (!write_file(sav_path, s, n)) return;
-    }
-    memcpy(sav_last, s, n);
-    sav_last_size = n;
-}
-
-static void sram_flush(bool force) { sram_flush_mode(force, false); }
-
-static void state_save(void)
-{
-    size_t n = pb_snapshot_size();
-    void *buf = malloc(n);
-    if (!buf) return;
-    pb_snapshot_save(pb, buf);
-    show_osd(write_file(state_path, buf, n) ? L"State saved (F9 to load it)"
-                                           : L"The state could not be saved");
-    free(buf);
-}
-
-static void state_load(void)
-{
-    uint8_t *d; size_t n;
-    if (!read_file(state_path, &d, &n, 64u << 20)) { show_osd(L"No saved state (F5 to save one)"); return; }
-    show_osd(pb_snapshot_load(pb, d, n) == 0 ? L"State loaded" : L"This saved state cannot be loaded");
-    free(d);
-}
-
-/* ------------------------------------------------------------------ ROM */
-
-static void ini_save_rom(void)
-{
-    write_file(ini_path, rom_path, (wcslen(rom_path) + 1) * sizeof(wchar_t));   /* UTF-16 path */
-}
-
-static wchar_t old_ini_path[MAX_PATH], old_cfg_path[MAX_PATH];   /* Pinball TC's, read once */
-
-static bool ini_load_rom(wchar_t *out)
-{
-    uint8_t *d; size_t n;
-    if (!read_file(ini_path, &d, &n, MAX_PATH * sizeof(wchar_t)) &&
-        !read_file(old_ini_path, &d, &n, MAX_PATH * sizeof(wchar_t))) return false;
-    memcpy(out, d, n);
-    out[n / sizeof(wchar_t) < MAX_PATH ? n / sizeof(wchar_t) : MAX_PATH - 1] = 0;
-    free(d);
-    return out[0] != 0;
-}
-
-/* ------------------------------------------------------------------ input mapping */
-
-/*
- * The Game Boy buttons, named by what they do in the game (its default key configuration, which
- * the program keeps: pb_fix_key_config), each with up to MAXB keys and MAXB gamepad inputs.
- * The mapping tool (F2) changes them; they are kept in pinball_ns.cfg.
- */
-enum { ACT_LEFT, ACT_A, ACT_DOWN, ACT_B, ACT_SELECT, ACT_START, ACT_UP, ACT_RIGHT, ACT_N };
-#define MAXB 4
-static const uint8_t act_button[ACT_N] = { GBC_LEFT, GBC_A, GBC_DOWN, GBC_B, GBC_SELECT, GBC_START, GBC_UP, GBC_RIGHT };
-static const char *const act_id[ACT_N] = { "left", "a", "down", "b", "select", "start", "up", "right" };
-static const wchar_t *const act_name[ACT_N] = {
-    L"Left flipper, menus left", L"Right flipper, launch, OK", L"Left tilt, menus down", L"Right tilt, back",
-    L"Upper tilt", L"Pause menu", L"Menus up", L"Menus right" };
-static const wchar_t *const act_gb[ACT_N] = { L"Left", L"A", L"Down", L"B", L"Select", L"Start", L"Up", L"Right" };
-
-/* gamepad inputs: the 16 XInput buttons (bit numbers), the triggers, the left stick */
-enum { PAD_LT = 16, PAD_RT, PAD_LS_LEFT, PAD_LS_RIGHT, PAD_LS_UP, PAD_LS_DOWN, PAD_N };
-static const wchar_t *const pad_name[PAD_N] = {
-    L"D-pad up", L"D-pad down", L"D-pad left", L"D-pad right", L"Start", L"Back", L"Left stick click",
-    L"Right stick click", L"LB", L"RB", L"?", L"?", L"A", L"B", L"X", L"Y",
-    L"LT", L"RT", L"Left stick left", L"Left stick right", L"Left stick up", L"Left stick down" };
-
-static uint16_t keymap[ACT_N][MAXB];  /* virtual keys, 0: none */
-static uint8_t padmap[ACT_N][MAXB];   /* gamepad input + 1, 0: none */
-
-static const uint16_t def_keys[ACT_N][MAXB] = {
-    { VK_LSHIFT, 'Z', 'W', VK_LEFT }, { VK_RSHIFT, 'X', VK_SPACE }, { VK_DOWN }, { 'C', VK_BACK },
-    { 'V', VK_TAB }, { VK_RETURN }, { VK_UP }, { VK_RIGHT } };
-static const uint8_t def_pad[ACT_N][MAXB] = {
-    { 8 + 1, PAD_LT + 1, 2 + 1, PAD_LS_LEFT + 1 }, { 9 + 1, PAD_RT + 1, 12 + 1 }, { 1 + 1, PAD_LS_DOWN + 1 },
-    { 13 + 1, 14 + 1 }, { 15 + 1, 5 + 1 }, { 4 + 1 }, { 0 + 1, PAD_LS_UP + 1 }, { 3 + 1, PAD_LS_RIGHT + 1 } };
-
-/* keys kept by the program (its own functions) */
-static bool key_reserved(unsigned vk)
-{
-    return vk == VK_F1 || vk == VK_F2 || vk == VK_F5 || vk == VK_F8 || vk == VK_F9 || vk == VK_F10 || vk == VK_F11 ||
-           vk == 'P' || vk == VK_PAUSE || vk == VK_ESCAPE;
-}
-
-static void map_defaults(void)
-{
-    memcpy(keymap, def_keys, sizeof keymap);
-    memcpy(padmap, def_pad, sizeof padmap);
-}
-
-/* settings next to the program (pinball_ns.cfg): "narrow=0/1", "smooth=0/1", and for each
- * button "keys.NAME=" virtual keys and "pad.NAME=" gamepad inputs (hexadecimal) */
-static void cfg_load(void)
-{
-    map_defaults();
-    uint8_t *d; size_t n;
-    if (!read_file(cfg_path, &d, &n, 8192) && !read_file(old_cfg_path, &d, &n, 8192)) return;
-    char buf[8193];
-    memcpy(buf, d, n);
-    buf[n] = 0;
-    free(d);
-    narrow = strstr(buf, "narrow=1") != NULL;
-    smooth = strstr(buf, "smooth=1") != NULL;
-    for (int a = 0; a < ACT_N; a++)
-        for (int pad = 0; pad < 2; pad++) {
-            char key[32];
-            snprintf(key, sizeof key, "%s.%s=", pad ? "pad" : "keys", act_id[a]);
-            const char *q = strstr(buf, key);
-            if (!q) continue;                          /* not saved yet: the defaults */
-            q += strlen(key);
-            int k = 0;
-            if (pad) memset(padmap[a], 0, sizeof padmap[a]); else memset(keymap[a], 0, sizeof keymap[a]);
-            while (k < MAXB && *q && *q != '\r' && *q != '\n') {
-                char *e;
-                unsigned long v = strtoul(q, &e, 16);
-                if (e == q) break;
-                if (pad ? v < PAD_N : (v > 0 && v < 256 && !key_reserved((unsigned)v))) {
-                    if (pad) padmap[a][k++] = (uint8_t)(v + 1); else keymap[a][k++] = (uint16_t)v;
-                }
-                q = e;
-                while (*q == ' ' || *q == ',') q++;
-            }
-        }
-}
-
-static void cfg_save(void)
-{
-    char buf[2048];
-    int n = snprintf(buf, sizeof buf, "narrow=%d\r\nsmooth=%d\r\n", narrow ? 1 : 0, smooth ? 1 : 0);
-    for (int a = 0; a < ACT_N; a++)
-        for (int pad = 0; pad < 2; pad++) {
-            n += snprintf(buf + n, sizeof buf - (size_t)n, "%s.%s=", pad ? "pad" : "keys", act_id[a]);
-            for (int k = 0; k < MAXB; k++) {
-                unsigned v = pad ? padmap[a][k] : keymap[a][k];
-                if (!v) continue;
-                n += snprintf(buf + n, sizeof buf - (size_t)n, "%X ", pad ? v - 1 : v);
-            }
-            n += snprintf(buf + n, sizeof buf - (size_t)n, "\r\n");
-        }
-    write_file(cfg_path, buf, (size_t)n);
+    if (hwnd) SetWindowTextW(hwnd, D.pb && D.pb->rom->id == PB_ROM_GENERATIONS ? APP_TITLE L" - Generations" : APP_TITLE);
 }
 
 /* load and check a ROM; on success the game is (re)started with it */
 static bool try_rom(const wchar_t *path, bool report)
 {
-    uint8_t *d; size_t n;
-    if (!read_file(path, &d, &n, 8u << 20)) {
+    char p[DESK_PATH], err[1024];
+    wchar_t full[MAX_PATH];
+    if (!GetFullPathNameW(path, MAX_PATH, full, NULL)) wcsncpy(full, path, MAX_PATH - 1), full[MAX_PATH - 1] = 0;
+    to_utf8(full, p, DESK_PATH);
+    if (!desk_open_rom(&D, p, err, sizeof err)) {
         if (report) {
-            wchar_t msg[MAX_PATH + 128];
-            swprintf(msg, MAX_PATH + 128, L"This file cannot be read:\n%ls", path);
-            MessageBoxW(hwnd, msg, APP_TITLE, MB_ICONERROR);
-        }
-        return false;
-    }
-    Pinball *np = (Pinball *)calloc(1, sizeof(Pinball));
-    if (!np) { free(d); return false; }
-    if (pb_init(np, d, n, AUDIO_RATE) != 0) {
-        if (report) {
-            wchar_t err[300], msg[600];
-            MultiByteToWideChar(CP_UTF8, 0, np->error, -1, err, 300);
-            (void)err;
-            swprintf(msg, 600, L"This is not the expected ROM.\n\n"
-                     L"Pinball NS needs the ROM dumped from your own Pokémon Pinball cartridge "
-                     L"(US version, Pokémon Pinball (USA, Australia) (Rumble Version)).");
+            wchar_t msg[1100];
+            to_wide(err, msg, 1100);
             MessageBoxW(hwnd, msg, APP_TITLE, MB_ICONWARNING);
         }
-        pb_free(np);
-        free(np);
-        free(d);
         return false;
     }
-    if (pb) { sram_flush(false); pb_free(pb); free(pb); free(rom_data); }
-    pb = np;
-    pb_set_narrow(pb, narrow);
-    pb_set_antilag(pb, true);                   /* no frame skipped by the game (see pinball.h) */
-    pb_set_frame_palettes(pb, true);            /* no picture torn by a change of colours */
-    pb_set_hold(pb, true);                      /* the screen off (loadings): the last picture stays */
-    pb_set_audio_highpass(pb, GBC_HIGHPASS_FRONT);      /* the bass of the music (gbc.h) */
-    shown_px = NULL;                          /* the old game's picture: not this one's size */
-    rom_data = d;
-    rom_size = n;
-    wcsncpy(rom_path, path, MAX_PATH - 1);
-    rom_path[MAX_PATH - 1] = 0;
-    replace_ext(sav_path, rom_path, L".sav");
-    replace_ext(state_path, rom_path, L".state");
-    sram_load();
-    ini_save_rom();
+    set_title();
     return true;
 }
 
@@ -410,12 +126,26 @@ static bool ask_rom(void)
     ofn.lpstrFilter = L"Game Boy Color ROM (*.gbc, *.gb)\0*.gbc;*.gb;*.cgb\0All files\0*.*\0";
     ofn.lpstrFile = file;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrTitle = L"Choose the ROM of your Pokémon Pinball cartridge (US)";
+    ofn.lpstrTitle = L"Choose the ROM of your Pokémon Pinball cartridge (US), or of Pokémon Pinball Generations";
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
     for (;;) {
         if (!GetOpenFileNameW(&ofn)) return false;
         if (try_rom(file, true)) return true;
     }
+}
+
+/* the ROM of 2.8 and before: its path in pinball_ns.ini (UTF-16), or in Pinball TC's */
+static bool ini_load_rom(wchar_t *out)
+{
+    for (int k = 0; k < 2; k++) {
+        FILE *f = _wfopen(k ? old_ini_path : ini_path, L"rb");
+        if (!f) continue;
+        size_t n = fread(out, sizeof(wchar_t), MAX_PATH - 1, f);
+        fclose(f);
+        out[n] = 0;
+        if (out[0]) return true;
+    }
+    return false;
 }
 
 /* look next to the program for a ROM that matches */
@@ -482,13 +212,20 @@ static void audio_close(void)
     audio_ok = false;
 }
 
-/* move the emulator's new samples to the sound card */
+static void audio_hold(bool hold)
+{
+    if (!wout) return;
+    if (hold) waveOutPause(wout); else waveOutRestart(wout);
+}
+
+/* move the emulator's new samples to the sound card (SOUND: OFF in the handheld menu: silence) */
 static void audio_pump(void)
 {
     int16_t tmp[4096];
     int n;
-    while ((n = pb_audio(pb, tmp, 2048)) > 0) {
+    while ((n = pb_audio(D.pb, tmp, 2048)) > 0) {
         if (!audio_ok) continue;
+        if (!D.sound) memset(tmp, 0, (size_t)n * 4);
         int cap = (int)(sizeof stage_buf / sizeof stage_buf[0] / 2);
         if (stage_n + n > cap) {                   /* far ahead of the card: drop the oldest */
             int drop = stage_n + n - cap;
@@ -559,12 +296,21 @@ static int audio_pace(double t, int frames_left)
         memmove(stage_buf, stage_buf + drop * 2, (size_t)(stage_n - drop) * 4);
         stage_n -= drop;
     }
-    pb_set_audio_rate(pb, rate);
+    pb_set_audio_rate(D.pb, rate);
     return act;
 }
 
-/* ------------------------------------------------------------------ gamepad (XInput) */
+/* ------------------------------------------------------------------ gamepads */
 
+/*
+ * Every gamepad is read into the layout of an Xbox gamepad (desk.h: PAD_*): XInput (Xbox gamepads and
+ * the many that act as one); the others through raw input and hid.dll (2.9): DualShock 4, DualSense,
+ * Switch Pro, and any HID gamepad (8BitDo in its D-input mode, Logitech, arcade sticks...), their
+ * buttons by number as most of them number them (1 west, 2 south, 3 east, 4 north, 5-8 shoulders and
+ * triggers, 9 back, 10 start, 11-12 sticks, 13 home; the Switch Pro: 1 south, 2 east, 3 west, 4 north),
+ * the hat as the D-pad, X / Y the left stick, the triggers as axes when they have them. The inputs of
+ * all the gamepads count together.
+ */
 typedef struct { WORD wButtons; BYTE bLeftTrigger, bRightTrigger; SHORT sThumbLX, sThumbLY, sThumbRX, sThumbRY; } XPad;
 typedef struct { DWORD dwPacketNumber; XPad Gamepad; } XState;
 typedef struct { WORD wLeftMotorSpeed, wRightMotorSpeed; } XVibration;
@@ -587,39 +333,186 @@ static void xinput_load(void)
     }
 }
 
-/* the gamepad inputs held (bit = PAD_* input), -1 when there is no gamepad */
-static long pad_inputs(void)
+/* the inputs of the XInput gamepad (bit = PAD_*), -1 when there is none */
+static long xinput_inputs(void)
 {
     if (!xget) return -1;
-    XState st;
+    XState s;
     if (pad_index < 0) {
         DWORD now = GetTickCount();
         if (now - pad_scan_tick < 1000) return -1;   /* polling absent pads is slow */
         pad_scan_tick = now;
-        for (int i = 0; i < 4; i++) if (xget((DWORD)i, &st) == ERROR_SUCCESS) { pad_index = i; break; }
+        for (int i = 0; i < 4; i++) if (xget((DWORD)i, &s) == ERROR_SUCCESS) { pad_index = i; break; }
         if (pad_index < 0) return -1;
     }
-    if (xget((DWORD)pad_index, &st) != ERROR_SUCCESS) { pad_index = -1; return -1; }
-    long in = st.Gamepad.wButtons;
-    if (st.Gamepad.bLeftTrigger > 40) in |= 1L << PAD_LT;
-    if (st.Gamepad.bRightTrigger > 40) in |= 1L << PAD_RT;
-    if (st.Gamepad.sThumbLX < -16000) in |= 1L << PAD_LS_LEFT;
-    if (st.Gamepad.sThumbLX > 16000) in |= 1L << PAD_LS_RIGHT;
-    if (st.Gamepad.sThumbLY > 16000) in |= 1L << PAD_LS_UP;
-    if (st.Gamepad.sThumbLY < -16000) in |= 1L << PAD_LS_DOWN;
+    if (xget((DWORD)pad_index, &s) != ERROR_SUCCESS) { pad_index = -1; return -1; }
+    long in = s.Gamepad.wButtons;
+    if (s.Gamepad.bLeftTrigger > 40) in |= 1L << PAD_LT;
+    if (s.Gamepad.bRightTrigger > 40) in |= 1L << PAD_RT;
+    if (s.Gamepad.sThumbLX < -16000) in |= 1L << PAD_LS_LEFT;
+    if (s.Gamepad.sThumbLX > 16000) in |= 1L << PAD_LS_RIGHT;
+    if (s.Gamepad.sThumbLY > 16000) in |= 1L << PAD_LS_UP;
+    if (s.Gamepad.sThumbLY < -16000) in |= 1L << PAD_LS_DOWN;
     return in;
 }
 
-static void pad_poll(void)
+/* hid.dll (HidP_*), its structures as the SDK has them */
+typedef struct { USHORT Usage, UsagePage; USHORT InputReportByteLength, OutputReportByteLength, FeatureReportByteLength;
+                 USHORT Reserved[17]; USHORT NumberLinkCollectionNodes, NumberInputButtonCaps, NumberInputValueCaps,
+                 NumberInputDataIndices, NumberOutputButtonCaps, NumberOutputValueCaps, NumberOutputDataIndices,
+                 NumberFeatureButtonCaps, NumberFeatureValueCaps, NumberFeatureDataIndices; } HidCaps;
+typedef struct { USHORT UsagePage; UCHAR ReportID; BOOLEAN IsAlias; USHORT BitField, LinkCollection, LinkUsage, LinkUsagePage;
+                 BOOLEAN IsRange, IsStringRange, IsDesignatorRange, IsAbsolute; ULONG Reserved[10];
+                 union { struct { USHORT UsageMin, UsageMax, StringMin, StringMax, DesignatorMin, DesignatorMax, DataIndexMin, DataIndexMax; } Range;
+                         struct { USHORT Usage, Reserved1, StringIndex, Reserved2, DesignatorIndex, Reserved3, DataIndex, Reserved4; } NotRange; }; } HidButtonCaps;
+typedef struct { USHORT UsagePage; UCHAR ReportID; BOOLEAN IsAlias; USHORT BitField, LinkCollection, LinkUsage, LinkUsagePage;
+                 BOOLEAN IsRange, IsStringRange, IsDesignatorRange, IsAbsolute, HasNull; UCHAR Reserved; USHORT BitSize, ReportCount;
+                 USHORT Reserved2[5]; ULONG UnitsExp, Units; LONG LogicalMin, LogicalMax, PhysicalMin, PhysicalMax;
+                 union { struct { USHORT UsageMin, UsageMax, StringMin, StringMax, DesignatorMin, DesignatorMax, DataIndexMin, DataIndexMax; } Range;
+                         struct { USHORT Usage, Reserved1, StringIndex, Reserved2, DesignatorIndex, Reserved3, DataIndex, Reserved4; } NotRange; }; } HidValueCaps;
+typedef LONG (WINAPI *HidGetCapsFn)(void *, HidCaps *);
+typedef LONG (WINAPI *HidGetButtonCapsFn)(int, HidButtonCaps *, USHORT *, void *);
+typedef LONG (WINAPI *HidGetValueCapsFn)(int, HidValueCaps *, USHORT *, void *);
+typedef LONG (WINAPI *HidGetUsagesFn)(int, USHORT, USHORT, USHORT *, ULONG *, void *, CHAR *, ULONG);
+typedef LONG (WINAPI *HidGetUsageValueFn)(int, USHORT, USHORT, USHORT, ULONG *, void *, CHAR *, ULONG);
+static HidGetCapsFn hid_caps;
+static HidGetButtonCapsFn hid_button_caps;
+static HidGetValueCapsFn hid_value_caps;
+static HidGetUsagesFn hid_usages;
+static HidGetUsageValueFn hid_value;
+#define HID_OK 0x00110000L
+
+#define MAX_HID 4
+static struct {
+    HANDLE dev;
+    uint8_t *prep;                   /* its preparsed data */
+    int kind;                        /* 0 generic, 1 Nintendo (Switch Pro), 2 Sony (its triggers on Rx, Ry) */
+    HidValueCaps val[24];
+    int nval;
+    long in;                         /* its inputs */
+} hid[MAX_HID];
+static int nhid;
+
+static void hid_load(void)
 {
-    pad_buttons = 0;
-    long in = pad_inputs();
-    if (in <= 0) return;
-    uint8_t m = 0;
-    for (int a = 0; a < ACT_N; a++)
-        for (int k = 0; k < MAXB; k++)
-            if (padmap[a][k] && (in & (1L << (padmap[a][k] - 1)))) m |= act_button[a];
-    pad_buttons = m;
+    HMODULE m = LoadLibraryW(L"hid.dll");
+    if (!m) return;
+    hid_caps = (HidGetCapsFn)(void (*)(void))GetProcAddress(m, "HidP_GetCaps");
+    hid_button_caps = (HidGetButtonCapsFn)(void (*)(void))GetProcAddress(m, "HidP_GetButtonCaps");
+    hid_value_caps = (HidGetValueCapsFn)(void (*)(void))GetProcAddress(m, "HidP_GetValueCaps");
+    hid_usages = (HidGetUsagesFn)(void (*)(void))GetProcAddress(m, "HidP_GetUsages");
+    hid_value = (HidGetUsageValueFn)(void (*)(void))GetProcAddress(m, "HidP_GetUsageValue");
+    if (!hid_caps || !hid_value_caps || !hid_usages || !hid_value) { hid_caps = NULL; return; }
+    RAWINPUTDEVICE rid[2] = { { 0x01, 0x04, RIDEV_INPUTSINK | RIDEV_DEVNOTIFY, hwnd },     /* joysticks */
+                              { 0x01, 0x05, RIDEV_INPUTSINK | RIDEV_DEVNOTIFY, hwnd } };   /* gamepads */
+    RegisterRawInputDevices(rid, 2, sizeof rid[0]);
+}
+
+/* a gamepad seen for the first time (XInput ones are read through XInput: their name has "IG_") */
+static int hid_slot(HANDLE dev)
+{
+    for (int i = 0; i < nhid; i++) if (hid[i].dev == dev) return i;
+    if (nhid == MAX_HID) return -1;
+    wchar_t name[512];
+    UINT n = 512;
+    if (GetRawInputDeviceInfoW(dev, RIDI_DEVICENAME, name, &n) == (UINT)-1) return -1;
+    if (wcsstr(name, L"IG_") || wcsstr(name, L"ig_")) return -1;
+    UINT sz = 0;
+    GetRawInputDeviceInfoW(dev, RIDI_PREPARSEDDATA, NULL, &sz);
+    if (!sz) return -1;
+    uint8_t *prep = (uint8_t *)malloc(sz);
+    if (!prep || GetRawInputDeviceInfoW(dev, RIDI_PREPARSEDDATA, prep, &sz) == (UINT)-1) { free(prep); return -1; }
+    RID_DEVICE_INFO info;
+    info.cbSize = sizeof info;
+    UINT isz = sizeof info;
+    int kind = 0;
+    if (GetRawInputDeviceInfoW(dev, RIDI_DEVICEINFO, &info, &isz) != (UINT)-1 && info.dwType == RIM_TYPEHID &&
+        info.hid.dwVendorId == 0x057E) kind = 1;                       /* Nintendo */
+    else if (info.dwType == RIM_TYPEHID && info.hid.dwVendorId == 0x054C) kind = 2;   /* Sony */
+    int i = nhid++;
+    memset(&hid[i], 0, sizeof hid[i]);
+    hid[i].dev = dev;
+    hid[i].prep = prep;
+    hid[i].kind = kind;
+    HidCaps caps;
+    if (hid_caps(prep, &caps) == HID_OK) {
+        USHORT nv = (USHORT)(caps.NumberInputValueCaps < 24 ? caps.NumberInputValueCaps : 24);
+        if (nv && hid_value_caps(0, hid[i].val, &nv, prep) == HID_OK) hid[i].nval = nv;
+    }
+    return i;
+}
+
+/* an axis read as -1..1 */
+static double hid_axis(int i, const HidValueCaps *c, uint8_t *rep, ULONG len)
+{
+    ULONG v;
+    USHORT usage = c->IsRange ? c->Range.UsageMin : c->NotRange.Usage;
+    if (hid_value(0, c->UsagePage, 0, usage, &v, hid[i].prep, (CHAR *)rep, len) != HID_OK) return 0;
+    LONG lo = c->LogicalMin, hi = c->LogicalMax;
+    if (hi <= lo) { lo = 0; hi = (LONG)((1u << c->BitSize) - 1); }
+    return (2.0 * ((LONG)v - lo) / (double)(hi - lo)) - 1.0;
+}
+
+static void hid_report(HANDLE dev, uint8_t *rep, ULONG len)
+{
+    if (!hid_caps) return;
+    int i = hid_slot(dev);
+    if (i < 0) return;
+    long in = 0;
+    USHORT us[64];
+    ULONG n = 64;
+    if (hid_usages(0, 0x09, 0, us, &n, hid[i].prep, (CHAR *)rep, len) == HID_OK)
+        for (ULONG k = 0; k < n; k++) {
+            static const int8_t generic[16] = { PAD_X, PAD_A, PAD_B, PAD_Y, PAD_LB, PAD_RB, PAD_LT, PAD_RT, PAD_BACK, PAD_START,
+                                                PAD_LTHUMB, PAD_RTHUMB, PAD_GUIDE, PAD_MISC, -1, -1 };
+            static const int8_t nintendo[16] = { PAD_A, PAD_B, PAD_X, PAD_Y, PAD_LB, PAD_RB, PAD_LT, PAD_RT, PAD_BACK, PAD_START,
+                                                 PAD_LTHUMB, PAD_RTHUMB, PAD_GUIDE, PAD_MISC, -1, -1 };
+            int b = us[k] - 1;
+            if (b < 0 || b >= 16) continue;
+            int p = hid[i].kind == 1 ? nintendo[b] : generic[b];
+            if (p >= 0) in |= 1L << p;
+        }
+    for (int v = 0; v < hid[i].nval; v++) {
+        const HidValueCaps *c = &hid[i].val[v];
+        if (c->UsagePage != 0x01) continue;
+        USHORT usage = c->IsRange ? c->Range.UsageMin : c->NotRange.Usage;
+        if (usage == 0x39) {                                         /* the hat: 8 directions, else centred */
+            ULONG h;
+            if (hid_value(0, 0x01, 0, 0x39, &h, hid[i].prep, (CHAR *)rep, len) != HID_OK) continue;
+            long d = (long)h - c->LogicalMin;
+            if (d < 0 || d > 7) continue;
+            static const uint8_t dirs[8] = { 1, 9, 8, 10, 2, 6, 4, 5 };   /* bits: up 1, down 2, left 4, right 8 */
+            if (dirs[d] & 1) in |= 1L << PAD_DUP;
+            if (dirs[d] & 2) in |= 1L << PAD_DDOWN;
+            if (dirs[d] & 4) in |= 1L << PAD_DLEFT;
+            if (dirs[d] & 8) in |= 1L << PAD_DRIGHT;
+            continue;
+        }
+        double a = hid_axis(i, c, rep, len);
+        if (usage == 0x30) { if (a < -0.5) in |= 1L << PAD_LS_LEFT; if (a > 0.5) in |= 1L << PAD_LS_RIGHT; }
+        else if (usage == 0x31) { if (a < -0.5) in |= 1L << PAD_LS_UP; if (a > 0.5) in |= 1L << PAD_LS_DOWN; }
+        else if (hid[i].kind == 2 && usage == 0x33 && a > -0.4) in |= 1L << PAD_LT;   /* Rx, Ry: the triggers of the */
+        else if (hid[i].kind == 2 && usage == 0x34 && a > -0.4) in |= 1L << PAD_RT;   /* PlayStation pads (else a stick) */
+    }
+    hid[i].in = in;
+}
+
+static void hid_removed(HANDLE dev)
+{
+    for (int i = 0; i < nhid; i++)
+        if (hid[i].dev == dev) {
+            free(hid[i].prep);
+            hid[i] = hid[--nhid];
+            return;
+        }
+}
+
+/* the inputs of every gamepad together, -1 when there is none */
+static long pad_inputs(void)
+{
+    long in = xinput_inputs();
+    for (int i = 0; i < nhid; i++) in = (in < 0 ? 0 : in) | hid[i].in;
+    return in;
 }
 
 static void pad_rumble(bool on)
@@ -632,20 +525,15 @@ static void pad_rumble(bool on)
 
 /* ------------------------------------------------------------------ keyboard */
 
-static bool down(int vk) { return (GetKeyState(vk) & 0x8000) != 0; }
-
-static void kb_update(void)
+/* the key of a key message: Shift, Ctrl and Alt with their side */
+static unsigned msg_key(WPARAM wp, LPARAM lp)
 {
-    uint8_t m = 0;
-    if (!ctl_wnd)
-        for (int a = 0; a < ACT_N; a++)
-            for (int k = 0; k < MAXB; k++) {
-                unsigned vk = keymap[a][k];
-                if (!vk || !down((int)vk)) continue;
-                if (vk == VK_RETURN && down(VK_MENU)) continue;       /* Alt+Enter: full screen */
-                m |= act_button[a];
-            }
-    kb_buttons = m;
+    unsigned sc = (unsigned)((lp >> 16) & 0xFF);
+    bool ext = (lp & (1 << 24)) != 0;
+    if (wp == VK_SHIFT) return MapVirtualKeyW(sc, 3 /* MAPVK_VSC_TO_VK_EX */) == VK_RSHIFT ? VK_RSHIFT : VK_LSHIFT;
+    if (wp == VK_CONTROL) return ext ? VK_RCONTROL : VK_LCONTROL;
+    if (wp == VK_MENU) return ext ? VK_RMENU : VK_LMENU;
+    return (unsigned)wp;
 }
 
 /* names of the keys, in English whatever the system language */
@@ -672,17 +560,6 @@ static void key_name(unsigned vk, wchar_t *out, int n)
     else swprintf(out, (size_t)n, L"Key %02X", vk);
 }
 
-/* the key of a key message: Shift, Ctrl and Alt with their side */
-static unsigned msg_key(WPARAM wp, LPARAM lp)
-{
-    unsigned sc = (unsigned)((lp >> 16) & 0xFF);
-    bool ext = (lp & (1 << 24)) != 0;
-    if (wp == VK_SHIFT) return MapVirtualKeyW(sc, 3 /* MAPVK_VSC_TO_VK_EX */) == VK_RSHIFT ? VK_RSHIFT : VK_LSHIFT;
-    if (wp == VK_CONTROL) return ext ? VK_RCONTROL : VK_LCONTROL;
-    if (wp == VK_MENU) return ext ? VK_RMENU : VK_LMENU;
-    return (unsigned)wp;
-}
-
 /* ------------------------------------------------------------------ the input mapping tool */
 
 static void set_fullscreen(bool on);
@@ -707,10 +584,10 @@ static int ctl_col_x(int c) { return c == 0 ? U(16) : c == 1 ? U(268) : U(508); 
 static void cell_text(int a, int col, wchar_t *out, int n)
 {
     out[0] = 0;
-    for (int k = 0; k < MAXB; k++) {
+    for (int k = 0; k < DESK_MAXB; k++) {
         wchar_t name[48];
-        if (col == 0) { if (!keymap[a][k]) continue; key_name(keymap[a][k], name, 48); }
-        else { if (!padmap[a][k]) continue; wcsncpy(name, pad_name[padmap[a][k] - 1], 47); name[47] = 0; }
+        if (col == 0) { if (!D.keymap[a][k]) continue; key_name(D.keymap[a][k], name, 48); }
+        else { if (!D.padmap[a][k]) continue; to_wide(desk_pad_name[D.padmap[a][k] - 1], name, 48); }
         if (out[0] && wcslen(out) + 2 < (size_t)n) wcscat(out, L", ");
         if (wcslen(out) + wcslen(name) < (size_t)n) wcscat(out, name);
     }
@@ -721,32 +598,32 @@ static void ctl_bind(int a, int col, unsigned v)
 {
     /* one button per input: taken off the others */
     for (int b = 0; b < ACT_N; b++)
-        for (int k = 0; k < MAXB; k++) {
-            unsigned cur = col == 0 ? keymap[b][k] : padmap[b][k];
+        for (int k = 0; k < DESK_MAXB; k++) {
+            unsigned cur = col == 0 ? D.keymap[b][k] : D.padmap[b][k];
             if (cur != (col == 0 ? v : v + 1)) continue;
-            for (int j = k; j < MAXB - 1; j++) {
-                if (col == 0) keymap[b][j] = keymap[b][j + 1]; else padmap[b][j] = padmap[b][j + 1];
+            for (int j = k; j < DESK_MAXB - 1; j++) {
+                if (col == 0) D.keymap[b][j] = D.keymap[b][j + 1]; else D.padmap[b][j] = D.padmap[b][j + 1];
             }
-            if (col == 0) keymap[b][MAXB - 1] = 0; else padmap[b][MAXB - 1] = 0;
+            if (col == 0) D.keymap[b][DESK_MAXB - 1] = 0; else D.padmap[b][DESK_MAXB - 1] = 0;
             k--;
         }
     int k = 0;
-    while (k < MAXB && (col == 0 ? keymap[a][k] : padmap[a][k])) k++;
-    if (k == MAXB) {                           /* full: the oldest one goes */
-        for (int j = 0; j < MAXB - 1; j++) {
-            if (col == 0) keymap[a][j] = keymap[a][j + 1]; else padmap[a][j] = padmap[a][j + 1];
+    while (k < DESK_MAXB && (col == 0 ? D.keymap[a][k] : D.padmap[a][k])) k++;
+    if (k == DESK_MAXB) {                      /* full: the oldest one goes */
+        for (int j = 0; j < DESK_MAXB - 1; j++) {
+            if (col == 0) D.keymap[a][j] = D.keymap[a][j + 1]; else D.padmap[a][j] = D.padmap[a][j + 1];
         }
-        k = MAXB - 1;
+        k = DESK_MAXB - 1;
     }
-    if (col == 0) keymap[a][k] = (uint16_t)v; else padmap[a][k] = (uint8_t)(v + 1);
-    cfg_save();
+    if (col == 0) D.keymap[a][k] = (uint16_t)v; else D.padmap[a][k] = (uint8_t)(v + 1);
+    desk_cfg_save(&D);
     ctl_msg[0] = 0;
 }
 
 static void ctl_clear(int a, int col)
 {
-    if (col == 0) memset(keymap[a], 0, sizeof keymap[a]); else memset(padmap[a], 0, sizeof padmap[a]);
-    cfg_save();
+    if (col == 0) memset(D.keymap[a], 0, sizeof D.keymap[a]); else memset(D.padmap[a], 0, sizeof D.padmap[a]);
+    desk_cfg_save(&D);
 }
 
 static void ctl_wait(int row, int col)
@@ -755,8 +632,10 @@ static void ctl_wait(int row, int col)
     ctl_col = col;
     long in = pad_inputs();
     ctl_pad_held = in > 0 ? in : 0;
+    wchar_t name[64];
+    to_wide(desk_act_name[row], name, 64);
     swprintf(ctl_msg, 200, col == 0 ? L"%ls: press a key (Esc: cancel, Delete: clear)"
-                                    : L"%ls: press a gamepad button (Esc: cancel, Delete: clear)", act_name[row]);
+                                    : L"%ls: press a gamepad button (Esc: cancel, Delete: clear)", name);
     if (col == 1 && pad_inputs() < 0) wcscat(ctl_msg, L". No gamepad found.");
     SetFocus(ctl_wnd);
     InvalidateRect(ctl_wnd, NULL, FALSE);
@@ -800,10 +679,10 @@ static void ctl_paint(HWND w)
             }
         wchar_t t[160];
         SelectObject(mem, fb);
-        swprintf(t, 160, L"%ls", act_gb[a]);
+        to_wide(desk_act_gb[a], t, 160);
         TextOutW(mem, ctl_col_x(0), y, t, (int)wcslen(t));
         SelectObject(mem, f);
-        swprintf(t, 160, L"%ls", act_name[a]);
+        to_wide(desk_act_name[a], t, 160);
         TextOutW(mem, ctl_col_x(0) + U(56), y, t, (int)wcslen(t));
         for (int c = 0; c < 2; c++) {
             if (ctl_row == a && ctl_col == c) wcscpy(t, c == 0 ? L"press a key..." : L"press a button...");
@@ -833,9 +712,9 @@ static void ctl_close(void)
     ctl_wnd = NULL;
     DestroyWindow(w);
     SetForegroundWindow(hwnd);
-    cfg_save();
-    if (wout && !paused) waveOutRestart(wout);
-    kb_update();
+    desk_cfg_save(&D);
+    if (!D.paused) audio_hold(false);
+    desk_keys_released(&D);
 }
 
 static LRESULT CALLBACK ctl_proc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
@@ -847,8 +726,8 @@ static LRESULT CALLBACK ctl_proc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         if (LOWORD(wp) == CTL_ID_CLOSE) ctl_close();
         else if (LOWORD(wp) == CTL_ID_DEFAULTS) {
-            map_defaults();
-            cfg_save();
+            desk_map_defaults(&D);
+            desk_cfg_save(&D);
             ctl_row = -1;
             wcscpy(ctl_msg, L"Default controls restored.");
             SetFocus(w);
@@ -880,7 +759,7 @@ static LRESULT CALLBACK ctl_proc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
         if (vk == VK_ESCAPE) { ctl_row = -1; ctl_msg[0] = 0; }
         else if (vk == VK_DELETE) { ctl_clear(ctl_row, ctl_col); ctl_row = -1; ctl_msg[0] = 0; }
         else if (ctl_col == 0) {
-            if (key_reserved(vk)) wcscpy(ctl_msg, L"F1, F2, F5, F8 to F11, P, Pause and Esc are kept by Pinball NS.");
+            if (desk_key_reserved(vk)) wcscpy(ctl_msg, L"F1 to F11, P, Pause and Esc are kept by Pinball NS.");
             else { ctl_bind(ctl_row, 0, vk); ctl_row = -1; }
         }
         InvalidateRect(w, NULL, FALSE);
@@ -898,6 +777,17 @@ static LRESULT CALLBACK ctl_proc(HWND w, UINT msg, WPARAM wp, LPARAM lp)
                 if (fresh & (1L << i)) { ctl_bind(ctl_row, 1, (unsigned)i); ctl_row = -1; InvalidateRect(w, NULL, FALSE); break; }
         }
         return 0;
+    case WM_INPUT: {                          /* the HID gamepads, while the tool has the focus */
+        UINT sz = 0;
+        GetRawInputData((HRAWINPUT)lp, RID_INPUT, NULL, &sz, sizeof(RAWINPUTHEADER));
+        static uint8_t buf[2048];
+        if (sz && sz <= sizeof buf && GetRawInputData((HRAWINPUT)lp, RID_INPUT, buf, &sz, sizeof(RAWINPUTHEADER)) == sz) {
+            RAWINPUT *ri = (RAWINPUT *)buf;
+            if (ri->header.dwType == RIM_TYPEHID && ri->data.hid.dwCount)
+                hid_report(ri->header.hDevice, ri->data.hid.bRawData, ri->data.hid.dwSizeHid);
+        }
+        break;
+    }
     default:
         break;
     }
@@ -937,10 +827,10 @@ static void ctl_open(void)
     if (y < 0) y = 0;
     ctl_row = -1;
     ctl_msg[0] = 0;
-    if (wout) waveOutPause(wout);
+    audio_hold(true);
     ctl_wnd = CreateWindowExW(WS_EX_DLGMODALFRAME, L"PinballNSControls", L"Pinball NS - Controls", style, x, y, ww, wh, hwnd,
                               NULL, inst, NULL);
-    if (!ctl_wnd) { if (wout && !paused) waveOutRestart(wout); return; }
+    if (!ctl_wnd) { if (!D.paused) audio_hold(false); return; }
     HFONT bf = CreateFontW(-U(15), 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
     RECT cr;
     GetClientRect(ctl_wnd, &cr);
@@ -952,7 +842,7 @@ static void ctl_open(void)
     SendMessageW(b1, WM_SETFONT, (WPARAM)bf, TRUE);
     SendMessageW(b2, WM_SETFONT, (WPARAM)bf, TRUE);
     EnableWindow(hwnd, FALSE);
-    kb_buttons = 0;
+    desk_keys_released(&D);
     ShowWindow(ctl_wnd, SW_SHOW);
     SetTimer(ctl_wnd, 1, 30, NULL);
     SetFocus(ctl_wnd);
@@ -973,20 +863,22 @@ static void about(void)
     mb.lpszText =
         L"Pinball NS " APP_VERSION L"\n"
         L"Pokémon Pinball, the whole table on one screen.\n"
-        L"Made by Reinhard Sharapov 2026.\n\n"
+        L"Made by Reinhard Sharapov 2026. Controls of the handheld mode after a design by Gianchy3000.\n"
+        L"Pokémon Pinball Generations by RainbowDevs (formerly TPPDevs).\n\n"
         L"Pokémon Pinball © 1995-1999 Nintendo, Creatures Inc., GAME FREAK inc.\n"
         L"© 1999 HAL Laboratory, Inc., Jupiter Corp.\n"
         L"Pokémon, Pokémon character names, Game Boy and Game Boy Color are trademarks of Nintendo.\n\n"
         L"Pinball NS contains no part of the game: it plays the ROM dumped from your own cartridge.\n\n"
-        L"F1: about   F2: controls   F5 / F9: save / load state   F8: table width\n"
-        L"F10: sharp / smooth   F11 or Alt+Enter: full screen   P: pause";
-    bool was = paused;
-    paused = true;
-    if (wout) waveOutPause(wout);
+        L"F1: about   F2: controls   F3: handheld mode   F4: its keys hidden in a game\n"
+        L"F5 / F9: save / load state   F8: table width   F10: sharp / smooth   F11 or Alt+Enter: full screen\n"
+        L"F6: screen filter (none, dots, LCD)   F7: colours (original, black and white, Game Boy green)   P: pause";
+    bool was = D.paused;
+    D.paused = true;
+    audio_hold(true);
     MessageBoxIndirectW(&mb);
-    paused = was;
-    if (wout && !paused) waveOutRestart(wout);
-    kb_update();
+    D.paused = was;
+    if (!D.paused) audio_hold(false);
+    desk_keys_released(&D);
 }
 
 /* ------------------------------------------------------------------ video */
@@ -1005,15 +897,61 @@ static void set_fullscreen(bool on)
                          mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top,
                          SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
             fullscreen = true;
-            ShowCursor(FALSE);
+            if (!D.handheld) ShowCursor(FALSE);
         }
     } else if (!on && fullscreen) {
         SetWindowLongW(hwnd, GWL_STYLE, (LONG)(style | WS_OVERLAPPEDWINDOW));
         SetWindowPlacement(hwnd, &prev_place);
         SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
         fullscreen = false;
-        ShowCursor(TRUE);
+        if (!D.handheld) ShowCursor(TRUE);
     }
+}
+
+/* The screen filter and the colours (screenfx.h): the cells that changed, by bands of rows shared out
+ * between a few threads when there are many (a fade, a new screen: every cell). */
+static int fx_nthreads = -1;
+static HANDLE fx_go[3], fx_done[3];
+static volatile int fx_band[3][2];
+static ScreenFx *fx_cur;
+
+static DWORD WINAPI fx_worker(LPVOID arg)
+{
+    int i = (int)(INT_PTR)arg;
+    for (;;) {
+        WaitForSingleObject(fx_go[i], INFINITE);
+        screenfx_rows(fx_cur, fx_band[i][0], fx_band[i][1]);
+        SetEvent(fx_done[i]);
+    }
+}
+
+static void fx_make(ScreenFx *sfx)
+{
+    if (fx_nthreads < 0) {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        int n = (int)si.dwNumberOfProcessors - 1;
+        fx_nthreads = n < 0 ? 0 : n > 3 ? 3 : n;
+        for (int i = 0; i < fx_nthreads; i++) {
+            fx_go[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
+            fx_done[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
+            HANDLE t = fx_go[i] && fx_done[i] ? CreateThread(NULL, 0, fx_worker, (LPVOID)(INT_PTR)i, 0, NULL) : NULL;
+            if (!t) { fx_nthreads = i; break; }
+            CloseHandle(t);
+        }
+    }
+    long dirty = 0;
+    for (int i = 0; i < sfx->w * sfx->h; i++) dirty += sfx->dirty[i];
+    if (dirty * sfx->k * sfx->k < 200000 || fx_nthreads == 0) { screenfx_rows(sfx, 0, sfx->h); return; }
+    int n = fx_nthreads + 1;
+    fx_cur = sfx;
+    for (int i = 0; i < fx_nthreads; i++) {
+        fx_band[i][0] = sfx->h * i / n;
+        fx_band[i][1] = sfx->h * (i + 1) / n;
+        SetEvent(fx_go[i]);
+    }
+    screenfx_rows(sfx, sfx->h * fx_nthreads / n, sfx->h);
+    WaitForMultipleObjects((DWORD)fx_nthreads, fx_done, TRUE, INFINITE);
 }
 
 static void paint(HDC dc)
@@ -1022,55 +960,45 @@ static void paint(HDC dc)
     GetClientRect(hwnd, &rc);
     int cw = rc.right, ch = rc.bottom;
     HBRUSH black = (HBRUSH)GetStockObject(BLACK_BRUSH);
-    if (!pb || cw <= 0 || ch <= 0) { FillRect(dc, &rc, black); return; }
-
-    int w, h, stride;
-    const uint32_t *px = pb_frame(pb, &w, &h, &stride);
-    if (shown_seq != pb_picture_seq(pb) || !shown_px) {    /* a new picture of the game */
-        shown_seq = pb_picture_seq(pb);
-        shown_px = deflicker_frame(&defl, px, w, h, stride);
-    }
-    if (shown_px) { px = shown_px; stride = w; }
-    /* sharp: largest integer zoom (unless it would waste too much room); smooth: fit */
-    double fit = (double)cw / w < (double)ch / h ? (double)cw / w : (double)ch / h;
-    int iz = (int)fit;
-    int dw, dh;
-    if (!smooth && iz >= 1 && iz >= fit * 0.82) { dw = w * iz; dh = h * iz; }
-    else { dw = (int)(w * fit); dh = (int)(h * fit); }
-    int x = (cw - dw) / 2, y = (ch - dh) / 2;
+    if (!D.pb || cw <= 0 || ch <= 0) { FillRect(dc, &rc, black); return; }
+    DeskPicture p;
+    desk_picture(&D, cw, ch, &p);
+    if (!p.px) { FillRect(dc, &rc, black); return; }
 
     RECT r;
-    SetRect(&r, 0, 0, cw, y); FillRect(dc, &r, black);
-    SetRect(&r, 0, y + dh, cw, ch); FillRect(dc, &r, black);
-    SetRect(&r, 0, y, x, y + dh); FillRect(dc, &r, black);
-    SetRect(&r, x + dw, y, cw, y + dh); FillRect(dc, &r, black);
+    if (p.y > 0) { SetRect(&r, 0, 0, cw, p.y); FillRect(dc, &r, black); }
+    if (p.y + p.dh < ch) { SetRect(&r, 0, p.y + p.dh, cw, ch); FillRect(dc, &r, black); }
+    if (p.x > 0) { SetRect(&r, 0, p.y, p.x, p.y + p.dh); FillRect(dc, &r, black); }
+    if (p.x + p.dw < cw) { SetRect(&r, p.x + p.dw, p.y, cw, p.y + p.dh); FillRect(dc, &r, black); }
 
     BITMAPINFO bmi;
     memset(&bmi, 0, sizeof bmi);
     bmi.bmiHeader.biSize = sizeof bmi.bmiHeader;
-    bmi.bmiHeader.biWidth = stride;
-    bmi.bmiHeader.biHeight = -h;
+    bmi.bmiHeader.biWidth = p.stride;
+    bmi.bmiHeader.biHeight = -p.h;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
-    if (smooth && dw != w * iz) { SetStretchBltMode(dc, HALFTONE); SetBrushOrgEx(dc, 0, 0, NULL); }
+    if (p.smooth) { SetStretchBltMode(dc, HALFTONE); SetBrushOrgEx(dc, 0, 0, NULL); }
     else SetStretchBltMode(dc, COLORONCOLOR);
-    StretchDIBits(dc, x, y, dw, dh, 0, 0, w, h, px, &bmi, DIB_RGB_COLORS, SRCCOPY);
+    StretchDIBits(dc, p.x, p.y, p.dw, p.dh, 0, 0, p.w, p.h, p.px, &bmi, DIB_RGB_COLORS, SRCCOPY);
 
-    const wchar_t *msg = NULL;
-    if (paused) msg = L"PAUSE (P to resume)";
-    else if (osd[0] && (int32_t)(GetTickCount() - osd_until) < 0) msg = osd;   /* (the tick count wraps after 49 days) */
-    if (msg) {
+    const char *msg = NULL;
+    if (D.paused) msg = "PAUSE (P to resume)";
+    else if (D.osd[0] && D.now < D.osd_until) msg = D.osd;
+    if (msg && !D.handheld) {
+        wchar_t wmsg[200];
+        to_wide(msg, wmsg, 200);
+        int dw = p.dw < cw ? p.dw : cw, dh = p.dh < ch ? p.dh : ch, y = p.y > 0 ? p.y : 0;
         SetBkMode(dc, OPAQUE);
         SetBkColor(dc, RGB(0, 0, 0));
         SetTextColor(dc, RGB(255, 255, 255));
         int fh_px = dh / 26 < dw / 24 ? dh / 26 : dw / 24;
         if (fh_px < 12) fh_px = 12;
-        HFONT f = CreateFontW(-fh_px, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0,
-                              CLEARTYPE_QUALITY, 0, L"Segoe UI");
+        HFONT f = CreateFontW(-fh_px, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
         HGDIOBJ old = SelectObject(dc, f);
-        RECT tr = { x, y + dh / 2 - dh / 20, x + dw, y + dh / 2 + dh / 20 };
-        DrawTextW(dc, msg, -1, &tr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        RECT tr = { p.x > 0 ? p.x : 0, y + dh / 2 - dh / 20, (p.x > 0 ? p.x : 0) + dw, y + dh / 2 + dh / 20 };
+        DrawTextW(dc, wmsg, -1, &tr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         SelectObject(dc, old);
         DeleteObject(f);
     }
@@ -1085,9 +1013,66 @@ static void present(void)
 
 /* ------------------------------------------------------------------ window */
 
-static void apply_narrow(void);
 #define SC_CONTROLS 0x1000             /* window menu entries */
 #define SC_ABOUT    0x1010
+
+/* the shape of the window for the display (the table: its zoom kept; the handheld mode: a phone's shape) */
+static void reshape(void)
+{
+    if (fullscreen || IsZoomed(hwnd) || IsIconic(hwnd)) { InvalidateRect(hwnd, NULL, FALSE); return; }
+    RECT c, wa;
+    GetClientRect(hwnd, &c);
+    SystemParametersInfoW(SPI_GETWORKAREA, 0, &wa, 0);
+    int w, h;
+    if (D.handheld) desk_window_size(&D, wa.right - wa.left, wa.bottom - wa.top, &w, &h);
+    else {
+        int zoom = (c.bottom + PB_FIELD_H / 2) / PB_FIELD_H;
+        if (zoom < 1) zoom = 1;
+        w = (D.narrow ? PB_FIELD_W_NARROW : PB_FIELD_W) * zoom;
+        h = PB_FIELD_H * zoom;
+    }
+    RECT r = { 0, 0, w, h };
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
+    SetWindowPos(hwnd, NULL, 0, 0, r.right - r.left, r.bottom - r.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    InvalidateRect(hwnd, NULL, FALSE);
+}
+
+static void do_action(int a)
+{
+    switch (a) {
+    case DESK_FULLSCREEN: set_fullscreen(!fullscreen); break;
+    case DESK_LEAVE_FULLSCREEN: if (fullscreen) set_fullscreen(false); break;
+    case DESK_ABOUT: about(); break;
+    case DESK_CONTROLS: ctl_open(); break;
+    case DESK_RESHAPE: reshape(); break;
+    case DESK_PAUSE: audio_hold(D.paused); InvalidateRect(hwnd, NULL, FALSE); break;
+    case DESK_REDRAW: InvalidateRect(hwnd, NULL, FALSE); break;
+    default: break;
+    }
+}
+
+/* touches of a touch screen (handheld mode): the pointer messages of Windows 8 and later; the mouse
+ * stays the mouse (its messages below) */
+#ifndef WM_POINTERUPDATE
+#define WM_POINTERUPDATE 0x0245
+#define WM_POINTERDOWN   0x0246
+#define WM_POINTERUP     0x0247
+#endif
+typedef BOOL (WINAPI *GetPointerTypeFn)(UINT32, DWORD *);
+static GetPointerTypeFn get_pointer_type;
+
+static bool touch_message(UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (!get_pointer_type) return false;
+    UINT32 id = LOWORD(wp);
+    DWORD type = 0;
+    if (!get_pointer_type(id, &type) || type == 4 /* PT_MOUSE */) return false;
+    POINT pt = { (short)LOWORD(lp), (short)HIWORD(lp) };
+    ScreenToClient(hwnd, &pt);
+    int action = msg == WM_POINTERDOWN ? UI_DOWN : msg == WM_POINTERUP ? UI_UP : UI_MOVE;
+    desk_pointer(&D, action, (int)(id & 0x7FFF) + 1, (float)pt.x, (float)pt.y);
+    return true;
+}
 
 static LRESULT CALLBACK wndproc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -1108,45 +1093,60 @@ static LRESULT CALLBACK wndproc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     case WM_ERASEBKGND:
         return 1;
     case WM_SIZE:
-        if (wp == SIZE_MINIMIZED) { if (wout) waveOutPause(wout); }
-        else if (wout && !paused) waveOutRestart(wout);
+        if (wp == SIZE_MINIMIZED) audio_hold(true);
+        else if (!D.paused) audio_hold(false);
         InvalidateRect(h, NULL, FALSE);
         return 0;
     case WM_KILLFOCUS:
-        kb_buttons = 0;
+        desk_keys_released(&D);
+        if (D.handheld) desk_pointer(&D, UI_CANCEL, 0, 0, 0);
         return 0;
     case WM_SYSCOMMAND:
         if ((wp & 0xFFF0) == SC_CONTROLS) { ctl_open(); return 0; }
         if ((wp & 0xFFF0) == SC_ABOUT) { about(); return 0; }
         break;
     case WM_SYSKEYDOWN:
-        if (wp == VK_RETURN && (lp & (1 << 29))) { set_fullscreen(!fullscreen); return 0; }
-        if (wp == VK_F10) { smooth = !smooth; cfg_save(); InvalidateRect(h, NULL, FALSE); return 0; }
-        kb_update();
-        break;
     case WM_KEYDOWN:
-        if (!(lp & (1 << 30))) {               /* not an auto-repeat */
-            switch (wp) {
-            case VK_F11: set_fullscreen(!fullscreen); break;
-            case VK_F8: narrow = !narrow; apply_narrow(); break;
-            case VK_F1: about(); break;
-            case VK_F2: ctl_open(); break;
-            case VK_ESCAPE: if (fullscreen) set_fullscreen(false); break;
-            case 'P': case VK_PAUSE:
-                paused = !paused;
-                if (wout) { if (paused) waveOutPause(wout); else waveOutRestart(wout); }
-                InvalidateRect(h, NULL, FALSE);
-                break;
-            case VK_F5: if (pb) state_save(); break;
-            case VK_F9: if (pb) state_load(); break;
-            default: break;
-            }
-        }
-        kb_update();
+        do_action(desk_key(&D, msg_key(wp, lp), true, (lp & (1 << 30)) != 0));
+        /* F10 and Alt+Enter: not the window's menu; the other Alt keys as usual (Alt+F4 closes) */
+        if (msg == WM_SYSKEYDOWN && wp != VK_F10 && !(wp == VK_RETURN && (lp & (1 << 29)))) break;
         return 0;
     case WM_KEYUP:
     case WM_SYSKEYUP:
-        kb_update();
+        desk_key(&D, msg_key(wp, lp), false, false);
+        if (msg == WM_SYSKEYUP) break;
+        return 0;
+    case WM_SYSCHAR:
+        return 0;                             /* no beep for Alt + key */
+    case WM_LBUTTONDOWN:
+        SetCapture(h);
+        desk_pointer(&D, UI_DOWN, 0, (float)(short)LOWORD(lp), (float)(short)HIWORD(lp));
+        return 0;
+    case WM_MOUSEMOVE:
+        if (wp & MK_LBUTTON) desk_pointer(&D, UI_MOVE, 0, (float)(short)LOWORD(lp), (float)(short)HIWORD(lp));
+        return 0;
+    case WM_LBUTTONUP:
+        ReleaseCapture();
+        desk_pointer(&D, UI_UP, 0, (float)(short)LOWORD(lp), (float)(short)HIWORD(lp));
+        return 0;
+    case WM_POINTERDOWN:
+    case WM_POINTERUPDATE:
+    case WM_POINTERUP:
+        if (D.handheld && touch_message(msg, wp, lp)) return 0;
+        break;
+    case WM_INPUT: {
+        UINT sz = 0;
+        GetRawInputData((HRAWINPUT)lp, RID_INPUT, NULL, &sz, sizeof(RAWINPUTHEADER));
+        static uint8_t buf[2048];
+        if (sz && sz <= sizeof buf && GetRawInputData((HRAWINPUT)lp, RID_INPUT, buf, &sz, sizeof(RAWINPUTHEADER)) == sz) {
+            RAWINPUT *ri = (RAWINPUT *)buf;
+            if (ri->header.dwType == RIM_TYPEHID && ri->data.hid.dwCount)
+                hid_report(ri->header.hDevice, ri->data.hid.bRawData, ri->data.hid.dwSizeHid);
+        }
+        break;
+    }
+    case WM_INPUT_DEVICE_CHANGE:
+        if (wp == 2 /* GIDC_REMOVAL */) hid_removed((HANDLE)lp);
         return 0;
     case WM_DROPFILES: {
         wchar_t p[MAX_PATH];
@@ -1158,26 +1158,6 @@ static LRESULT CALLBACK wndproc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         break;
     }
     return DefWindowProcW(h, msg, wp, lp);
-}
-
-static int field_w(void) { return narrow ? PB_FIELD_W_NARROW : PB_FIELD_W; }
-
-/* F8: the table at its original width or whole; the window takes the new shape */
-static void apply_narrow(void)
-{
-    if (pb) pb_set_narrow(pb, narrow);
-    cfg_save();
-    show_osd(narrow ? L"Table: original width (F8)" : L"Table: whole (F8)");
-    if (!fullscreen && !IsZoomed(hwnd) && !IsIconic(hwnd)) {
-        RECT c;
-        GetClientRect(hwnd, &c);
-        int zoom = (c.bottom + PB_FIELD_H / 2) / PB_FIELD_H;
-        if (zoom < 1) zoom = 1;
-        RECT r = { 0, 0, field_w() * zoom, PB_FIELD_H * zoom };
-        AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
-        SetWindowPos(hwnd, NULL, 0, 0, r.right - r.left, r.bottom - r.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-    }
-    InvalidateRect(hwnd, NULL, FALSE);
 }
 
 static void create_window(HINSTANCE inst)
@@ -1194,13 +1174,12 @@ static void create_window(HINSTANCE inst)
     wc.lpszClassName = L"PinballNS";
     RegisterClassExW(&wc);
 
-    /* biggest whole zoom of the tall field that fits the screen */
+    /* biggest whole zoom of the tall field that fits the screen (the handheld mode: a phone's shape) */
     RECT wa;
     SystemParametersInfoW(SPI_GETWORKAREA, 0, &wa, 0);
-    int zoom = 1;
-    while (field_w() * (zoom + 1) <= (wa.right - wa.left) * 9 / 10 &&
-           PB_FIELD_H * (zoom + 1) <= (wa.bottom - wa.top) * 9 / 10) zoom++;
-    RECT r = { 0, 0, field_w() * zoom, PB_FIELD_H * zoom };
+    int w, h;
+    desk_window_size(&D, wa.right - wa.left, wa.bottom - wa.top, &w, &h);
+    RECT r = { 0, 0, w, h };
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
     int ww = r.right - r.left, wh = r.bottom - r.top;
     hwnd = CreateWindowExW(WS_EX_ACCEPTFILES, wc.lpszClassName, APP_TITLE, WS_OVERLAPPEDWINDOW,
@@ -1211,16 +1190,17 @@ static void create_window(HINSTANCE inst)
     AppendMenuW(sm, MF_SEPARATOR, 0, NULL);
     AppendMenuW(sm, MF_STRING, SC_CONTROLS, L"Controls...\tF2");
     AppendMenuW(sm, MF_STRING, SC_ABOUT, L"About Pinball NS\tF1");
+    get_pointer_type = (GetPointerTypeFn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetPointerType");
 }
 
 /* ------------------------------------------------------------------ main */
 
 static void run_one_frame(void)
 {
-    pb_run_frame(pb, kb_buttons | pad_buttons);
+    desk_frame(&D);
     frame_seq++;
     audio_pump();
-    pad_rumble(pb_rumble(pb));
+    pad_rumble(desk_rumble(&D));
 }
 
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
@@ -1229,22 +1209,27 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
     SetProcessDPIAware();
     timeBeginPeriod(1);
 
-    wchar_t exe[MAX_PATH], dir[MAX_PATH];
+    wchar_t exe[MAX_PATH];
     GetModuleFileNameW(NULL, exe, MAX_PATH);
-    wcscpy(dir, exe);
-    wchar_t *sl = wcsrchr(dir, L'\\');
+    wcscpy(exe_dir, exe);
+    wchar_t *sl = wcsrchr(exe_dir, L'\\');
     if (sl) *sl = 0;
-    swprintf(ini_path, MAX_PATH, L"%ls\\pinball_ns.ini", dir);
-    swprintf(cfg_path, MAX_PATH, L"%ls\\pinball_ns.cfg", dir);
-    swprintf(old_ini_path, MAX_PATH, L"%ls\\pinball_tc.ini", dir);     /* Pinball TC's, if any */
-    swprintf(old_cfg_path, MAX_PATH, L"%ls\\pinball_tc.cfg", dir);
-    cfg_load();
+    wchar_t cfg[MAX_PATH], old_cfg[MAX_PATH];
+    swprintf(ini_path, MAX_PATH, L"%ls\\pinball_ns.ini", exe_dir);
+    swprintf(old_ini_path, MAX_PATH, L"%ls\\pinball_tc.ini", exe_dir);     /* Pinball TC's, if any */
+    swprintf(cfg, MAX_PATH, L"%ls\\pinball_ns.cfg", exe_dir);
+    swprintf(old_cfg, MAX_PATH, L"%ls\\pinball_tc.cfg", exe_dir);
+    if (GetFileAttributesW(cfg) == INVALID_FILE_ATTRIBUTES) CopyFileW(old_cfg, cfg, TRUE);   /* Pinball TC's settings, once */
+    char cfg8[DESK_PATH];
+    to_utf8(cfg, cfg8, DESK_PATH);
+    desk_init(&D, cfg8);
+    D.own_pages = true;
+    D.fx_run = fx_make;
 
     create_window(inst);
     if (!hwnd) return 1;
 
-    /* the ROM: command line / drag and drop on the .exe, last one used, next to the
-     * program, or ask */
+    /* the ROM: command line / drag and drop on the .exe, last one used, next to the program, or ask */
     int argc = 0;
     wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     bool have = false;
@@ -1255,15 +1240,18 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
         have = try_rom(argv[3], true);
         if (!have) return 2;
     } else if (argv && argc > 1) have = try_rom(argv[1], true);
+    if (!have && D.rom_paths[0][0]) { wchar_t w[MAX_PATH]; to_wide(D.rom_paths[0], w, MAX_PATH); have = try_rom(w, false); }
+    if (!have && D.rom_paths[1][0]) { wchar_t w[MAX_PATH]; to_wide(D.rom_paths[1], w, MAX_PATH); have = try_rom(w, false); }
     if (!have) {
         wchar_t last[MAX_PATH];
         if (ini_load_rom(last)) have = try_rom(last, false);
     }
-    if (!have) have = find_rom_near_exe(dir);
+    if (!have) have = find_rom_near_exe(exe_dir);
     if (!have) {
         MessageBoxW(hwnd,
             L"Welcome!\n\nPinball NS needs the ROM of your own Pokémon Pinball cartridge "
-            L"(US version, .gbc file). It is not included.\n\n"
+            L"(US version, .gbc file). It is not included. It also plays Pokémon Pinball Generations 1.6 "
+            L"(its patch applied to that ROM).\n\n"
             L"Choose it in the next window. It will be remembered next time.",
             APP_TITLE, MB_ICONINFORMATION);
         have = ask_rom();
@@ -1276,7 +1264,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
         UpdateWindow(hwnd);
     }
     xinput_load();
-    io_start();
+    hid_load();
     refresh_init();
     pacer_reset(&pacer);
     audio_open();
@@ -1285,10 +1273,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
         st.start = qpc_now();
         st.level_min = 1e9;
     }
-    sav_check_tick = GetTickCount();
     bool was_active = false;
 
-    while (running) {
+    while (running && !D.quit) {
         MSG m;
         while (PeekMessageW(&m, NULL, 0, 0, PM_REMOVE)) {
             if (m.message == WM_QUIT) running = false;
@@ -1296,9 +1283,12 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
             DispatchMessageW(&m);
         }
         if (!running) break;
-        pad_poll();
+        desk_pad(&D, ctl_wnd ? -1 : pad_inputs());
 
-        bool active = !paused && !ctl_wnd && !IsIconic(hwnd);
+        bool active = !D.paused && !ctl_wnd && !IsIconic(hwnd);
+        /* the display kept on during a game (played with a gamepad, nothing else tells Windows someone is there) */
+        if (active != was_active)
+            SetThreadExecutionState(active ? ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED : ES_CONTINUOUS);
         if (active) {
             /* the display sets the pace; the sound follows (pacing.h) */
             double t = wait_refresh(hwnd);
@@ -1307,13 +1297,14 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
                 if (audio_ok) sound_restart(&snd, t);       /* the card was paused: measured afresh */
             }
             int n = pacer_frames(&pacer, t, 6);
-            if (selftest) kb_buttons = (frame_seq % 90) < 6 ? 0x01 : 0;       /* A, now and then */
+            if (selftest) desk_key(&D, 'X', (frame_seq % 90) < 6, false);   /* A, now and then */
             bool extra = false;
             for (int k = 0; k < n; k++) {
                 /* the sound may ask for one frame more (its target raised: pacing.h) */
                 if (audio_pace(t, n - k) == SOUND_EXTRA && !extra) { extra = true; n++; }
                 run_one_frame();
             }
+            desk_tick(&D, t);
             present();                                      /* every refresh: composed at the next */
             if (selftest) {
                 double e = qpc_now();
@@ -1331,37 +1322,16 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
                 st.last = t;
                 if (e - st.start > st.secs) running = false;
             }
-        } else if (osd[0] && (int32_t)(GetTickCount() - osd_until) >= 0) {
-            osd[0] = 0;
-            InvalidateRect(hwnd, NULL, FALSE);
+        } else {
+            if (desk_tick(&D, qpc_now())) InvalidateRect(hwnd, NULL, FALSE);
+            MsgWaitForMultipleObjects(0, NULL, FALSE, 50, QS_ALLINPUT);
         }
         was_active = active;
-
-        DWORD now = GetTickCount();
-        if (now - sav_check_tick > 1000) {
-            sav_check_tick = now;
-            /* the game's own key configuration must stay the default one (the mapping is here) */
-            int fix = pb_fix_key_config(pb);
-            if (fix) {
-                sram_flush(true);
-                if (fix == 2) { wchar_t p[MAX_PATH]; wcscpy(p, rom_path); try_rom(p, false); }
-                show_osd(L"Game key config reset to the defaults (F2: controls)");
-            }
-            double f0 = qpc_now();
-            LONG before = io_state;
-            sram_flush_mode(false, true);
-            if (selftest) {
-                double f = qpc_now() - f0;
-                if (f > st.flush_max) st.flush_max = f;
-                if (!before && io_state) st.sram_writes++;
-            }
-        }
-
-        if (!active) MsgWaitForMultipleObjects(0, NULL, FALSE, 50, QS_ALLINPUT);
+        set_title();
     }
 
     pad_rumble(false);
-    sram_flush(false);
+    desk_sram_flush(&D, false, false);
     if (selftest) {
         FILE *f = _wfopen(st.report, L"w");
         if (f) {
@@ -1373,11 +1343,11 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR cmd, int show)
             fprintf(f, "sound: waiting %.0f..%.0f  starving %ld  silences added %ld  dropped %ld  frames added %ld  target %.0f  "
                     "card %.1f Hz (measured %.1f)\n", st.level_min, st.level_max, st.starving, st.pads, st.flushes, snd.extra,
                     snd.target, snd.rate, snd.measured);
-            fprintf(f, "cartridge save: %ld writes handed over, longest call %.3f ms\n", st.sram_writes, st.flush_max * 1000);
             fclose(f);
         }
     }
     audio_close();
+    desk_free(&D);
     timeEndPeriod(1);
     DestroyWindow(hwnd);
     return 0;

@@ -7,8 +7,8 @@
 #define PB_APP_H
 
 #include "ui.h"
+#include "screen.h"
 #include "../../src/game/pinball.h"
-#include "../../src/front/deflicker.h"
 #include <stdatomic.h>
 
 #define APP_RING 32768              /* audio ring, stereo frames (power of two; room for the peaks of a
@@ -28,6 +28,8 @@ typedef struct {
     Pinball *pb;                    /* NULL until a valid ROM is known */
     uint8_t *rom;
     size_t rom_size;
+    bool gen;                       /* the game played: Pokemon Pinball Generations (else the original) */
+    bool installed[2];              /* the ROMs installed: the original, Generations */
     Ui ui;
     char dir[512];                  /* private storage of the app */
     uint32_t rate;
@@ -43,35 +45,25 @@ typedef struct {
     atomic_bool ring_flush;
     _Atomic uint32_t ring_drop;     /* frames for the audio thread to skip (app_audio_drop) */
     bool rumble;                    /* rumble motor state, for the platform */
+    bool vibration_test;            /* VIBRATION turned on: the platform makes a pulse */
     bool quit;                      /* the player chose "QUIT" */
     bool sound_changed;             /* the platform must open/close its audio stream */
-    uint32_t *canvas;               /* the picture of the whole screen (ND_MAX_W x ND_MAX_H) */
-    /* the game's picture as shown: its 30 Hz flicker mixed (deflicker.h), made again only when
-     * the game has made a new frame */
-    Deflicker defl;
+    NdScreen scr;                   /* the whole screen, one picture (screen.h) */
     uint32_t frame_seq;
-    const uint32_t *shown;
-    int shown_w, shown_h;
-    /* what comes with each picture of the game (pb_set_hold): made just after it, while the game's
-     * state is that of the picture (nd_render_game), kept while the game's screen is off */
-    uint32_t pic_seq;                   /* pb_picture_seq of the picture in bg */
-    uint32_t *bg;                       /* the canvas without the controls (ND_MAX_W x ND_MAX_H) */
-    int bg_fade[2];
-    bool bg_ok;
-    NdLayout bg_layout;                 /* the layout it was made for */
-    bool disp_in_game, disp_field;      /* the controls of that picture (ui_nd_state) */
-    int disp_table;
     /* files written by the writer thread of the platform: io_async set, io_wake wakes it */
     AppWrite io[2];
     bool io_async;
-    bool no_deflicker;              /* tools: the game's picture as it is (comparisons) */
     void (*io_wake)(void);
     int test_bonus;                 /* test builds: bonus stage asked for (app_test_command) */
 } MobileApp;
 
 int  app_init(MobileApp *a, const char *dir, uint32_t sample_rate);
 void app_free(MobileApp *a);
+/* a ROM opened with the app: the US Pokemon Pinball, Pokemon Pinball Generations 1.6, or the IPS patch
+ * of Generations (applied to the US ROM installed) */
 bool app_import_rom(MobileApp *a, const uint8_t *data, size_t size);
+/* the game of this ROM (or of this patch of Generations) is installed already */
+bool app_has_rom(const MobileApp *a, const uint8_t *data, size_t size);
 bool app_has_game(const MobileApp *a);
 bool app_running(const MobileApp *a);           /* game loaded and not in the menu */
 void app_layout(MobileApp *a, int width, int height);

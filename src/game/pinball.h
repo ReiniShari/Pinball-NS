@@ -1,15 +1,16 @@
 /*
  * pinball.h - "Pokemon Pinball : table complete" runtime.
  *
- * Runs the US Pokemon Pinball ROM on the C core and replaces the game's stage
- * management with a single, unified field: the top and bottom halves of the Red and
- * Blue tables are loaded together, updated together every frame and displayed
- * together on one tall screen (192 x 280 pixels). See pinball.c for details.
+ * Runs the US Pokemon Pinball ROM (or Pokemon Pinball Generations, made from it) on the C core and
+ * replaces the game's stage management with a single, unified field: the top and bottom halves of
+ * each table are loaded together, updated together every frame and displayed together on one tall
+ * screen (192 x 280 pixels). See pinball.c for details.
  */
 #ifndef PINBALL_H
 #define PINBALL_H
 
 #include "../core/gbc.h"
+#include "pinball_rom.h"
 
 #define PB_PAGE_MAIN 0       /* bottom half, bonus stages, menus */
 #define PB_PAGE_TOP  1       /* top half of the field            */
@@ -46,15 +47,18 @@ typedef struct {
     uint64_t resolve_frame;
     long stats_swaps, stats_refresh, stats_aborts, stats_frames_unified;
     long stats_buffers;      /* redraws whose queue buffers (billboard) had to be kept */
+    bool pcm_normal;         /* Pikachu's voice played at the single speed (pb_set_double_speed) */
 } PinballState;
 
 typedef struct {
     GBC g;
+    const PbRom *rom;                    /* the ROM played: its addresses (pinball_rom.h) */
     PinballState st;
     GBCState *snap_a, *snap_b, *snap_c;   /* scratch machine states (heap) */
     GBCState *snap_r;                    /* state before the ball half's object logic */
     char error[256];
     bool narrow;                         /* original width (see pb_set_narrow); not in snapshots */
+    bool double_speed;                   /* see pb_set_double_speed; not in snapshots */
     /* see pb_set_antilag; not in snapshots */
     bool antilag;
     uint16_t wait_sp;                    /* SP of the last wait for the next frame (0468) */
@@ -117,6 +121,15 @@ bool pb_narrow(const Pinball *pb);
  * memory waiting for the lines 64-127 (the letters of a message, the picture of a Pokemon caught)
  * is done at once there. Off by default (the original timing: the tools' fingerprints). */
 void pb_set_antilag(Pinball *pb, bool on);
+/* Pokemon Pinball Generations plays its tables at the double speed of the Game Boy Color (KEY1,
+ * STOP): the CPU has twice the time for the work of a frame, and the game hardly ever skips one.
+ * It also keeps at the single speed what the CPU times itself (Pikachu's voice, a sample written
+ * at the CPU's pace), sets its timer for the double speed (the sound is updated by its interrupt
+ * while the screen is off: 60 Hz either way), and doubles a delay of the slot's roulette. With
+ * this option the original ROM is played the same way, by the emulator: the double speed on the
+ * pinball screen (tables and bonus stages), switched between frames, and the same three changes.
+ * Generations does it itself. Off by default (the original timing: the tools' fingerprints). */
+void pb_set_double_speed(Pinball *pb, bool on);
 /* The game changes its palettes while a picture is drawn now and then (the start and the end of
  * the white flash after a ball is lost, some fades), and the other half's palettes are loaded
  * out of time at any line: the picture tore at that line, on both halves (a striped flash of the
@@ -142,11 +155,15 @@ bool pb_in_game(const Pinball *pb);                                  /* on the p
 /* the table (or a bonus stage) is being played: not one of the in-game menus (pause menu,
  * choice of the Pokemon to evolve, end-of-ball bonus), which use the directional pad */
 bool pb_playing(const Pinball *pb);
-/* the table being played: 0 Red, 1 Blue, -1 none (title, menus, bonus stages) */
+/* the table being played: PB_TABLE_* (Red, Blue; Gold, Silver, Ruby, Sapphire in Generations), -1 none
+ * (title, menus, bonus stages) */
 int  pb_table(const Pinball *pb);
-/* the stage of the pinball screen (wCurrentStage: 0/1 Red, 4/5 Blue, 7 Gengar, 9 Mewtwo,
- * 11 Meowth, 13 Diglett, 15 Seel), -1 on the other screens */
+/* the stage of the pinball screen (wCurrentStage; US: 0/1 Red, 4/5 Blue, 7 Gengar, 9 Mewtwo, 11 Meowth,
+ * 13 Diglett, 15 Seel; Generations: 0-11 the six tables, 13 Gengar ... 21 Seel), -1 on the other screens */
 int  pb_stage(const Pinball *pb);
+/* what a stage is in the ROM played: its table (PB_TABLE_*, -1), its bonus stage (PB_BONUS_*, 0) */
+int  pb_stage_table(const Pinball *pb, int stage);
+int  pb_stage_bonus(const Pinball *pb, int stage);
 
 /* The front-ends press the buttons of the game's default key configuration (OPTION > KEY
  * CONFIG). Once the game has loaded it (from the title screen on) and out of its options, a
@@ -156,10 +173,15 @@ int  pb_stage(const Pinball *pb);
  * 2: fixed out of a game (the front-end should save the cartridge and restart the game). */
 int  pb_fix_key_config(Pinball *pb);
 
-/* whole-machine snapshots (to resume after the app is suspended) */
+/* whole-machine snapshots (to resume after the app is suspended); only loaded into the game of the
+ * same ROM */
 size_t pb_snapshot_size(void);
 void   pb_snapshot_save(const Pinball *pb, void *dst);
 int    pb_snapshot_load(Pinball *pb, const void *src, size_t size);
+
+/* the tiles of the flippers in the ROM played (FlipperGfx: 18 tiles, 16 bytes each; the same place in
+ * both ROMs), for the flipper keys of the front-ends; NULL: not there */
+const uint8_t *pb_flipper_tiles(const Pinball *pb);
 
 /* utility */
 void pb_sha1_hex(const uint8_t *data, size_t len, char out[41]);

@@ -48,7 +48,7 @@ static const char *field_of(size_t off)
     return "(padding)";
 }
 
-static long checks;
+static long checks, double_speed;          /* checks made in double speed (2.9) */
 
 static void trace_print(GBC *g, void *u)
 {
@@ -71,6 +71,7 @@ static void on_watch(GBC *g, uint16_t addr, uint8_t v, void *u)
 static bool same(const char *what, long n)
 {
     checks++;
+    if (A.s.ds) double_speed++;
     const uint8_t *pa = (const uint8_t *)&A.s, *pb = (const uint8_t *)&B.s;
     bool ok = memcmp(pa, pb, sizeof(GBCState)) == 0 && A.frame_done == B.frame_done && watch_sum[0] == watch_sum[1] &&
               A.fake_ly == B.fake_ly && A.fake_phase == B.fake_phase && memcmp(A.fb, B.fb, sizeof A.fb) == 0;
@@ -219,6 +220,14 @@ static int check_fuzz(uint32_t seed, long programs, long len, bool slices)
             uint16_t bc = (uint16_t)(rnd() % 4 == 0 ? rnd() : rnd() % 0x300);
             s->b = (uint8_t)(bc >> 8); s->c = (uint8_t)bc;
         }
+        if (rnd() % 4 == 0) {
+            /* (2.9) a change of speed: ld a,1 / ldh [$4D],a / stop (KEY1 prepared, then STOP: the double speed,
+             * or back to the normal one), then the PPU, the timer and the sound in the other scale */
+            static const uint8_t sw[6] = { 0x3E, 0x01, 0xE0, 0x4D, 0x10, 0x00 };
+            uint16_t at = (uint16_t)(rnd() % 0x7FF0);
+            memcpy(&rom[at], sw, 6);
+            if (rnd() & 1) s->pc = at;
+        }
         if (rnd() & 1) gbc_ppu_lcdc_write(&A, 0x11);   /* LCD off */
         bool frozen = rnd() & 1;
         if (frozen) { A.frozen = 1; A.fake_lcd_off = rnd() & 1; }
@@ -265,8 +274,8 @@ static int check_fuzz(uint32_t seed, long programs, long len, bool slices)
             if (A.frame_done) A.frame_done = B.frame_done = false;
         }
     }
-    printf("fuzz%s: %ld programs of %ld instructions, all the same (%ld checks)\n", slices ? " in slices" : "", programs,
-           len, checks);
+    printf("fuzz%s: %ld programs of %ld instructions, all the same (%ld checks, %ld in double speed)\n", slices ? " in slices" : "",
+           programs, len, checks, double_speed);
     return 0;
 }
 

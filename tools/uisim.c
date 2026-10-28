@@ -7,6 +7,7 @@
  *         import:PATH  suspend  restart  s:NAME  bot:N:SEED (random touches on the flippers)
  *         c:NAME (the picture sent to the screen, in pixels of the game)  info / cab (layout)
  *         bonus:STAGE (the slot sends the ball to a bonus stage, as pbdebug -bonus)
+ *         table:T (the table chosen on the field select screen, as pbrun -table)
  *         cs:N:NAME (N frames in a row, each as c: does: NAME_000...)
  *         catch:top|bottom, evo:top|bottom (the mode starts when the ball is in that half, as
  *         pbdebug -force), hit:N (the catch mode Pokemon hit every N frames, ball in the bottom
@@ -18,12 +19,16 @@
  *         while they look alike is reported: NAME_glitchK_f_a/b/c.png),
  *         vtrace:T0:T1:F0:F1 (writes to the tiles T0..T1 of the top page between frames F0 and
  *         F1, out of time included, with the writer), perf:N:SEED (as bot:, the time of each frame:
- *         app_run_frame, then app_build + app_frame)
+ *         app_run_frame, then app_build + app_frame), audio:FILE (the sound the app gives to the
+ *         audio output from now on, raw 16-bit stereo, and the frame of each second on stdout),
+ *         hitcheck:NAME (2.9: a finger presses a control exactly on its picture: every pixel of the
+ *         canvas under the game, the control under its centre against the pixels the controls draw;
+ *         the differences counted and shown in NAME.png, red: pressed off the picture, blue: a
+ *         drawn pixel that presses nothing)
  */
 #include "../platform/mobile/app.h"
 #include "engine.h"
 #include "../src/front/font5x7.h"
-#include "../src/game/pinball_us.h"
 #include "png_write.h"
 #include <math.h>
 #include <stdio.h>
@@ -57,6 +62,13 @@ static double now_ms(void)
 }
 
 static MobileApp app;
+#define PBR (app.pb->rom)
+#define PB_ (app.pb)
+/* the stages of the ROM played (pinball_rom.h) */
+#define IS_FIELD(s)   (pb_stage_table(PB_, (s)) >= 0)
+#define IS_TOP(s)     (IS_FIELD(s) && !((s) & 1))
+#define IS_BOTTOM(s)  (IS_FIELD(s) && ((s) & 1))
+#define IS_RED_TOP(s) (IS_TOP(s) && PB_TABLE_RED_LIKE(pb_stage_table(PB_, (s))))
 static int W = 1080, H = 2400;
 static uint32_t *fb;
 static double now;
@@ -303,12 +315,19 @@ static long frames;
 static int force_kind, force_half, hit_every;
 static long up_after = -1, up_at = -1;   /* up:N: the ball thrown up N frames after the third hit */
 static char rec_name[64];             /* rec:NAME: every frame as c: does (NAME_FRAME.png), rec:off */
+static FILE *audio_out;               /* audio:FILE */
 static bool rec_special;              /* rec:NAME:special: only while a special mode is on */
 static void rec_frame(void);
+static uint64_t cry_cycles;
 static bool hk_cry_log(GBC *g, void *u)       /* cries: the game plays them with the interrupts off */
 {
-    (void)u;
-    if (!g->frozen) printf("frame %ld: cry (14:4000)\n", frames);
+    if (u) {                                   /* its sample, written at the CPU's pace (R_CryPlayer) */
+        if (u == (void *)1) { cry_cycles = g->s.cycles; return false; }
+        printf("frame %ld: cry sample played in %.3f s (frozen %d, double speed %d)\n", frames,
+               (double)(g->s.cycles - cry_cycles) / (GBC_CLOCK << g->s.ds), g->frozen, g->s.ds);
+        return false;
+    }
+    printf("frame %ld: cry (14:4000)%s, double speed %d\n", frames, g->frozen ? " out of time" : "", g->s.ds);
     return false;
 }
 
@@ -362,35 +381,54 @@ static bool hk_force(GBC *g, void *u)
     uint8_t st = gbc_read(g, W_CurrentStage);
     if (gbc_read(g, W_CurrentScreen) != SCREEN_PINBALL_GAME || ((st & 1) != 0) != (force_half == 1)) return false;
     if (gbc_read(g, W_InSpecialMode) || !gbc_read(g, W_PinballIsVisible)) return false;
-    if (force_kind == 2 && gbc_read(g, 0xD460) == 0) { gbc_write(g, 0xD300, 0x12); gbc_write(g, 0xD460, 1); }
+    if (force_kind == 2 && gbc_read(g, W_NumPartyMons) == 0) {
+        gbc_write(g, W_PartyMons, 0x12);
+        if (PBR->id == PB_ROM_GENERATIONS) gbc_write(g, (uint16_t)(W_PartyMons + 1), 0);   /* (two bytes a Pokemon) */
+        gbc_write(g, W_NumPartyMons, 1);
+    }
     GBCState *s = &g->s;
     gbc_push(g, s->pc);
     s->hram[0x8A - 0x80] = s->a;                          /* hFarCallTempA */
     s->a = 4;
-    uint16_t addr = force_kind == 1 ? 0x403F : 0x4AB3;    /* StartCatchEmMode / StartEvolutionMode */
+    uint16_t addr = force_kind == 1 ? PBR->R_StartCatchEmMode : PBR->R_StartEvolutionMode;
     s->h = (uint8_t)(addr >> 8);
     s->l = (uint8_t)addr;
-    s->pc = 0x054F;                                       /* BankSwitch */
+    s->pc = R_BankSwitch;
     printf("frame %ld: %s mode started (stage %d)\n", frames, force_kind == 1 ? "catch" : "evolution", st);
     force_kind = 0;
     return true;
 }
 
+/* a thumb on a flipper key (the bots; 2.8: the game itself tilts the table by default) */
+static void flip_touch(int id, int key)
+{
+    const NdRect *r = &app.ui.nd.btn[key];
+    float sc = app.ui.nd.scale;
+    app_touch(&app, UI_DOWN, id, (r->x + r->w * 0.5f) * sc, (r->y + r->h * 0.5f) * sc);
+}
+
+static int table_wanted = -1;          /* table:T */
+
 static void frame(void)
 {
     /* as the device: the interface is built at every frame (layout, key animations) */
     app_build(&app, &list);
+    if (table_wanted >= 0 && app.pb && pb_screen(app.pb) == SCREEN_FIELD_SELECT) {
+        /* the region (Generations: Kanto, Johto) and the table in it */
+        if (W_FieldSelectRegion) gbc_write(&app.pb->g, W_FieldSelectRegion, (uint8_t)(table_wanted / 2));
+        gbc_write(&app.pb->g, W_SelectedFieldIndex, (uint8_t)(table_wanted & 1));
+    }
     now += 70224.0 / 4194304.0;
     app_update(&app, now);
     app_set_pad(&app, pad);
     if (hit_every > 0 && app.pb && frames % hit_every == 0) {
         GBC *g = &app.pb->g;
         /* only where the ball can hit it: on the billboard, in the bottom half */
-        if (gbc_read(g, W_InSpecialMode) && gbc_read(g, W_SpecialMode) == 0 && gbc_read(g, 0xD5BB) &&
+        if (gbc_read(g, W_InSpecialMode) && gbc_read(g, W_SpecialMode) == 0 && gbc_read(g, W_WildMonIsHittable) &&
             (gbc_read(g, W_CurrentStage) & 1)) {
-            gbc_write(g, 0xD5BF, 1);                      /* wBallHitWildMon: the ball hit the Pokemon */
-            printf("frame %ld: Pokemon hit (hits so far %d)\n", frames, gbc_read(g, 0xD5C0));
-            if (up_after >= 0 && gbc_read(g, 0xD5C0) == 2) up_at = frames + up_after;   /* this one is the third */
+            gbc_write(g, W_BallHitWildMon, 1);                      /* wBallHitWildMon: the ball hit the Pokemon */
+            printf("frame %ld: Pokemon hit (hits so far %d)\n", frames, gbc_read(g, W_NumMonHits));
+            if (up_after >= 0 && gbc_read(g, W_NumMonHits) == 2) up_at = frames + up_after;   /* this one is the third */
         }
     }
     if (frames == up_at && app.pb) {
@@ -405,7 +443,10 @@ static void frame(void)
     app_run_frame(&app);
     if (rec_name[0]) rec_frame();
     int16_t tmp[4096];
-    while (app_audio_queued(&app) > 2048) app_audio_pull(&app, tmp, 1024);
+    while (app_audio_queued(&app) > 2048) {
+        int n = app_audio_pull(&app, tmp, 1024);
+        if (audio_out && n > 0) fwrite(tmp, 4, (size_t)n, audio_out);
+    }
     app_take_haptic(&app);
     frames++;
 }
@@ -545,6 +586,47 @@ int main(int argc, char **argv)
             }
         }
         else if (!strcmp(a, "btn")) printf("buttons %02X field %d haptic %d\n", ui_buttons(&app.ui), app.ui.field, app.ui.haptic);
+        else if (!strncmp(a, "hitcheck:", 9)) {
+            Ui *u = &app.ui;
+            int fw, fh, stride;
+            app_build(&app, &list);
+            const uint32_t *cv = app_frame(&app, &fw, &fh, &stride);
+            const NdLayout *L = &u->nd;
+            if (!cv || !app.scr.bg) { printf("hitcheck: no picture\n"); continue; }
+            /* the controls alone: drawn over a colour no control has, as the app draws them */
+            uint32_t *only = (uint32_t *)malloc((size_t)fw * fh * 4), *mag = (uint32_t *)malloc((size_t)fw * fh * 4);
+            for (int i = 0; i < fw * fh; i++) mag[i] = 0xFF00FF;
+            NdState st;
+            ui_nd_state(u, &st);
+            st.set = !app.scr.disp_in_game ? ND_SET_GREY : nd_set_of_table(app.scr.disp_table);
+            st.letters = !app.scr.disp_field;
+            st.menu_open = false;
+            st.toast = NULL;
+            int nofade[2] = { 0, 0 };
+            nd_render_controls(L, &st, mag, nofade, only);
+            uint32_t *map = (uint32_t *)malloc((size_t)fw * fh * 4);
+            long off = 0, dead = 0, hits = 0, drawn = 0;
+            for (int y = 0; y < fh; y++)
+                for (int x = 0; x < fw; x++) {
+                    uint32_t c = cv[(size_t)y * stride + x] & 0xFFFFFF;
+                    uint8_t d;
+                    int k = y >= L->gy + L->gh || y >= L->play_h ? nd_hit(L, (x + 0.5f) * L->scale, (y + 0.5f) * L->scale, &d) : -1;
+                    bool dr = y >= L->gy + L->gh && (only[(size_t)y * fw + x] & 0xFFFFFF) != 0xFF00FF;
+                    map[(size_t)y * fw + x] = (c >> 2) & 0x3F3F3F;
+                    if (k >= 0) { hits++; map[(size_t)y * fw + x] |= 0x404040; }
+                    if (dr) drawn++;
+                    if (k >= 0 && !dr && y >= L->gy + L->gh) { off++; map[(size_t)y * fw + x] = 0xFF0000; }
+                    if (k < 0 && dr) { dead++; map[(size_t)y * fw + x] = 0x0000FF; }
+                }
+            printf("hitcheck %s: canvas %dx%d scale %.2f%s: %ld pixels press a control, %ld drawn; %ld pressed off the picture, "
+                   "%ld drawn pressing nothing\n", a + 9, fw, fh, L->scale, L->hidden ? " (controls hidden)" : "", hits, drawn, off, dead);
+            char p[600];
+            snprintf(p, sizeof p, "%s%s.png", prefix, a + 9);
+            png_write_rgb(p, map, fw, fh, fw, 4);
+            free(map);
+            free(only);
+            free(mag);
+        }
         else if (!strcmp(a, "hitmap")) {
             /* what a finger coming down presses, every 27 screen pixels over the bottom of the screen:
              * L/A flippers (LEFT/A), < > ^ the tilts or directions, M MENU, S START, . nothing */
@@ -614,6 +696,9 @@ int main(int argc, char **argv)
             force_half = strstr(a, "bottom") != NULL;
             if (!force_hooked) gbc_add_hook(&app.pb->g, 0, R_ResolveGameObjectCollisions, hk_force, NULL);
             force_hooked = true;
+        } else if (!strncmp(a, "audio:", 6)) {
+            if (audio_out) fclose(audio_out);
+            audio_out = fopen(a + 6, "wb");
         } else if (!strncmp(a, "rec:", 4)) {
             if (!strcmp(a + 4, "off")) rec_name[0] = 0;
             else {
@@ -623,9 +708,11 @@ int main(int argc, char **argv)
                 if (c) *c = 0;
             }
         } else if (!strcmp(a, "nodeflicker")) {
-            app.no_deflicker = true;
+            app.scr.no_deflicker = true;
         } else if (!strcmp(a, "cries") && app.pb) {
-            gbc_add_hook(&app.pb->g, 0x14, 0x4000, hk_cry_log, NULL);
+            gbc_add_hook(&app.pb->g, B_PlayCry, R_PlayCry, hk_cry_log, NULL);
+            gbc_add_hook(&app.pb->g, B_PlayCry, PBR->R_CryPlayer, hk_cry_log, (void *)1);
+            gbc_add_hook(&app.pb->g, B_PlayCry, 0x4054, hk_cry_log, (void *)2);   /* after the call of the sample player (both ROMs) */
         } else if (sscanf(a, "vtrace:%d:%d:%d:%d", &vt_t0, &vt_t1, &vt_f0, &vt_f1) == 4 && app.pb) {
             app.pb->g.vram_fn = vtrace_fn;
         } else if (!strcmp(a, "vlog") && app.pb) {
@@ -647,31 +734,31 @@ int main(int argc, char **argv)
                 printf("  KEY1 %02X", g->s.io[0x4D]);
                 printf("\n");
             }
+        } else if (sscanf(a, "table:%d", &n) == 1) {
+            table_wanted = n;
         } else if (sscanf(a, "bonus:%d", &n) == 1) {
             /* as the "go to bonus" reward of the slot, once the ball is in the bottom half */
             GBC *g = app.pb ? &app.pb->g : NULL;
             int k = 0;
             for (; g && k < 20000; k++) {
                 uint8_t st = gbc_read(g, W_CurrentStage);
-                if (gbc_read(g, W_CurrentScreen) == SCREEN_PINBALL_GAME && (st == 1 || st == 5) && !gbc_read(g, W_InSpecialMode) &&
-                    gbc_read(g, W_PinballIsVisible) && !gbc_read(g, 0xD495))
+                if (gbc_read(g, W_CurrentScreen) == SCREEN_PINBALL_GAME && IS_BOTTOM(st) && !gbc_read(g, W_InSpecialMode) &&
+                    gbc_read(g, W_PinballIsVisible) && !gbc_read(g, W_GoingToBonusStage))
                     break;
                 frame();
             }
             if (!g || k == 20000) { fprintf(stderr, "bonus %d: the ball never reached a table\n", n); continue; }
-            gbc_write(g, 0xD495, 1);                              /* wGoingToBonusStage */
+            gbc_write(g, W_GoingToBonusStage, 1);                              /* wGoingToBonusStage */
             gbc_write(g, W_MoveToNextScreenState, 1);
-            gbc_write(g, 0xD497, (uint8_t)n);                     /* wNextStage */
+            gbc_write(g, W_NextStage, (uint8_t)n);                     /* wNextStage */
         }
         else if (sscanf(a, "glitch:%d:%d", &n, &seed) == 2) {
             srand((unsigned)seed);
-            float gx, gy, gw, gh;
             for (int k = 0; k < n; k++) {
-                nd_game_rect(&app.ui.nd, &gx, &gy, &gw, &gh);
                 if (k % 6 == 0) {
                     app_touch(&app, UI_CANCEL, 0, 0, 0);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 1, gx + gw * 0.2f, gy + gh * 0.7f);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 2, gx + gw * 0.8f, gy + gh * 0.7f);
+                    if (rand() % 100 < 45) flip_touch(1, ND_LFLIP);
+                    if (rand() % 100 < 45) flip_touch(2, ND_RFLIP);
                 }
                 if (k % 600 == 300 && app.pb && !pb_in_game(app.pb)) { pad |= GBC_A; frame(); pad &= (uint8_t)~GBC_A; }
                 frame();
@@ -684,8 +771,6 @@ int main(int argc, char **argv)
             /* as bot:, each frame timed: app_run_frame (the game, its picture's background), then
              * app_build + app_frame (the controls, the picture shown), as the Android glue does */
             srand((unsigned)seed);
-            float gx, gy, gw, gh;
-            nd_game_rect(&app.ui.nd, &gx, &gy, &gw, &gh);
             double sum[2] = { 0, 0 }, mx[2] = { 0, 0 };
 #ifdef APP_PROF
             memset(app_prof, 0, sizeof app_prof);
@@ -694,8 +779,8 @@ int main(int argc, char **argv)
             for (int k = 0; k < n; k++) {
                 if (k % 6 == 0) {
                     app_touch(&app, UI_CANCEL, 0, 0, 0);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 1, gx + gw * 0.2f, gy + gh * 0.7f);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 2, gx + gw * 0.8f, gy + gh * 0.7f);
+                    if (rand() % 100 < 45) flip_touch(1, ND_LFLIP);
+                    if (rand() % 100 < 45) flip_touch(2, ND_RFLIP);
                 }
                 double t0 = now_ms();
                 frame();
@@ -725,13 +810,11 @@ int main(int argc, char **argv)
         }
         else if (sscanf(a, "bot:%d:%d", &n, &seed) == 2) {
             srand((unsigned)seed);
-            float gx, gy, gw, gh;
-            nd_game_rect(&app.ui.nd, &gx, &gy, &gw, &gh);
             for (int k = 0; k < n; k++) {
                 if (k % 6 == 0) {
                     app_touch(&app, UI_CANCEL, 0, 0, 0);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 1, gx + gw * 0.2f, gy + gh * 0.7f);
-                    if (rand() % 100 < 45) app_touch(&app, UI_DOWN, 2, gx + gw * 0.8f, gy + gh * 0.7f);
+                    if (rand() % 100 < 45) flip_touch(1, ND_LFLIP);
+                    if (rand() % 100 < 45) flip_touch(2, ND_RFLIP);
                 }
                 frame();
             }

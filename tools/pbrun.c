@@ -9,14 +9,23 @@
  *   -hashlog FILE: the fingerprints of the picture and of the sound of each frame, one line per
  *          frame (the first frame where two engines differ, and in what)
  *   -prof: (Windows, built with symbols) samples where the time goes: functions, source lines
+ *   -fx F:C:K: the screenshots through the screen filter F (0 none, 1 dots, 2 LCD) and the colours C
+ *          (0 original, 1 black and white, 2 Game Boy green) of the Windows version, cells of K x K
+ *   -table T: the bot plays the table T (PB_TABLE_*: 0 Red, 1 Blue; Generations: 2 Gold, 3 Silver, 4 Ruby,
+ *          5 Sapphire), chosen on the field select screen
+ *   -ds: the double speed of Generations on the original ROM (pb_set_double_speed, as the front-ends)
+ *   -pcm: Pikachu's voice (the sample player of bank $14): the wave channel when it starts, its length
+ *   -linecheck: rows of a picture (1 or 2) that differ from the pictures before and after while
+ *          these two are the same and the rows around stay put (a line drawn late, or early);
+ *          the first ones saved as PREFIX_line_FRAME_{a,b,c}.png
  *   -antilag, -hold: as the front-ends run the game (pb_set_antilag, pb_set_hold: the fingerprint
  *          is then that of the pictures shown); -frametime: the time of each frame, by kind
  */
 #include "../src/game/pinball.h"
 #include "engine.h"
-#include "../src/game/pinball_us.h"
 #include "png_write.h"
 #include "../src/front/deflicker.h"
+#include "../src/front/screenfx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "botrand.h"
@@ -27,8 +36,12 @@
 #endif
 
 static Pinball pb;
+#define PBR (pb.rom)
 static uint8_t rom[4 << 20];
 static bool hashing;
+static int fx_f = -1, fx_c, fx_k = 4;       /* -fx */
+static ScreenFx fx;
+static int table_wanted = -1;             /* -table */
 static uint64_t run_hash = 1469598103934665603ull;
 
 static FILE *hashlog, *audiodump;
@@ -61,7 +74,7 @@ static int btn(const char *n)
 static uint8_t rd(uint16_t a) { return gbc_read(&pb.g, a); }
 
 /* -check: report wild jumps and resets, count time per stage */
-static long wild, resets, stage_frames[16], screen_frames[16];
+static long wild, resets, stage_frames[32], screen_frames[16];
 static void check_trace(GBC *g, void *u)
 {
     (void)u;
@@ -90,9 +103,9 @@ static bool hk_vblank(GBC *g, void *u)
     lag_vblanks++;
     /* on a table, playing: late unless in the wait for the next frame (0472-0474) */
     uint8_t st = rd(W_CurrentStage);
-    if (rd(W_CurrentScreen) == SCREEN_PINBALL_GAME && st <= 5) {
+    if (rd(W_CurrentScreen) == SCREEN_PINBALL_GAME && pb_stage_table(&pb, st) >= 0) {
         lag_field++;
-        bool late = !(bank == 0 && pc >= 0x0472 && pc <= 0x0474) && !g->s.halted;
+        bool late = !(bank == 0 && pc >= R_WaitFrameLoop && pc <= R_WaitFrameLoop + 2) && !g->s.halted;
         if (late) {
             lag_field_late++;
             lag_late_run++;
@@ -146,6 +159,20 @@ static void lag_report(void)
 /* -sfx: the sound effects (04AF, DE = the effect) and songs (0490, E) the game asks for, in its
  * normal run and in the out-of-time runs of the half without the ball (whose requests are lost:
  * the memory of the sound engine is not merged) */
+/* -pcm: Pikachu's voice (the sample player of bank $14): the state of the wave channel when it
+ * starts, and how long it took */
+static uint64_t pcm_t0;
+static bool hk_pcm_log(GBC *g, void *u)
+{
+    const GBCApu *a = &g->s.apu;
+    if (u == (void *)1) pcm_t0 = gbc_sound_time(&g->s);
+    fprintf(stderr, "frame %ld: sample player %s (%.3f s): NR50 %02X NR51 %02X power %d ch3 on %d dac %d level %d sample %d "
+            "frozen %d double speed %d\n", frames, u == (void *)1 ? "starts" : "returns",
+            u == (void *)1 ? 0.0 : (double)(gbc_sound_time(&g->s) - pcm_t0) / GBC_CLOCK,
+            a->regs[0x14], a->regs[0x15], a->power, a->ch3.on, a->ch3.dac, a->ch3.level, a->ch3.sample, g->frozen, g->s.ds);
+    return false;
+}
+
 static bool sfxstat;
 static long sfx_n[2][2][256];            /* [song?][frozen?][id] */
 static long sfx_frame[256][2];            /* last frame each effect was asked for: [running, out of time] */
@@ -243,6 +270,67 @@ static void flicker_frame(void)
     for (int y = 0; y < h; y++) memcpy(fl_prev[0] + (size_t)y * w, px + (size_t)y * stride, (size_t)w * 4);
 }
 
+/* -linecheck: a band of 1 or 2 rows of picture B different from A (before) and C (after), A and C
+ * the same there, and the rows just above and below the same in all three */
+static bool linecheck;
+static void save_png_rows(const char *name, const uint32_t *p, int w, int h) { png_write_rgb(name, p, w, h, w, 3); }
+static uint32_t *lc_pic[2];
+static long lc_found, lc_frames, lc_saved, lc_row_hist[GBC_FB_H];
+
+static bool row_same(const uint32_t *a, const uint32_t *b, int w, int y)
+{
+    return !memcmp(a + (size_t)y * w, b + (size_t)y * w, (size_t)w * 4);
+}
+
+static void linecheck_frame(void)
+{
+    int w, h, stride;
+    const uint32_t *px = pb_frame(&pb, &w, &h, &stride);
+    static int pw, ph, same;
+    if (!lc_pic[0]) for (int i = 0; i < 2; i++) lc_pic[i] = (uint32_t *)calloc((size_t)GBC_FB_W * GBC_FB_H, 4);
+    static uint32_t *cur;
+    if (!cur) cur = (uint32_t *)calloc((size_t)GBC_FB_W * GBC_FB_H, 4);
+    for (int y = 0; y < h; y++) memcpy(cur + (size_t)y * w, px + (size_t)y * stride, (size_t)w * 4);
+    if (w != pw || h != ph) { pw = w; ph = h; same = 0; }
+    same++;
+    const uint32_t *A = lc_pic[1], *B = lc_pic[0], *C = cur;
+    if (same >= 3) {
+        lc_frames++;
+        int y = 1;
+        while (y < h - 1) {
+            bool t = !row_same(A, B, w, y) && !row_same(B, C, w, y) && row_same(A, C, w, y);
+            if (!t) { y++; continue; }
+            int y1 = y;
+            while (y1 + 1 < h - 1 && !row_same(A, B, w, y1 + 1) && !row_same(B, C, w, y1 + 1) && row_same(A, C, w, y1 + 1)) y1++;
+            bool around = row_same(A, B, w, y - 1) && row_same(B, C, w, y - 1) && row_same(A, B, w, y1 + 1) && row_same(B, C, w, y1 + 1);
+            if (y1 - y < 2 && around) {
+                lc_found++;
+                lc_row_hist[y]++;
+                if (lc_found <= 20) fprintf(stderr, "frame %ld: rows %d-%d of the picture (%dx%d) shown for one frame only (stage %d)\n",
+                                            frames - 1, y, y1, w, h, rd(W_CurrentStage));
+                if (lc_saved < 6) {
+                    char n[600];
+                    snprintf(n, sizeof n, "%s_line_%ld_a.png", prefix, frames - 1); save_png_rows(n, A, w, h);
+                    snprintf(n, sizeof n, "%s_line_%ld_b.png", prefix, frames - 1); save_png_rows(n, B, w, h);
+                    snprintf(n, sizeof n, "%s_line_%ld_c.png", prefix, frames - 1); save_png_rows(n, C, w, h);
+                    lc_saved++;
+                }
+            }
+            y = y1 + 1;
+        }
+    }
+    uint32_t *t = lc_pic[1];
+    lc_pic[1] = lc_pic[0];
+    lc_pic[0] = t;
+    memcpy(lc_pic[0], cur, (size_t)w * h * 4);
+}
+
+static void linecheck_report(void)
+{
+    fprintf(stderr, "linecheck: %ld bands of 1-2 rows shown for one frame only, in %ld frames compared\n", lc_found, lc_frames);
+    for (int y = 0; y < GBC_FB_H; y++) if (lc_row_hist[y]) fprintf(stderr, "  row %3d: %ld\n", y, lc_row_hist[y]);
+}
+
 /* -frametime: the time of each frame of the emulation (pb_run_frame), the slowest ones */
 static bool frametime;
 static double ft_sum, ft_max[8];
@@ -278,6 +366,11 @@ static void frame(void)
     long refresh0 = pb.st.stats_refresh, swaps0 = pb.st.stats_swaps, late0 = pb.stats_late;
     bool unified0 = pb.st.unified;
     if (ratewobble) pb_set_audio_rate(&pb, 48000.0 * (1.0 + 0.005 * ((rand() % 2001) - 1000) / 1000.0));
+    if (table_wanted >= 0 && rd(W_CurrentScreen) == SCREEN_FIELD_SELECT) {
+        /* the region (Generations: Kanto, Johto) and the table in it */
+        if (W_FieldSelectRegion) gbc_write(&pb.g, W_FieldSelectRegion, (uint8_t)(table_wanted / 2));
+        gbc_write(&pb.g, W_SelectedFieldIndex, (uint8_t)(table_wanted & 1));
+    }
     pb_run_frame(&pb, held);
     if (sfxstat) sfx_end_frame();
     if (frametime) {
@@ -300,6 +393,7 @@ static void frame(void)
             }
     }
     if (flicker) flicker_frame();
+    if (linecheck) linecheck_frame();
     if (sramwatch && frames % 60 == 0) {             /* -sramwrites: the cartridge save changed this second */
         size_t n;
         const uint8_t *d = pb_sram(&pb, &n);
@@ -307,7 +401,7 @@ static void frame(void)
         if (frames && memcmp(d, sram_last, n)) { sram_changes++; if (sram_changes <= 20) fprintf(stderr, "frame %ld: cartridge save changed\n", frames); }
         memcpy(sram_last, d, n);
     }
-    stage_frames[rd(W_CurrentStage) & 15]++;
+    stage_frames[rd(W_CurrentStage) & 31]++;
     screen_frames[rd(W_CurrentScreen) & 15]++;
     int16_t tmp[4096];
     int n;
@@ -435,6 +529,11 @@ static void shot(const char *name)
     int w, h, stride;
     const uint32_t *px = pb_frame(&pb, &w, &h, &stride);
     snprintf(path, sizeof path, "%s_%s.png", prefix, name);
+    if (fx_f >= 0 && screenfx_begin(&fx, px, w, h, stride, fx_f, fx_c, fx_k)) {
+        screenfx_rows(&fx, 0, fx.h);
+        png_write_rgb(path, fx.out, w * fx.k, h * fx.k, w * fx.k, fx.k == 1 ? 2 : 1);
+        return;
+    }
     png_write_rgb(path, px, w, h, stride, 2);
 }
 
@@ -528,8 +627,14 @@ int main(int argc, char **argv)
         } else if (!strcmp(a, "-hashlog") && i + 1 < argc) {
             hashing = true;
             hashlog = fopen(argv[++i], "w");
+        } else if (!strcmp(a, "-fx") && i + 1 < argc) {
+            sscanf(argv[++i], "%d:%d:%d", &fx_f, &fx_c, &fx_k);
+        } else if (!strcmp(a, "-table") && i + 1 < argc) {
+            table_wanted = atoi(argv[++i]);
         } else if (!strcmp(a, "-hash")) {
             hashing = true;
+        } else if (!strcmp(a, "-linecheck")) {
+            linecheck = true;
         } else if (!strcmp(a, "-flicker")) {
             flicker = true;
         } else if (!strcmp(a, "-deflicker")) {
@@ -538,8 +643,13 @@ int main(int argc, char **argv)
             ratewobble = true;
         } else if (!strcmp(a, "-sfx")) {
             sfxstat = true;
-            gbc_add_hook(&pb.g, 0, 0x04AF, hk_sfx, NULL);
-            gbc_add_hook(&pb.g, 0, 0x0490, hk_sfx, (void *)1);
+            gbc_add_hook(&pb.g, 0, R_PlaySoundEffect, hk_sfx, NULL);
+            gbc_add_hook(&pb.g, 0, R_PlaySong, hk_sfx, (void *)1);
+        } else if (!strcmp(a, "-pcm")) {
+            gbc_add_hook(&pb.g, B_PlayCry, PBR->R_CryPlayer, hk_pcm_log, (void *)1);
+            gbc_add_hook(&pb.g, B_PlayCry, 0x4054, hk_pcm_log, (void *)2);   /* after its call (both ROMs) */
+        } else if (!strcmp(a, "-ds")) {
+            pb_set_double_speed(&pb, true);
         } else if (!strcmp(a, "-antilag")) {
             pb_set_antilag(&pb, true);
         } else if (!strcmp(a, "-hold")) {               /* pb_frame as the front-ends show it (pb_set_hold) */
@@ -547,7 +657,7 @@ int main(int argc, char **argv)
         } else if (!strcmp(a, "-lag")) {
             lagstat = true;
             gbc_add_hook(&pb.g, 0, 0x0040, hk_vblank, NULL);
-            gbc_add_hook(&pb.g, 0, 0x0468, hk_wait_entry, NULL);
+            gbc_add_hook(&pb.g, 0, R_WaitFrame, hk_wait_entry, NULL);
         } else if (!strcmp(a, "-frametime")) {
             frametime = true;
         } else if (!strcmp(a, "-sramwrites")) {
@@ -641,7 +751,7 @@ int main(int argc, char **argv)
             pb.st.stats_refresh, pb.st.stats_aborts, rd(W_CurrentStage), rd(W_CurrentScreen));
     if (pb.g.trace_fn) {
         fprintf(stderr, "wild=%ld resets=%ld  stages:", wild, resets);
-        for (int i = 0; i < 16; i++) if (stage_frames[i]) fprintf(stderr, " %d:%ld", i, stage_frames[i]);
+        for (int i = 0; i < 32; i++) if (stage_frames[i]) fprintf(stderr, " %d:%ld", i, stage_frames[i]);
         fprintf(stderr, "  screens:");
         for (int i = 0; i < 16; i++) if (screen_frames[i]) fprintf(stderr, " %d:%ld", i, screen_frames[i]);
         fprintf(stderr, "\n");
@@ -701,6 +811,7 @@ int main(int argc, char **argv)
     if (profiling) prof_report();
     if (lagstat) lag_report();
     if (sfxstat) sfx_report();
+    if (linecheck) linecheck_report();
     pb_free(&pb);
     return 0;
 }

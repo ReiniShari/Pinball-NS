@@ -10,7 +10,6 @@
  */
 #include "design.h"
 #include "../../src/front/font5x7.h"
-#include "../../src/game/pinball_us.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +36,41 @@ typedef struct {
     bool letters;                    /* B and A on white keys (menus), else the flippers */
 } KeySet;
 
-static const KeySet SETS[3] = {
+/* the guides of each table, measured on their palettes (Gold: FFC500 / AD5200, Silver: 7B84CE / 211963) */
+static const KeySet SETS[ND_NSETS] = {
     { C_LBLUE, C_BLUE, C_LBLUE, C_BLUE, C_BLUE, false },
     { C_GREEN, C_DGREEN, C_GREEN, C_DGREEN, C_DGREEN, false },
     { C_LAV, C_WHITE, C_LAV, C_DARK, 0x4A4A7Bu, true },
+    { 0xFFC500u, 0xAD5200u, 0xFFC500u, 0xAD5200u, 0xAD5200u, false },
+    { 0x7B84CEu, 0x211963u, 0x7B84CEu, 0x211963u, 0x211963u, false },
 };
+
+int nd_set_of_table(int table)
+{
+    switch (table) {
+    case PB_TABLE_RED: case PB_TABLE_RUBY: return ND_SET_RED;
+    case PB_TABLE_BLUE: case PB_TABLE_SAPPHIRE: return ND_SET_BLUE;
+    case PB_TABLE_GOLD: return ND_SET_GOLD;
+    case PB_TABLE_SILVER: return ND_SET_SILVER;
+    default: return ND_SET_GREY;
+    }
+}
+
+/* the frame of the tables built like the Red one (its colour, its lines, its rivets) and the
+ * background of those built like the Blue one (its blue, the light blue of its launch lane),
+ * measured on the tables of Generations: Gold 733A00 / C58400, Silver 525263 / 9494AD */
+typedef struct { uint32_t frame, line, rivet; } RedFrame;
+typedef struct { uint32_t back, lane; } BlueBack;
+static RedFrame red_frame(int table)
+{
+    if (table == PB_TABLE_GOLD) return (RedFrame){ 0x733A00u, 0xC58400u, C_RIVET };
+    return (RedFrame){ C_RED, C_YELLOW, C_RIVET };
+}
+static BlueBack blue_back(int table)
+{
+    if (table == PB_TABLE_SILVER) return (BlueBack){ 0x525263u, 0x9494ADu };
+    return (BlueBack){ C_BLUE, C_LBLUE };
+}
 
 #define BLOCK_H   65                 /* rows from the status bar to the bottom in the design */
 /* the funnels under the status bar: half width, depth, bands of lines under the outline */
@@ -52,8 +81,12 @@ static const KeySet SETS[3] = {
 #define BLUE_DEPTH 8
 #define BLUE_BANDS 7
 #define BLOCK_MIN 44                 /* the least room the controls get (smaller keys) */
+#define HIDDEN_H  16                 /* the controls hidden: the room of MENU and START */
 #define PILL_W    26
 #define PILL_H    8
+#define PILL_GAP  6                  /* between MENU and START, under the pad */
+#define PAD_W     48
+#define KEY_W     40                 /* the flipper keys (32 up to 2.7, 42 in 2.8) */
 
 /* ------------------------------------------------------------------ drawing on the canvas */
 
@@ -240,17 +273,63 @@ static const char *const SCREW[13] = {
 };
 static const char *const RIVET[4] = { ".00.", "0120", "02.0", ".00." };
 
+/* The game's own flipper in the flipper keys (2.9, the user's design): its three positions as the
+ * game draws them, from its tiles in the ROM played (nd_set_flipper; nothing of the game's art is
+ * in this program). The right flipper, as the OAM frames of DrawFlippers make it (rest, half way,
+ * up: three 8 x 16 sprites each, y, x, first tile - $60); the left one is its mirror image. The three
+ * share one box, so that the pivot stays put. */
+#define FLIP_MAX 32
+static const int8_t FLIP_OAM[3][3][3] = {
+    { { 0x0C, 5, 4 }, { 0x0A, -3, 2 }, { 0x14, -11, 0 } },
+    { { 0x0C, 5, 10 }, { 0x04, -3, 8 }, { 0x0C, -11, 6 } },
+    { { 0x0A, 5, 16 }, { 0x03, -3, 14 }, { -3, -11, 12 } },
+};
+static uint8_t flip_px[3][FLIP_MAX][FLIP_MAX];  /* colour numbers (0: transparent) */
+static int flip_w, flip_h;                      /* the box of the three, 0: no sprite */
+
+void nd_set_flipper(const uint8_t *tiles)
+{
+    flip_w = flip_h = 0;
+    if (!tiles) return;
+    int x0 = 99, y0 = 99, x1 = -99, y1 = -99;
+    static int8_t px[3][48][40];
+    memset(px, 0, sizeof px);
+    for (int f = 0; f < 3; f++)
+        for (int s = 0; s < 3; s++)
+            for (int r = 0; r < 16; r++) {
+                const uint8_t *row = tiles + (FLIP_OAM[f][s][2] + r / 8) * 16 + (r % 8) * 2;
+                for (int b = 0; b < 8; b++) {
+                    int c = ((row[0] >> (7 - b)) & 1) | (((row[1] >> (7 - b)) & 1) << 1);
+                    int x = FLIP_OAM[f][s][1] + b + 12, y = FLIP_OAM[f][s][0] + r + 4;
+                    if (!c || x < 0 || x >= 40 || y < 0 || y >= 48) continue;
+                    px[f][y][x] = (int8_t)c;
+                    if (x < x0) x0 = x;
+                    if (x > x1) x1 = x;
+                    if (y < y0) y0 = y;
+                    if (y > y1) y1 = y;
+                }
+            }
+    if (x1 < x0 || x1 - x0 + 1 > FLIP_MAX || y1 - y0 + 1 > FLIP_MAX) return;
+    flip_w = x1 - x0 + 1;
+    flip_h = y1 - y0 + 1;
+    for (int f = 0; f < 3; f++)
+        for (int y = 0; y < flip_h; y++)
+            for (int x = 0; x < flip_w; x++) flip_px[f][y][x] = (uint8_t)px[f][y0 + y][x0 + x];
+}
+
 /* ------------------------------------------------------------------ layout */
 
-static int fdiv(int a, int b) { return a >= 0 ? a / b : -((-a + b - 1) / b); }
+static int floor_div(int a, int b) { return a >= 0 ? a / b : -((-a + b - 1) / b); }
 
 /* the last row of a funnel's lines, under the status bar (its tip) */
-static int funnel_bottom(int hv, int depth, int nb) { return -1 + fdiv((hv - 1) * depth, hv) + nb; }
+static int funnel_bottom(int hv, int depth, int nb) { return -1 + floor_div((hv - 1) * depth, hv) + nb; }
 
-void nd_layout(NdLayout *L, int sw, int sh, int inset_t, int inset_b, int corner, int gw, int gh, int scene)
+void nd_layout(NdLayout *L, int sw, int sh, int inset_t, int inset_b, int corner, int gw, int gh, int scene, bool tee, bool hidden)
 {
     memset(L, 0, sizeof *L);
     L->scene = scene;
+    L->tee = tee;
+    L->hidden = hidden;
     if (sw < 1) sw = 1;
     if (sh < 1) sh = 1;
     if (gw < 1) gw = ND_W;
@@ -260,7 +339,7 @@ void nd_layout(NdLayout *L, int sw, int sh, int inset_t, int inset_b, int corner
     /* as wide as the screen; a screen too short for the table and its controls gets a smaller
      * picture (then black on both sides: nothing is added beside the game) */
     float s = (float)sw / ND_W;
-    float smax = (float)sh / (gh + BLOCK_MIN);
+    float smax = (float)sh / (gh + (hidden ? HIDDEN_H : BLOCK_MIN));
     if (s > smax) s = smax;
     if (s < 0.01f) s = 0.01f;
     int cw = (int)ceilf(sw / s - 0.01f), ch = (int)ceilf(sh / s - 0.01f);
@@ -278,47 +357,66 @@ void nd_layout(NdLayout *L, int sw, int sh, int inset_t, int inset_b, int corner
     L->bottom = L->vh - ib;
     /* under the camera cut-out when the controls keep the room of the design, else higher (the
      * table then goes under it: its top is the frame) */
-    int room = L->bottom - gh - BLOCK_H;
+    int room = L->bottom - gh - (hidden ? HIDDEN_H : BLOCK_H);
     L->gy = room <= 0 ? 0 : room < it ? room : it;
     L->corner = (int)lroundf(corner / s);
+    bool table = scene == ND_SCENE_RED || scene == ND_SCENE_BLUE;
 
-    /* the controls: anchored at the bottom, smaller when the room is short */
+    /* the controls: anchored at the bottom, smaller when the room is short. The pad (the rows it
+     * shows: the T ends with its bar, shadows included), then MENU and START under it */
     int avail = L->bottom - (L->gy + gh);
     float f = avail >= BLOCK_H ? 1.0f : (avail - 5) / 60.0f;
     if (f < 0.5f) f = 0.5f;
-    int pad = (int)lroundf(48 * f), key = (int)lroundf(32 * f);
+    int pad = (int)lroundf(PAD_W * f), key = (int)lroundf(KEY_W * f);
     if (pad < 24) pad = 24;
-    if (key < 16) key = 16;
+    if (key < 18) key = 18;
+    int a = pad / 3 + ((pad / 3) % 2 == 0 ? 1 : 0), half = pad / 2;
+    int body = tee ? half + a / 2 + 2 : pad + 1;
+    int gap = (int)lroundf(3 * f);
+    if (gap < 2) gap = 2;
+    int group = body + gap + PILL_H + 1;
     int b = L->bottom, x0 = L->gx;
-    int pad_y = b - 6 - pad;
-    if (avail < BLOCK_H) pad_y = b - (int)lroundf(6 * f) - pad;
-    L->btn[ND_PAD] = (NdRect){ x0 + ND_W / 2 - pad / 2, pad_y, pad, pad };
-    L->btn[ND_LFLIP] = (NdRect){ x0 + 5, pad_y + (pad - key) / 2, key, key };
-    L->btn[ND_RFLIP] = (NdRect){ x0 + ND_W - 5 - key, pad_y + (pad - key) / 2, key, key };
-    /* on a table, the pad is centred in the room left between the tip of the funnel and the
-     * bottom (the line of the frame on the Red table) */
-    if (avail >= BLOCK_H && (scene == ND_SCENE_RED || scene == ND_SCENE_BLUE)) {
+    int gy0 = b - (int)lroundf(5 * f) - group;
+    /* on a table, centred in the room left between the tip of the funnel and the bottom (the line
+     * of the frame on the Red table) */
+    if (avail >= BLOCK_H && table) {
         bool red = scene == ND_SCENE_RED;
         int top = L->gy + gh + 1 + (red ? funnel_bottom(RED_HV, RED_DEPTH, RED_BANDS) : funnel_bottom(BLUE_HV, BLUE_DEPTH, BLUE_BANDS));
         int lim = red ? L->vh - 3 : L->vh;
-        int py = top + (lim - top - (pad + 1)) / 2;
-        if (py + pad + 1 > lim) py = lim - pad - 1;
+        int py = top + (lim - top - group) / 2;
+        if (py + group > lim) py = lim - group;
         if (py < top) py = top;
-        L->btn[ND_PAD].y = py;
+        gy0 = py;
     }
-    int pill_y = b - (int)lroundf(60 * f);
-    if (pill_y < L->gy + gh + 4) pill_y = L->gy + gh + 4;
-    L->btn[ND_MENU] = (NdRect){ x0 + 19, pill_y, PILL_W, PILL_H };
-    L->btn[ND_START] = (NdRect){ x0 + ND_W - 19 - PILL_W, pill_y, PILL_W, PILL_H };
+    L->btn[ND_PAD] = (NdRect){ x0 + ND_W / 2 - pad / 2, gy0, pad, pad };
+    int pill_y = gy0 + body + gap;
+    L->btn[ND_MENU] = (NdRect){ x0 + ND_W / 2 - PILL_GAP / 2 - PILL_W, pill_y, PILL_W, PILL_H };
+    L->btn[ND_START] = (NdRect){ x0 + ND_W / 2 + PILL_GAP / 2, pill_y, PILL_W, PILL_H };
+    /* the flipper keys: beside the pad, level with its middle (2.9, the user's design: MENU and
+     * START under the T, below the keys), under the line at the top of the Red frame */
+    int ky = gy0 + body / 2 - key / 2, kmin = L->gy + gh + (scene == ND_SCENE_RED ? 5 : 2);
+    if (ky + key > b - 2) ky = b - 2 - key;
+    if (ky < kmin) ky = kmin;
+    L->btn[ND_LFLIP] = (NdRect){ x0 + 5, ky, key, key };
+    L->btn[ND_RFLIP] = (NdRect){ x0 + ND_W - 5 - key, ky, key, key };
+
+    int ctl_top = (gy0 < ky ? gy0 : ky) - 3;
+    if (hidden) {
+        /* the controls hidden (2.9): MENU and START only, at the bottom (the pad and the keys keep their
+         * places, neither drawn nor touched); the whole screen is the game's */
+        int py = b - 4 - PILL_H;
+        L->btn[ND_MENU].y = L->btn[ND_START].y = py;
+        ctl_top = py - 3;
+    }
 
     /* the screens of the Game Boy's size: centred between the top and the controls (never under
      * the camera cut-out); what they show continues above and below them */
-    int ctl_top = pill_y - 3;
-    if (scene != ND_SCENE_RED && scene != ND_SCENE_BLUE && gh <= PB_STAGE_H) {
+    if (!table && gh <= PB_STAGE_H) {
         int cy = (ctl_top - gh) / 2;
         if (cy > L->gy) L->gy = cy;
     }
-    L->play_h = L->gy + gh > ctl_top ? L->gy + gh : ctl_top;
+    L->play_h = table || L->gy + gh > ctl_top ? L->gy + gh : ctl_top;
+    if (hidden) L->play_h = L->vh;
 }
 
 void nd_play_rect(const NdLayout *L, float *x, float *y, float *w, float *h)
@@ -359,11 +457,10 @@ static bool in_key(const NdRect *r, int px, int py)
     return dx + dy >= n / 4;
 }
 
-static int in_pad(const NdRect *r, int px, int py)
+static int pad_part(int n, int x, int y, bool tee)               /* x, y from the centre */
 {
-    int n = r->w, a = n / 3 + ((n / 3) % 2 == 0 ? 1 : 0), half = n / 2, ha = a / 2;
-    int x = px - (r->x + half), y = py - (r->y + half);
-    if (y == half) y = half - 1;                                    /* its shadow */
+    int a = n / 3 + ((n / 3) % 2 == 0 ? 1 : 0), half = n / 2, ha = a / 2;
+    if (tee && y > ha) return -1;                                   /* the T: no down arm */
     if (x < -half || x >= half || y < -half || y >= half) return -1;
     int X = x < 0 ? -x - 1 : x, Y = y < 0 ? -y - 1 : y;
     if (!((X <= ha && Y < half) || (Y <= ha && X < half))) return -1;
@@ -372,30 +469,38 @@ static int in_pad(const NdRect *r, int px, int py)
     return 0;
 }
 
+static int in_pad(const NdRect *r, int px, int py, bool tee)
+{
+    int x = px - (r->x + r->w / 2), y = py - (r->y + r->w / 2);
+    int d = pad_part(r->w, x, y, tee);
+    return d >= 0 ? d : pad_part(r->w, x, y - 1, tee);            /* its shadow, a row lower (2.9: all of it) */
+}
+
 /*
- * The control under a point of the screen: below the play area only (the halves of the game, which
- * play the flippers, end where the controls begin), on the pixels of its picture only: the octagon of
- * a flipper key, the cross of the pad (its arm: one direction, a tilt never comes with another one),
- * the rounded box of a pill. Up to 2.7 margins around them (2.6: the whole of each side of the
- * controls for the flipper keys): a thumb near the pad or a pill pressed another control.
+ * The control under a point of the screen, below the game only: on the pixels of their pictures
+ * only (2.9, as in 2.7): the octagon of a flipper key, the cross or the T of the pad (its arm, one
+ * direction: a tilt never comes with another one), the rounded box of a pill, their shadows
+ * included. Up to 2.6 margins around the controls, in 2.8 the whole quarter of the screen beside
+ * the pad for the flipper keys. With the controls hidden, MENU and START only.
  */
 int nd_hit(const NdLayout *L, float sx, float sy, uint8_t *dirs)
 {
     float x = sx / L->scale, y = sy / L->scale;
     *dirs = 0;
-    if (y < L->play_h) return -1;
     int px = (int)floorf(x), py = (int)floorf(y);
-    if (L->btn[ND_MENU].w > 0 && in_pill(&L->btn[ND_MENU], px, py)) return ND_MENU;
-    if (L->btn[ND_START].w > 0 && in_pill(&L->btn[ND_START], px, py)) return ND_START;
-    if (L->btn[ND_LFLIP].w > 0 && in_key(&L->btn[ND_LFLIP], px, py)) return ND_LFLIP;
-    if (L->btn[ND_RFLIP].w > 0 && in_key(&L->btn[ND_RFLIP], px, py)) return ND_RFLIP;
-    int d = L->btn[ND_PAD].w > 0 ? in_pad(&L->btn[ND_PAD], px, py) : -1;
-    if (d < 0) return -1;
-    *dirs = (uint8_t)d;
-    return ND_PAD;
+    if (in_pill(&L->btn[ND_MENU], px, py)) return ND_MENU;
+    if (in_pill(&L->btn[ND_START], px, py)) return ND_START;
+    if (L->hidden || y < L->play_h) return -1;
+    const NdRect *p = &L->btn[ND_PAD];
+    if (p->w <= 0) return -1;
+    int d = in_pad(p, px, py, L->tee);
+    if (d >= 0) { *dirs = (uint8_t)d; return ND_PAD; }
+    if (in_key(&L->btn[ND_LFLIP], px, py)) return ND_LFLIP;
+    if (in_key(&L->btn[ND_RFLIP], px, py)) return ND_RFLIP;
+    return -1;
 }
 
-uint8_t nd_key_buttons(int key, uint8_t dirs, bool field)
+uint8_t nd_key_buttons(int key, uint8_t dirs, bool field, bool tee)
 {
     switch (key) {
     case ND_LFLIP: return field ? ND_GB_LEFT : ND_GB_B;
@@ -407,6 +512,10 @@ uint8_t nd_key_buttons(int key, uint8_t dirs, bool field)
             if (dirs & ND_DIR_LEFT) m |= ND_GB_DOWN;
             if (dirs & ND_DIR_RIGHT) m |= ND_GB_B;
             if (!dirs || (dirs & ND_DIR_UP)) m |= ND_GB_SELECT;    /* the up arm and TILT itself */
+        } else if (tee) {                                 /* the game's menus: SAVE over CANCEL */
+            if (dirs & ND_DIR_LEFT) m |= ND_GB_LEFT | ND_GB_UP;
+            if (dirs & ND_DIR_RIGHT) m |= ND_GB_RIGHT | ND_GB_DOWN;
+            if (dirs & ND_DIR_UP) m |= ND_GB_UP;
         } else {
             if (!dirs) m |= ND_GB_SELECT;                 /* the centre of the directional pad */
             if (dirs & ND_DIR_LEFT) m |= ND_GB_LEFT;
@@ -420,7 +529,7 @@ uint8_t nd_key_buttons(int key, uint8_t dirs, bool field)
     }
 }
 
-void nd_targets(uint8_t on, bool field, bool menu_open, float target[ND_NBTN], uint8_t *dirs)
+void nd_targets(uint8_t on, bool field, bool tee, bool menu_open, float target[ND_NBTN], uint8_t *dirs)
 {
     if (menu_open) on = 0;
     uint8_t d = 0;
@@ -428,6 +537,10 @@ void nd_targets(uint8_t on, bool field, bool menu_open, float target[ND_NBTN], u
         if (on & ND_GB_DOWN) d |= ND_DIR_LEFT;
         if (on & ND_GB_B) d |= ND_DIR_RIGHT;
         if (on & ND_GB_SELECT) d |= ND_DIR_UP;
+    } else if (tee) {                                     /* (no down arm: DOWN is the right arrow) */
+        if (on & ND_GB_LEFT) d |= ND_DIR_LEFT;
+        if (on & (ND_GB_RIGHT | ND_GB_DOWN)) d |= ND_DIR_RIGHT;
+        if ((on & ND_GB_UP) && !(on & ND_GB_LEFT)) d |= ND_DIR_UP;
     } else {
         if (on & ND_GB_LEFT) d |= ND_DIR_LEFT;
         if (on & ND_GB_RIGHT) d |= ND_DIR_RIGHT;
@@ -437,7 +550,7 @@ void nd_targets(uint8_t on, bool field, bool menu_open, float target[ND_NBTN], u
     *dirs = d;
     target[ND_LFLIP] = (field ? (on & ND_GB_LEFT) : (on & ND_GB_B)) ? 1.0f : 0.0f;
     target[ND_RFLIP] = (on & ND_GB_A) ? 1.0f : 0.0f;
-    target[ND_PAD] = (d || (!field && (on & ND_GB_SELECT))) ? 1.0f : 0.0f;
+    target[ND_PAD] = (d || (!field && !tee && (on & ND_GB_SELECT))) ? 1.0f : 0.0f;
     target[ND_START] = (on & ND_GB_START) ? 1.0f : 0.0f;
     target[ND_MENU] = menu_open ? 1.0f : 0.0f;
 }
@@ -459,12 +572,12 @@ static void funnel(Canvas *c, int cx, int y0, int hv, int depth, const uint32_t 
 {
     for (int x = x0; x < x1; x++) {
         int dxv = x < cx ? cx - x : x - cx + 1;
-        int e = y0 - 1 + fdiv((hv - dxv) * depth, hv);      /* the outline */
+        int e = y0 - 1 + floor_div((hv - dxv) * depth, hv);      /* the outline */
         for (int y = y0; y < e; y++) put(c, x, y, C_WHITE);
         if (e >= y0) put(c, x, e, dxv <= hv ? C_BLACK : bands[0]);
         for (int k = 0; k < nb; k++) if (e + 1 + k >= y0) put(c, x, e + 1 + k, bands[k]);
         /* steep steps of the outline: no hole between the columns */
-        int dn = (x < cx ? dxv - 1 : dxv + 1), en = y0 - 1 + fdiv((hv - dn) * depth, hv);
+        int dn = (x < cx ? dxv - 1 : dxv + 1), en = y0 - 1 + floor_div((hv - dn) * depth, hv);
         if (dxv <= hv && en < e - 1)
             for (int y = en + 1; y < e; y++) put(c, x, y, C_BLACK);
     }
@@ -486,11 +599,12 @@ static int frame_dist(int x, int y, int x0, int x1, int yb, int r)
 
 /* the frame of the Red table goes on and closes under it: red, the yellow-green line (two
  * pixels, one from the edge), its rivets, the funnel of the drain */
-static void panel_red(Canvas *c, const NdLayout *L)
+static void panel_red(Canvas *c, const NdLayout *L, int table)
 {
     int x0 = L->gx, x1 = L->gx + ND_W, y0 = L->gy + L->gh, yb = L->vh;
     int r = L->corner > 3 ? L->corner : 3;
-    uint32_t red = faded(c, C_RED), yel = faded(c, C_YELLOW), blk = faded(c, C_BLACK);
+    RedFrame fr = red_frame(table);
+    uint32_t red = faded(c, fr.frame), yel = faded(c, fr.line), blk = faded(c, C_BLACK);
     for (int y = y0; y < c->h; y++)
         for (int x = x0; x < x1; x++) {
             uint32_t col = red;
@@ -500,10 +614,10 @@ static void panel_red(Canvas *c, const NdLayout *L)
             }
             put_raw(c, x, y, col);
         }
-    fill(c, x0 + 1, y0 + 2, ND_W - 2, 2, C_YELLOW);       /* the top line, under the status bar */
-    static const uint32_t bands[RED_BANDS] = { C_RED, C_YELLOW, C_YELLOW };
+    fill(c, x0 + 1, y0 + 2, ND_W - 2, 2, fr.line);         /* the top line, under the status bar */
+    const uint32_t bands[RED_BANDS] = { fr.frame, fr.line, fr.line };
     funnel(c, x0 + ND_W / 2, y0, RED_HV, RED_DEPTH, bands, RED_BANDS, x0 + 3, x1 - 3);
-    static const uint32_t rpal[] = { C_RIVET, C_WHITE, C_YELLOW };
+    const uint32_t rpal[] = { fr.rivet, C_WHITE, fr.line };
     int ty = y0 + 5;
     sprite(c, x0 + 4, ty, RIVET, 4, rpal, false);
     sprite(c, x1 - 8, ty, RIVET, 4, rpal, false);
@@ -520,10 +634,11 @@ static void panel_red(Canvas *c, const NdLayout *L)
 
 /* the Blue table: blue, the funnel in the lines of its walls, the wall of the launch lane on the
  * right (as the table shows it at its original width), its screws */
-static void panel_blue(Canvas *c, const NdLayout *L)
+static void panel_blue(Canvas *c, const NdLayout *L, int table)
 {
     int x0 = L->gx, x1 = L->gx + ND_W, y0 = L->gy + L->gh, yb = L->vh;
-    fill(c, x0, y0, ND_W, c->h - y0, C_BLUE);
+    BlueBack bk = blue_back(table);
+    fill(c, x0, y0, ND_W, c->h - y0, bk.back);
     /* the lane wall: black, blue, four light blue, blue; the lane widens at the bottom (its wall
      * turns left), the blue edge of the table goes on down to the bottom */
     int bend = yb - 28;
@@ -531,16 +646,26 @@ static void panel_blue(Canvas *c, const NdLayout *L)
         int k = y >= bend ? (y - bend) / 4 + 1 : 0;
         int xk = x1 - 8 - k;
         put(c, xk, y, C_BLACK);
-        put(c, xk + 1, y, C_BLUE);
-        for (int x = xk + 2; x < x1; x++) put(c, x, y, x >= x1 - 2 ? C_BLUE : C_LBLUE);
+        put(c, xk + 1, y, bk.back);
+        for (int x = xk + 2; x < x1; x++) put(c, x, y, x >= x1 - 2 ? bk.back : bk.lane);
     }
-    static const uint32_t bands[BLUE_BANDS] = { C_BLUE, C_WHITE, C_WHITE, C_WHITE, C_BLUE, C_LBLUE, C_LBLUE };
+    const uint32_t bands[BLUE_BANDS] = { bk.back, C_WHITE, C_WHITE, C_WHITE, bk.back, bk.lane, bk.lane };
     funnel(c, x0 + ND_W / 2, y0, BLUE_HV, BLUE_DEPTH, bands, BLUE_BANDS, x0 + 50, x1 - 50);
-    static const uint32_t spal[] = { C_BLACK, C_WHITE, C_LBLUE };
-    int sy = yb - 15;
-    if (sy > y0 + 10) {
-        sprite(c, x0 + 39, sy, SCREW, 13, spal, false);
-        sprite(c, x1 - 39 - 13, sy, SCREW, 13, spal, true);
+    const uint32_t spal[] = { C_BLACK, C_WHITE, bk.lane };
+    /* the screws: beside the up arm of the pad, between it and the flipper keys (2.9, the user's
+     * design), when they have the room; else, and with the controls hidden, in the top corners (2.8;
+     * at the bottom up to 2.7) */
+    (void)yb;
+    const NdRect *p = &L->btn[ND_PAD], *kl = &L->btn[ND_LFLIP], *kr = &L->btn[ND_RFLIP];
+    int n = p->w, a = n / 3 + ((n / 3) % 2 == 0 ? 1 : 0), cx = p->x + n / 2;
+    int arm0 = cx - a / 2 - 1, arm1 = cx + a / 2;                   /* the columns of the up arm */
+    int sl = (kl->x + kl->w + arm0) / 2 - 6, sr = (arm1 + 1 + kr->x) / 2 - 6, sy = p->y - 3;
+    if (!L->hidden && n > 0 && sl > kl->x + kl->w && sl + 13 < arm0 && sr > arm1 + 1 && sr + 13 < kr->x && sy >= y0 + 2) {
+        sprite(c, sl, sy, SCREW, 13, spal, false);
+        sprite(c, sr, sy, SCREW, 13, spal, true);
+    } else if (L->hidden || kl->y >= y0 + 3 + 14) {
+        sprite(c, x0 + 4, y0 + 3, SCREW, 13, spal, false);
+        sprite(c, x1 - 23, y0 + 3, SCREW, 13, spal, true);
     }
 }
 
@@ -557,23 +682,25 @@ static void panel_blue(Canvas *c, const NdLayout *L)
  * Gengar's grass keeps its grass tiles only (no walls, no lane).
  */
 typedef struct {
-    uint8_t stage;
+    uint8_t bonus;                   /* PB_BONUS_* */
     int8_t pat0, pat_n;              /* the rows of the pattern */
     int8_t lane0, lane_n;            /* the rows of the drain lane (lane_n 0: none) */
     bool grass;
 } StageExt;
 
 static const StageExt STAGES[] = {
-    { 13, 16, 2, 16, 2, false },     /* Diglett */
-    { 9, 14, 4, 16, 2, false },      /* Mewtwo */
-    { 11, 12, 4, 16, 2, false },     /* Meowth */
-    { 15, 12, 6, 15, 3, false },     /* Seel */
-    { 7, 14, 4, 0, 0, true },        /* Gengar */
+    { PB_BONUS_DIGLETT, 16, 2, 16, 2, false },
+    { PB_BONUS_MEWTWO, 14, 4, 16, 2, false },
+    { PB_BONUS_MEOWTH, 12, 4, 16, 2, false },
+    { PB_BONUS_SEEL, 12, 6, 15, 3, false },
+    { PB_BONUS_GENGAR, 14, 4, 0, 0, true },
 };
 
-static const StageExt *stage_ext(int stage)
+/* the extension of a stage of the ROM played (its numbers differ in Generations) */
+static const StageExt *stage_ext(const Pinball *pb, int stage)
 {
-    for (size_t i = 0; i < sizeof STAGES / sizeof STAGES[0]; i++) if (STAGES[i].stage == stage) return &STAGES[i];
+    int kind = pb ? pb_stage_bonus(pb, stage) : PB_BONUS_NONE;
+    for (size_t i = 0; kind && i < sizeof STAGES / sizeof STAGES[0]; i++) if (STAGES[i].bonus == kind) return &STAGES[i];
     return NULL;
 }
 
@@ -581,9 +708,9 @@ int nd_scene(const Pinball *pb, int gh)
 {
     const PbView *v = pb ? pb_view(pb) : NULL;          /* what the game showed with its picture */
     if (!v || v->screen != SCREEN_PINBALL_GAME) return ND_SCENE_SCREEN;
-    int stage = v->stage;
-    if (gh == PB_FIELD_H) return (stage == 0 || stage == 1) ? ND_SCENE_RED : (stage == 4 || stage == 5) ? ND_SCENE_BLUE : ND_SCENE_SCREEN;
-    if ((gh == 144 || gh == PB_STAGE_H) && stage_ext(stage) && v->lcd_on) return ND_SCENE_STAGE;
+    int stage = v->stage, table = pb_stage_table(pb, stage);
+    if (gh == PB_FIELD_H) return table < 0 ? ND_SCENE_SCREEN : PB_TABLE_RED_LIKE(table) ? ND_SCENE_RED : ND_SCENE_BLUE;
+    if ((gh == 144 || gh == PB_STAGE_H) && stage_ext(pb, stage) && v->lcd_on) return ND_SCENE_STAGE;
     return ND_SCENE_SCREEN;
 }
 
@@ -644,7 +771,7 @@ static uint32_t pattern_px(const StageMap *m, int x, int vx, int row, int py)
 
 static bool ext_stage(Canvas *c, const NdLayout *L, const Pinball *pb, int stage)
 {
-    const StageExt *e = stage_ext(stage);
+    const StageExt *e = stage_ext(pb, stage);
     if (!e) return false;
     const GBCState *s = &pb->g.s;
     uint8_t lcdc = s->io[0x40];
@@ -800,7 +927,7 @@ static void draw_pill(Canvas *c, const NdRect *r, float press, const char *label
 }
 
 /* the pad: the lane guides of the table (or the lavender of the menus), lit from the top left */
-static void draw_pad(Canvas *c, const NdRect *r, const KeySet *k, uint8_t dirs, bool tilt, bool centre)
+static void draw_pad(Canvas *c, const NdRect *r, const KeySet *k, uint8_t dirs, bool tilt, bool centre, bool tee)
 {
     int n = r->w, a = n / 3 + ((n / 3) % 2 == 0 ? 1 : 0);      /* arm width, odd: centred */
     int cx = r->x + n / 2, cy = r->y + n / 2, half = n / 2, ha = a / 2;
@@ -810,8 +937,8 @@ static void draw_pad(Canvas *c, const NdRect *r, const KeySet *k, uint8_t dirs, 
             for (int x = -half; x < half; x++) {
                 int X = x < 0 ? -x - 1 : x, Y = y < 0 ? -y - 1 : y;          /* symmetric about the centre */
                 bool in = (X <= ha && Y < half) || (Y <= ha && X < half);
-                if (!in) continue;
-                bool edge = X == half - 1 || Y == half - 1 || (X == ha && Y > ha) || (Y == ha && X > ha);
+                if (!in || (tee && y > ha)) continue;                    /* the T: no down arm */
+                bool edge = X == half - 1 || Y == half - 1 || (X == ha && Y > ha) || (Y == ha && X > ha) || (tee && y == ha);
                 if (pass == 0) { put(c, cx + x, cy + y + 1, C_BLACK); continue; }
                 if (pass == 1) { put(c, cx + x, cy + y, C_BLACK); continue; }
                 if (edge) continue;
@@ -822,7 +949,8 @@ static void draw_pad(Canvas *c, const NdRect *r, const KeySet *k, uint8_t dirs, 
                 uint32_t col = lit ? k->pad_lit : k->pad;
                 bool top = (Y == half - 2 && y < 0 && X < ha) || (Y == ha - 1 && y < 0 && X > ha && X < half - 1);
                 bool left = (X == half - 2 && x < 0 && Y < ha) || (X == ha - 1 && x < 0 && Y > ha && Y < half - 1);
-                bool bot = (Y == half - 2 && y >= 0 && X < ha) || (Y == ha - 1 && y >= 0 && X > ha && X < half - 1);
+                bool bot = (Y == half - 2 && y >= 0 && X < ha) || (Y == ha - 1 && y >= 0 && X > ha && X < half - 1) ||
+                           (tee && y == ha - 1 && X < half - 1);
                 bool right = (X == half - 2 && x >= 0 && Y < ha) || (X == ha - 1 && x >= 0 && Y > ha && Y < half - 1);
                 if (!lit && (top || left)) col = C_WHITE;
                 else if (!lit && (bot || right)) col = k->pad_dark;
@@ -830,7 +958,7 @@ static void draw_pad(Canvas *c, const NdRect *r, const KeySet *k, uint8_t dirs, 
             }
     /* arrows near the ends of the arms */
     int al = ha - 1 > 1 ? ha - 1 : 1, off = half - 3 - al;
-    for (int d = 0; d < 4; d++) {
+    for (int d = 0; d < (tee ? 3 : 4); d++) {
         int bit = d == 0 ? ND_DIR_LEFT : d == 1 ? ND_DIR_RIGHT : d == 2 ? ND_DIR_UP : ND_DIR_DOWN;
         uint32_t col = (dirs & bit) ? C_WHITE : k->pad_dark;
         for (int q = 0; q <= al; q++)
@@ -886,7 +1014,19 @@ static void draw_key(Canvas *c, const NdRect *r, const KeySet *k, bool mirror, f
         if (letter) bitmap(c, r->x + (n - 7) / 2, r->y + (n - 10) / 2 + sink, letter, 10, white ? C_BLACK : C_WHITE, C_BLACK, !white);
         return;
     }
-    /* the flipper: a tapered bar from the pivot, rotating about it */
+    if (flip_w && flip_w + 6 <= n && flip_h + 6 <= n) {
+        /* the game's flipper: rest, half way, up, as the key goes down */
+        int f = up < 0.34f ? 0 : up < 0.67f ? 1 : 2;
+        static const uint32_t pal[4] = { 0, C_WHITE, C_SHADE, C_BLACK };
+        int ox = r->x + (n - flip_w) / 2, oy = r->y + (n - flip_h) / 2 + sink;
+        for (int y = 0; y < flip_h; y++)
+            for (int x = 0; x < flip_w; x++) {
+                int ci = flip_px[f][y][mirror ? x : flip_w - 1 - x];
+                if (ci) put(c, ox + x, oy + y, pal[ci]);
+            }
+        return;
+    }
+    /* without the game's tiles (the icon): a tapered bar from the pivot, rotating about it */
     float len = n * 0.56f, r1 = n * 0.15f, r2 = n * 0.075f;
     float rest = 0.42f, raised = -0.42f, ang = rest + (raised - rest) * up;
     float px = n * 0.27f, py = n * 0.45f + sink;
@@ -924,10 +1064,14 @@ static void draw_key(Canvas *c, const NdRect *r, const KeySet *k, bool mirror, f
 #define MENU_ROW 11
 #define MENU_HEAD 13
 
-/* cuts the next line of at most maxc letters off *s, at a space when possible, at a new line always */
-static int next_line(const char **s, char *line, int size, int maxc)
+/* cuts the next line of at most maxc letters off *s, at a space when possible, at a new line always;
+ * an empty line where the text has one (2.9: a new subject). false at its end. */
+static bool next_line(const char **s, char *line, int size, int maxc)
 {
-    while (**s == ' ' || **s == '\n') (*s)++;
+    while (**s == ' ') (*s)++;
+    if (!**s) return false;
+    line[0] = 0;
+    if (**s == '\n') { (*s)++; return true; }
     const char *p = *s;
     int n = 0, cut = -1;
     while (*p && *p != '\n' && n < maxc) { if (*p == ' ') cut = (int)(p - *s); utf8_next(&p); n++; }
@@ -937,7 +1081,9 @@ static int next_line(const char **s, char *line, int size, int maxc)
     memcpy(line, *s, (size_t)len);
     line[len] = 0;
     *s += len;
-    return len;
+    while (**s == ' ') (*s)++;
+    if (**s == '\n') (*s)++;                    /* the end of its line */
+    return true;
 }
 
 /* lines of a text cut to the width of the menu */
@@ -945,8 +1091,19 @@ static int text_lines(const char *s, int maxc)
 {
     char line[96];
     int n = 0;
-    while (s && *s && n < 12 && next_line(&s, line, sizeof line, maxc)) n++;
+    while (s && n < 60 && next_line(&s, line, sizeof line, maxc)) n++;
     return n;
+}
+
+/* the texts under the entries (the hint, the author, the rights, the measures): their lines, an
+ * empty line between two of them (2.9: a new subject) */
+static int texts_h(const NdState *st, int maxc)
+{
+    const char *parts[4] = { st->menu_hint, st->menu_credits, st->menu_rights, st->menu_info };
+    int h = 0, n = 0;
+    for (int k = 0; k < 4; k++)
+        if (parts[k]) { h += text_lines(parts[k], maxc) * FONT_CELL_H; n++; }
+    return n ? 2 + h + (n - 1) * FONT_CELL_H : 0;
 }
 
 static int menu_width(const NdLayout *L, const NdState *st)
@@ -962,11 +1119,7 @@ static int menu_width(const NdLayout *L, const NdState *st)
 static NdRect menu_box(const NdLayout *L, const NdState *st)
 {
     int w = menu_width(L, st), maxc = (w - 6) / FONT_CELL_W;
-    int h = MENU_HEAD + 4 + st->menu_n * MENU_ROW + 3;
-    if (st->menu_hint) h += text_lines(st->menu_hint, maxc) * FONT_CELL_H + 3;
-    if (st->menu_credits) h += text_lines(st->menu_credits, maxc) * FONT_CELL_H + 3;
-    if (st->menu_rights) h += text_lines(st->menu_rights, maxc) * FONT_CELL_H + 3;
-    if (st->menu_info) h += text_lines(st->menu_info, maxc) * FONT_CELL_H + 3;
+    int h = MENU_HEAD + 4 + st->menu_n * MENU_ROW + 3 + texts_h(st, maxc);
     NdRect r = { L->gx + L->gw / 2 - w / 2, L->gy + L->gh / 2 - h / 2, w, h };
     if (r.y + h > L->vh - 3) r.y = L->vh - 3 - h;
     if (r.x < 2) r.x = 2;
@@ -1007,20 +1160,25 @@ static void draw_menu(Canvas *c, const NdLayout *L, const NdState *st)
         }
         text_outlined(c, b.x + 15, ry + 1, st->menu_label[i], C_WHITE, C_BLACK);
     }
-    /* the hint, then the author (each under a line), the rights, what the platform measured (under a
-     * line); cut at the spaces */
+    /* the hint, the author, the rights, what the platform measured: cut at the spaces, an empty line
+     * between two subjects (a line in its middle; 2.9) */
     int hy = b.y + MENU_HEAD + 4 + st->menu_n * MENU_ROW + 2;
     const char *parts[4] = { st->menu_hint, st->menu_credits, st->menu_rights, st->menu_info };
+    if (st->menu_n && (parts[0] || parts[1] || parts[2] || parts[3])) fill(c, b.x + 3, hy - 2, b.w - 6, 1, C_SHADE);
+    bool first = true;
     for (int k = 0; k < 4; k++) {
         const char *s = parts[k];
         if (!s) continue;
-        if (k != 2) fill(c, b.x + 3, hy - 2, b.w - 6, 1, C_SHADE);
-        char line[96];
-        while (*s && next_line(&s, line, sizeof line, (b.w - 6) / FONT_CELL_W)) {
-            text(c, b.x + b.w / 2 - text_w(line) / 2, hy, line, C_HINT);
+        if (!first) {
+            fill(c, b.x + 3, hy + FONT_CELL_H / 2 - 1, b.w - 6, 1, C_SHADE);
             hy += FONT_CELL_H;
         }
-        hy += 3;
+        first = false;
+        char line[96];
+        while (next_line(&s, line, sizeof line, (b.w - 6) / FONT_CELL_W)) {
+            if (line[0]) text(c, b.x + b.w / 2 - text_w(line) / 2, hy, line, C_HINT);
+            hy += FONT_CELL_H;
+        }
     }
 }
 
@@ -1029,7 +1187,7 @@ static void draw_toast(Canvas *c, const NdLayout *L, const char *msg)
     char lines[2][64];
     int maxc = (L->gw - 6) / FONT_CELL_W, n = 0;
     const char *s = msg;
-    while (n < 2 && *s && next_line(&s, lines[n], sizeof lines[n], maxc)) n++;
+    while (n < 2 && next_line(&s, lines[n], sizeof lines[n], maxc)) if (lines[n][0]) n++;
     if (!n) return;
     int h = n * FONT_CELL_H + 3, y = L->gy + L->gh - (L->gh > 200 ? 10 : 0) - h - 6;
     fill(c, L->gx, y - 1, L->gw, h + 2, C_WHITE);
@@ -1085,10 +1243,10 @@ void nd_render_game(const NdLayout *L, const Pinball *pb, const uint32_t *game, 
     /* what continues the game around it */
     const PbView *v = pb ? pb_view(pb) : NULL;
     int y0 = L->gy + L->gh;
-    if (L->scene == ND_SCENE_RED) panel_red(&c, L);
-    else if (L->scene == ND_SCENE_BLUE) panel_blue(&c, L);
+    if (L->scene == ND_SCENE_RED) panel_red(&c, L, v ? v->table : PB_TABLE_RED);
+    else if (L->scene == ND_SCENE_BLUE) panel_blue(&c, L, v ? v->table : PB_TABLE_BLUE);
     else if (L->scene == ND_SCENE_STAGE && v && ext_stage(&c, L, pb, v->stage)) {
-        if (v->stage == 13) diglett_arch(&c, L, game, game_stride);
+        if (pb_stage_bonus(pb, v->stage) == PB_BONUS_DIGLETT) diglett_arch(&c, L, game, game_stride);
     } else if (game && v && v->screen == 5 && L->gh == 144 && dex_list(game, game_stride)) {
         dex_frame(&c, L, game, game_stride);
     } else {
@@ -1119,7 +1277,7 @@ void nd_render_controls(const NdLayout *L, const NdState *st, const uint32_t *bg
     memcpy(out, bg, (size_t)c.w * c.h * sizeof *out);
 
     /* the controls */
-    int set = st->set >= 0 && st->set <= ND_SET_GREY ? st->set : ND_SET_GREY;
+    int set = st->set >= 0 && st->set < ND_NSETS ? st->set : ND_SET_GREY;
     KeySet keys = SETS[set];
     if (st->letters) keys.letters = true;              /* the colours stay those of the table */
     const KeySet *k = &keys;
@@ -1128,9 +1286,11 @@ void nd_render_controls(const NdLayout *L, const NdState *st, const uint32_t *bg
     draw_pill(&c, &L->btn[ND_START], st->press[ND_START], "START");
     uint8_t dirs = st->pad_dirs;
     if (!field && !dirs && st->press[ND_PAD] > 0.5f) dirs = 0xFF;  /* SELECT: the centre */
-    draw_pad(&c, &L->btn[ND_PAD], k, dirs == 0xFF ? 0 : dirs, field, dirs == 0xFF);
-    draw_key(&c, &L->btn[ND_LFLIP], k, false, st->press[ND_LFLIP], BIG_B);
-    draw_key(&c, &L->btn[ND_RFLIP], k, true, st->press[ND_RFLIP], BIG_A);
+    if (!L->hidden) {
+        draw_pad(&c, &L->btn[ND_PAD], k, dirs == 0xFF ? 0 : dirs, field, dirs == 0xFF, L->tee);
+        draw_key(&c, &L->btn[ND_LFLIP], k, false, st->press[ND_LFLIP], BIG_B);
+        draw_key(&c, &L->btn[ND_RFLIP], k, true, st->press[ND_RFLIP], BIG_A);
+    }
 
     /* the game itself, over the controls */
     int x0 = L->gx < 0 ? 0 : L->gx, x1 = L->gx + L->gw > c.w ? c.w : L->gx + L->gw;

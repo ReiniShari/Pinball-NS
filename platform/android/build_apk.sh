@@ -87,7 +87,7 @@ echo "apksigner: $APKSIGNER"
 rm -rf "$OUT/obj" "$OUT/stubs" "$OUT/apk"
 mkdir -p "$OUT/res"
 
-SRCS="platform/android/main_android.c platform/android/gles_render.c platform/mobile/app.c platform/mobile/ui.c platform/mobile/design.c src/game/pinball.c \
+SRCS="platform/android/main_android.c platform/android/gles_render.c platform/mobile/app.c platform/mobile/ui.c platform/mobile/design.c platform/mobile/screen.c src/game/pinball.c \
  src/core/gbc.c src/core/gbc_exec.c src/core/gbc_ppu.c src/core/gbc_apu.c"
 
 # build_lib ABI: lib/ABI/libpinballtc.so

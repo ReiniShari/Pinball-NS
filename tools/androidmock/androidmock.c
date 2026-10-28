@@ -154,6 +154,7 @@ void AInputQueue_finishEvent(AInputQueue *q, AInputEvent *e, int handled) { (voi
 
 int32_t AInputEvent_getType(const AInputEvent *e) { return e->type; }
 int32_t AInputEvent_getSource(const AInputEvent *e) { return e->source; }
+int32_t AInputEvent_getDeviceId(const AInputEvent *e) { (void)e; return 7; }   /* one gamepad, or the touch screen */
 int32_t AKeyEvent_getAction(const AInputEvent *e) { return e->action; }
 int32_t AKeyEvent_getKeyCode(const AInputEvent *e) { return e->keycode; }
 int32_t AMotionEvent_getAction(const AInputEvent *e) { return e->action; }
@@ -339,8 +340,8 @@ void ANativeActivity_setWindowFlags(ANativeActivity *na, uint32_t a, uint32_t r)
 /* ------------------------------------------------------------------ JNI: a tiny fake Java world */
 
 enum { K_CLASS = 1, K_ACTIVITY, K_INTENT, K_URI, K_RESOLVER, K_STREAM, K_STRING, K_BYTES, K_WINDOW, K_VIEW, K_VIBRATOR,
-       K_EFFECT, K_PARAMS, K_INSETS, K_CUTOUT, K_CORNER };
-static int cutout_mode_set, effects_made, insets_asked;
+       K_EFFECT, K_PARAMS, K_INSETS, K_CUTOUT, K_CORNER, K_VIBMANAGER, K_ATTRIBUTES };
+static int cutout_mode_set, effects_made, insets_asked, vib_manager_asked, attributes_made;
 static const int mock_insets[4] = { 96, 0, 0, 0 };          /* a camera hole at the top */
 typedef struct FakeObj {
     int kind;
@@ -384,7 +385,12 @@ static jobject JNICALL j_CallObjectMethod(JNIEnv *env, jobject obj, jmethodID mi
     jobject r = NULL;
     if (o->kind == K_ACTIVITY && !strcmp(m, "getIntent")) r = (jobject)o->uri;           /* the intent */
     else if (o->kind == K_ACTIVITY && !strcmp(m, "getContentResolver")) r = (jobject)obj_new(K_RESOLVER);
-    else if (o->kind == K_ACTIVITY && !strcmp(m, "getSystemService")) r = (jobject)obj_new(K_VIBRATOR);
+    else if (o->kind == K_ACTIVITY && !strcmp(m, "getSystemService")) {
+        /* Android 12+: the vibrator manager, whose default vibrator is the phone's */
+        FakeObj *name = (FakeObj *)va_arg(ap, jobject);
+        if (name && !strcmp(name->str, "vibrator_manager")) { vib_manager_asked++; r = (jobject)obj_new(K_VIBMANAGER); }
+        else r = (jobject)obj_new(K_VIBRATOR);
+    } else if (o->kind == K_VIBMANAGER && !strcmp(m, "getDefaultVibrator")) r = (jobject)obj_new(K_VIBRATOR);
     else if (o->kind == K_ACTIVITY && !strcmp(m, "getWindow")) r = (jobject)obj_new(K_WINDOW);
     else if (o->kind == K_WINDOW && !strcmp(m, "getDecorView")) r = (jobject)obj_new(K_VIEW);
     else if (o->kind == K_WINDOW && !strcmp(m, "getAttributes")) r = (jobject)obj_new(K_PARAMS);
@@ -444,8 +450,19 @@ static jobject JNICALL j_CallStaticObjectMethod(JNIEnv *env, jclass c, jmethodID
     (void)env; (void)c;
     const char *m = ((FakeMethod *)mid)->name;
     if (!strcmp(m, "createPredefined") || !strcmp(m, "createOneShot")) { effects_made++; return (jobject)obj_new(K_EFFECT); }
+    if (!strcmp(m, "createForUsage")) { attributes_made++; return (jobject)obj_new(K_ATTRIBUTES); }
+    if (!strcmp(m, "getDevice")) return NULL;                       /* no gamepad */
     fprintf(stderr, "mock: unexpected CallStaticObjectMethod %s\n", m);
     return NULL;
+}
+static jboolean JNICALL j_CallBooleanMethod(JNIEnv *env, jobject obj, jmethodID mid, ...)
+{
+    (void)env;
+    FakeObj *o = (FakeObj *)obj;
+    const char *m = ((FakeMethod *)mid)->name;
+    if (o->kind == K_VIBRATOR && (!strcmp(m, "hasVibrator") || !strcmp(m, "hasAmplitudeControl"))) return JNI_TRUE;
+    fprintf(stderr, "mock: unexpected CallBooleanMethod %s\n", m);
+    return JNI_FALSE;
 }
 static jfieldID JNICALL j_GetFieldID(JNIEnv *env, jclass c, const char *name, const char *sig) { return (jfieldID)j_GetMethodID(env, c, name, sig); }
 static void JNICALL j_SetIntField(JNIEnv *env, jobject o, jfieldID f, jint v)
@@ -455,8 +472,9 @@ static void JNICALL j_SetIntField(JNIEnv *env, jobject o, jfieldID f, jint v)
 }
 
 /* the tables of functions: JNINativeInterface_ in the jni.h of a JDK (Linux), JNINativeInterface in
- * the NDK's (androidmock built for Android and run on the emulator) */
-#ifdef __ANDROID__
+ * the NDK's (androidmock built for Android and run on the emulator, or on Linux with the NDK's jni.h:
+ * -DPNS_NDK_JNI) */
+#if defined(__ANDROID__) || defined(PNS_NDK_JNI)
 static struct JNINativeInterface jni_fns;
 static struct JNIInvokeInterface vm_fns;
 #else
@@ -485,6 +503,7 @@ static void jni_setup(void)
     jni_fns.CallObjectMethod = j_CallObjectMethod;
     jni_fns.CallVoidMethod = j_CallVoidMethod;
     jni_fns.CallIntMethod = j_CallIntMethod;
+    jni_fns.CallBooleanMethod = j_CallBooleanMethod;
     jni_fns.GetStaticMethodID = j_GetStaticMethodID;
     jni_fns.CallStaticObjectMethod = j_CallStaticObjectMethod;
     jni_fns.GetFieldID = j_GetFieldID;
@@ -568,6 +587,22 @@ int main(int argc, char **argv)
 {
     if (argc < 2) { fprintf(stderr, "usage: androidmock ROM.gbc\n"); return 2; }
     const char *rom = argv[1];
+    /* the files of the game of this ROM (Pokemon Pinball Generations: gen_*, 2 MB) */
+    char rom_file[200], suspend_file[200];
+    long rom_bytes = 1 << 20;
+    {
+        FILE *f = fopen(rom, "rb");
+        static uint8_t buf[4 << 20];
+        size_t n = f ? fread(buf, 1, sizeof buf, f) : 0;
+        if (f) fclose(f);
+        char sha[41];
+        pb_sha1_hex(buf, n, sha);
+        const PbRom *r = pb_rom_profile(sha);
+        bool gen = r && r->id == PB_ROM_GENERATIONS;
+        snprintf(rom_file, sizeof rom_file, MOCK_DIR "/files/%srom.gbc", gen ? "gen_" : "");
+        snprintf(suspend_file, sizeof suspend_file, MOCK_DIR "/files/%ssuspend.state", gen ? "gen_" : "");
+        rom_bytes = (long)n;
+    }
     signal(SIGALRM, on_alarm);
     alarm(120);
     jni_setup();
@@ -584,7 +619,9 @@ int main(int argc, char **argv)
     CHECK(swaps > 20, "the screen is drawn (%ld frames)", swaps);
     CHECK(ui_flags_set > 0, "full screen requested (%ld)", ui_flags_set);
     CHECK(cutout_mode_set > 0, "the window covers the camera cut-out");
-    CHECK(effects_made == 3, "haptic effects made (%d)", effects_made);
+    CHECK(effects_made == 4, "haptic effects made, and the rumble's (%d)", effects_made);
+    CHECK(vib_manager_asked > 0 && attributes_made == 2, "the vibrator manager's vibrator, the attributes of the vibrations (%d, %d)",
+          vib_manager_asked, attributes_made);
 
     printf("2. the player opens the ROM with the app: a second activity\n");
     act_hide(&a1);
@@ -594,7 +631,7 @@ int main(int argc, char **argv)
     msleep(1500);
     struct stat st;
     CHECK(app_has_game(app), "the ROM was imported and the game started");
-    CHECK(stat(MOCK_DIR "/files/rom.gbc", &st) == 0 && st.st_size == 1 << 20, "rom.gbc stored in the app's storage");
+    CHECK(stat(rom_file, &st) == 0 && st.st_size == rom_bytes, "the ROM stored in the app's storage (%s)", rom_file + strlen(MOCK_DIR) + 1);
 
     printf("3. touches: start a game (A: the right key of the menus), then the flippers\n");
     msleep(2500);
@@ -643,7 +680,7 @@ int main(int argc, char **argv)
 
     printf("5. the app goes to the background and comes back\n");
     act_hide(&a2);
-    CHECK(stat(MOCK_DIR "/files/suspend.state", &st) == 0, "machine state saved when paused");
+    CHECK(stat(suspend_file, &st) == 0, "machine state saved when paused");
     long fh = game_frames();
     msleep(400);
     CHECK(game_frames() == fh && open_streams == 0, "nothing runs in the background, sound closed");
@@ -661,7 +698,12 @@ int main(int argc, char **argv)
     key(a1.q, AKEYCODE_BACK, AKEY_EVENT_ACTION_DOWN);
     key(a1.q, AKEYCODE_BACK, AKEY_EVENT_ACTION_UP);
     msleep(200);
-    for (int i = 0; i < UI_MENU_ITEMS - 1; i++) { key(a1.q, AKEYCODE_DPAD_DOWN, AKEY_EVENT_ACTION_DOWN); msleep(40); key(a1.q, AKEYCODE_DPAD_DOWN, AKEY_EVENT_ACTION_UP); msleep(40); }
+    /* RESUME chosen (the back key opened the menu): up goes round to the last row, QUIT */
+    key(a1.q, AKEYCODE_DPAD_UP, AKEY_EVENT_ACTION_DOWN);
+    msleep(40);
+    key(a1.q, AKEYCODE_DPAD_UP, AKEY_EVENT_ACTION_UP);
+    msleep(40);
+    CHECK(app->ui.menu_sel == UI_MENU_ITEMS - 1, "the last row chosen (QUIT, row %d)", app->ui.menu_sel);
     key(a1.q, AKEYCODE_BUTTON_A, AKEY_EVENT_ACTION_DOWN);
     msleep(60);
     key(a1.q, AKEYCODE_BUTTON_A, AKEY_EVENT_ACTION_UP);
@@ -680,7 +722,7 @@ int main(int argc, char **argv)
     MobileApp fresh;
     app_init(&fresh, internal, 48000);
     CHECK(app_has_game(&fresh) && pb_screen(fresh.pb) == 4, "suspend state restored at start (screen %d)", fresh.pb ? pb_screen(fresh.pb) : -1);
-    CHECK(stat(MOCK_DIR "/files/suspend.state", &st) != 0, "suspend state used once (removed once loaded)");
+    CHECK(stat(suspend_file, &st) != 0, "suspend state used once (removed once loaded)");
     app_free(&fresh);
 
     printf("%s (%d failure%s), %ld screen frames drawn, %ld game image uploads\n", failures ? "FAILED" : "ALL OK",

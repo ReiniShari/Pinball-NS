@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Pinball NS
+Comment=Pokémon Pinball, the whole table on one screen
+Exec=pinball-ns %f
+Icon=pinball-ns
+Terminal=false
+Categories=Game;ArcadeGame;
+MimeType=application/x-gameboy-color-rom;

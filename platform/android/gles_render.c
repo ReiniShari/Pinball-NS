@@ -75,6 +75,7 @@ static const char *FS_GAME =
     "uniform float u_filter;\n"
     "uniform float u_colors;\n"
     "uniform vec4 u_frect;\n"
+    "uniform vec2 u_fsize;\n"      /* the picture in the texture (texels) */
     "vec3 tone(vec3 c) {\n"
     "  if (u_colors < 0.5) return c;\n"
     "  float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
@@ -119,7 +120,9 @@ static const char *FS_GAME =
     "  vec2 c = fract(v_uv) - 0.5;\n"
     "  vec2 range = 0.5 - 0.5 / u_scale;\n"
     "  vec2 f = (c - clamp(c, -range, range)) * u_scale + 0.5;\n"
-    "  vec4 p = texture2D(u_tex, (t + f) / u_texsize);\n"
+    /* the transition of the last row and column stays in the picture: past it, the texture keeps
+     * an older, larger picture (2.9: a line of the old screen at the bottom and the right edge) */
+    "  vec4 p = texture2D(u_tex, clamp(t + f, vec2(0.5), u_fsize - 0.5) / u_texsize);\n"
     "  gl_FragColor = vec4(tone(p.bgr), 1.0);\n"
     "}\n";
 
@@ -190,6 +193,7 @@ bool gr_init(GlRenderer *r)
     r->u_game_filter = glGetUniformLocation(r->prog_game, "u_filter");
     r->u_game_frect = glGetUniformLocation(r->prog_game, "u_frect");
     r->u_game_colors = glGetUniformLocation(r->prog_game, "u_colors");
+    r->u_game_fsize = glGetUniformLocation(r->prog_game, "u_fsize");
 
     /* font atlas: glyph i in cell (i % 16, i / 16), 8 x 8 pixels per cell */
     font_init();
@@ -303,6 +307,7 @@ void gr_draw(GlRenderer *r, const UiList *l, int w, int h, int fw, int fh)
             glUniform1f(r->u_game_filter, (float)it->filter);
             glUniform4f(r->u_game_frect, it->fx0, it->fy0, it->fx1, it->fy1);
             glUniform1f(r->u_game_colors, (float)it->colors);
+            glUniform2f(r->u_game_fsize, (float)fw, (float)fh);
             float x0 = it->x, y0 = it->y, x1 = it->x + it->w, y1 = it->y + it->h;
             float q[16] = { x0, y0, 0, 0,  x1, y0, (float)fw, 0,  x0, y1, 0, (float)fh,  x1, y1, (float)fw, (float)fh };
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, q);

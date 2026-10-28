@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdatomic.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -71,10 +72,27 @@ static volatile int g_audio_error;
 static int32_t g_burst, g_xruns;        /* the stream's burst; its own underruns seen so far */
 static double g_xrun_check;
 
-static jobject g_vibrator;                 /* global refs, created once */
-static jmethodID g_vib_vibrate, g_vib_cancel;
+/* The vibrators (global refs, created once). 2.8 (issue 4 of the project: no vibration at all on a
+ * POCO F4, HyperOS, nor on its Bluetooth gamepad): the phone's is the default vibrator of the vibrator
+ * manager from Android 12 on (getSystemService("vibrator") before), and every vibration says what it
+ * is for: the rumble, part of a game, "media" (Android 13+: VibrationAttributes; 8-12: AudioAttributes
+ * USAGE_GAME), the keys "touch" (USAGE_ASSISTANCE_SONIFICATION) - without it the system classes them as
+ * "unknown". The method ids are those of android.os.Vibrator: valid for any vibrator, the gamepad's too. */
+static int g_sdk;
+static jobject g_vibrator;
+static jmethodID g_vib_vibrate;            /* vibrate(long) */
 static jmethodID g_vib_vibrate_fx;         /* vibrate(VibrationEffect), Android 8+ */
+static jmethodID g_vib_vibrate_attr;       /* vibrate(VibrationEffect, VibrationAttributes or AudioAttributes) */
+static jmethodID g_vib_has;                /* hasVibrator() */
+static jobject g_attr_media, g_attr_touch; /* the attributes of the rumble and of the keys */
 static jobject g_fx[4];                    /* the effect of each UI_HAPTIC_* (NULL: a plain vibration) */
+static jobject g_fx_rumble;                /* a pulse of the rumble motor (60 ms) */
+static char g_vib_info[48];                /* what was found (the page ABOUT) */
+/* the gamepad played with (the last one a button or a stick came from) and its vibrator, if it has one */
+static _Atomic int g_pad_id = -1;
+static int g_pad_vib_id = -1;
+static jobject g_pad_vibrator;
+static _Atomic bool g_pad_rumbles;
 
 static double now_s(void)
 {
@@ -94,6 +112,7 @@ static _Atomic int g_haptic_kind;           /* the strongest UI_HAPTIC_* waiting
 static _Atomic int g_haptic_pulse;          /* a pulse of the rumble motor waiting */
 static void vibrate(JNIEnv *env, long ms);
 static void haptic(JNIEnv *env, int kind);
+static void rumble_pulse(JNIEnv *env);
 
 static void *haptic_thread(void *arg)
 {
@@ -105,7 +124,7 @@ static void *haptic_thread(void *arg)
     for (;;) {
         while (sem_wait(&g_haptic_sem) != 0) {}
         int pulse = atomic_exchange(&g_haptic_pulse, 0), kind = atomic_exchange(&g_haptic_kind, 0);
-        if (pulse) vibrate(env, 60);
+        if (pulse) rumble_pulse(env);
         else if (kind) haptic(env, kind);
     }
     return NULL;
@@ -192,6 +211,7 @@ typedef struct Activity {
     long st_steps;
 #endif
     double last_vibration, insets_tried;
+    double last_touch;                  /* a finger came down on the screen (the accelerometer: not a tilt) */
     bool insets_known;
     bool keys[256];
     uint8_t axis_buttons;
@@ -332,17 +352,109 @@ static void vibrate(JNIEnv *env, long ms)
     jni_check(env);
 }
 
+/* an effect on a vibrator, with its attributes where the system takes them */
+static bool vibrate_fx(JNIEnv *env, jobject vib, jobject fx, jobject attr)
+{
+    if (!vib || !fx) return false;
+    if (g_vib_vibrate_attr && attr) (*env)->CallVoidMethod(env, vib, g_vib_vibrate_attr, fx, attr);
+    else if (g_vib_vibrate_fx) (*env)->CallVoidMethod(env, vib, g_vib_vibrate_fx, fx);
+    else return false;
+    return !jni_check(env);
+}
+
 /* the feedback of the touch controls: the system's own key clicks where available (Android
  * 10+: tick, click, heavy click), else short vibrations of chosen strength (Android 8+) */
 static void haptic(JNIEnv *env, int kind)
 {
     if (!g_vibrator || !env || kind <= UI_HAPTIC_NONE || kind > UI_HAPTIC_HEAVY) return;
-    if (g_vib_vibrate_fx && g_fx[kind]) {
-        (*env)->CallVoidMethod(env, g_vibrator, g_vib_vibrate_fx, g_fx[kind]);
-        jni_check(env);
-    } else {
+    if (!vibrate_fx(env, g_vibrator, g_fx[kind], g_attr_touch))
         vibrate(env, kind == UI_HAPTIC_HEAVY ? 20 : kind == UI_HAPTIC_CLICK ? 12 : 6);
+}
+
+/* The vibrator of the gamepad played with (InputDevice: its vibrator manager's default one from Android
+ * 12 on, getVibrator() before), looked up again when the gamepad changes; NULL if it has none. */
+static jobject pad_vibrator(JNIEnv *env)
+{
+    int id = atomic_load(&g_pad_id);
+    if (id == g_pad_vib_id) return g_pad_vibrator;
+    if (g_pad_vibrator) { (*env)->DeleteGlobalRef(env, g_pad_vibrator); g_pad_vibrator = NULL; }
+    g_pad_vib_id = id;
+    atomic_store(&g_pad_rumbles, false);
+    if (id < 0) return NULL;
+    jclass ic = (*env)->FindClass(env, "android/view/InputDevice");
+    if (jni_check(env) || !ic) return NULL;
+    jmethodID gd = (*env)->GetStaticMethodID(env, ic, "getDevice", "(I)Landroid/view/InputDevice;");
+    jobject dev = !jni_check(env) && gd ? (*env)->CallStaticObjectMethod(env, ic, gd, (jint)id) : NULL;
+    if (jni_check(env)) dev = NULL;
+    jobject v = NULL;
+    if (dev && g_sdk >= 31) {
+        jmethodID gm = (*env)->GetMethodID(env, ic, "getVibratorManager", "()Landroid/os/VibratorManager;");
+        jobject mgr = !jni_check(env) && gm ? (*env)->CallObjectMethod(env, dev, gm) : NULL;
+        if (jni_check(env)) mgr = NULL;
+        if (mgr) {
+            jclass mc = (*env)->FindClass(env, "android/os/VibratorManager");
+            jmethodID gdv = !jni_check(env) && mc ? (*env)->GetMethodID(env, mc, "getDefaultVibrator", "()Landroid/os/Vibrator;") : NULL;
+            if (!jni_check(env) && gdv) v = (*env)->CallObjectMethod(env, mgr, gdv);
+            if (jni_check(env)) v = NULL;
+            if (mc) (*env)->DeleteLocalRef(env, mc);
+            (*env)->DeleteLocalRef(env, mgr);
+        }
     }
+    if (dev && !v) {
+        jmethodID gv = (*env)->GetMethodID(env, ic, "getVibrator", "()Landroid/os/Vibrator;");
+        v = !jni_check(env) && gv ? (*env)->CallObjectMethod(env, dev, gv) : NULL;
+        if (jni_check(env)) v = NULL;
+    }
+    if (v && g_vib_has && (*env)->CallBooleanMethod(env, v, g_vib_has) && !jni_check(env)) {
+        g_pad_vibrator = (*env)->NewGlobalRef(env, v);
+        atomic_store(&g_pad_rumbles, true);
+    }
+    jni_check(env);
+    if (v) (*env)->DeleteLocalRef(env, v);
+    if (dev) (*env)->DeleteLocalRef(env, dev);
+    (*env)->DeleteLocalRef(env, ic);
+    return g_pad_vibrator;
+}
+
+/* a pulse of the game's rumble motor: the phone, and the gamepad played with */
+static void rumble_pulse(JNIEnv *env)
+{
+    if (!env) return;
+    if (g_vibrator && !vibrate_fx(env, g_vibrator, g_fx_rumble, g_attr_media)) vibrate(env, 60);
+    jobject pad = pad_vibrator(env);
+    if (pad) vibrate_fx(env, pad, g_fx_rumble, NULL);
+}
+
+/* the attributes of a vibration for (usage): VibrationAttributes on Android 13+, AudioAttributes
+ * before (usage: the AudioAttributes one) */
+static jobject vib_attributes(JNIEnv *env, int vib_usage, int audio_usage)
+{
+    jobject at = NULL;
+    if (g_sdk >= 33) {
+        jclass c = (*env)->FindClass(env, "android/os/VibrationAttributes");
+        jmethodID cf = !jni_check(env) && c ? (*env)->GetStaticMethodID(env, c, "createForUsage", "(I)Landroid/os/VibrationAttributes;") : NULL;
+        if (!jni_check(env) && cf) at = (*env)->CallStaticObjectMethod(env, c, cf, (jint)vib_usage);
+        if (jni_check(env)) at = NULL;
+        if (c) (*env)->DeleteLocalRef(env, c);
+    } else {
+        jclass c = (*env)->FindClass(env, "android/media/AudioAttributes$Builder");
+        jmethodID init = !jni_check(env) && c ? (*env)->GetMethodID(env, c, "<init>", "()V") : NULL;
+        jmethodID su = init ? (*env)->GetMethodID(env, c, "setUsage", "(I)Landroid/media/AudioAttributes$Builder;") : NULL;
+        jmethodID bd = su ? (*env)->GetMethodID(env, c, "build", "()Landroid/media/AudioAttributes;") : NULL;
+        jobject b = !jni_check(env) && bd ? (*env)->NewObject(env, c, init) : NULL;
+        if (jni_check(env)) b = NULL;
+        if (b) {
+            jobject b2 = (*env)->CallObjectMethod(env, b, su, (jint)audio_usage);
+            if (!jni_check(env) && b2) { at = (*env)->CallObjectMethod(env, b2, bd); if (jni_check(env)) at = NULL; }
+            if (b2) (*env)->DeleteLocalRef(env, b2);
+            (*env)->DeleteLocalRef(env, b);
+        }
+        if (c) (*env)->DeleteLocalRef(env, c);
+    }
+    if (!at) return NULL;
+    jobject g = (*env)->NewGlobalRef(env, at);
+    (*env)->DeleteLocalRef(env, at);
+    return g;
 }
 
 static void init_effects(ANativeActivity *na, jclass vcls)
@@ -364,9 +476,54 @@ static void init_effects(ANativeActivity *na, jclass vcls)
         if (!fx && one) { fx = (*env)->CallStaticObjectMethod(env, ve, one, ms[k], amp[k]); if (jni_check(env)) fx = NULL; }
         if (fx) { g_fx[k] = (*env)->NewGlobalRef(env, fx); (*env)->DeleteLocalRef(env, fx); }
     }
+    jobject fx = one ? (*env)->CallStaticObjectMethod(env, ve, one, (jlong)60, (jint)-1) : NULL;   /* DEFAULT_AMPLITUDE */
+    if (jni_check(env)) fx = NULL;
+    if (fx) { g_fx_rumble = (*env)->NewGlobalRef(env, fx); (*env)->DeleteLocalRef(env, fx); }
     g_vib_vibrate_fx = (*env)->GetMethodID(env, vcls, "vibrate", "(Landroid/os/VibrationEffect;)V");
     if (jni_check(env)) g_vib_vibrate_fx = NULL;
+    g_vib_vibrate_attr = na->sdkVersion >= 33
+        ? (*env)->GetMethodID(env, vcls, "vibrate", "(Landroid/os/VibrationEffect;Landroid/os/VibrationAttributes;)V")
+        : (*env)->GetMethodID(env, vcls, "vibrate", "(Landroid/os/VibrationEffect;Landroid/media/AudioAttributes;)V");
+    if (jni_check(env)) g_vib_vibrate_attr = NULL;
+    /* VibrationAttributes USAGE_MEDIA 19, USAGE_TOUCH 18; AudioAttributes USAGE_GAME 14,
+     * USAGE_ASSISTANCE_SONIFICATION 13 */
+    if (g_vib_vibrate_attr) {
+        g_attr_media = vib_attributes(env, 19, 14);
+        g_attr_touch = vib_attributes(env, 18, 13);
+    }
     (*env)->DeleteLocalRef(env, ve);
+}
+
+/* the phone's vibrator: the vibrator manager's default one (Android 12+), else the "vibrator" service */
+static jobject phone_vibrator(ANativeActivity *na)
+{
+    JNIEnv *env = na->env;
+    jclass acls = (*env)->GetObjectClass(env, na->clazz);
+    jmethodID gss = (*env)->GetMethodID(env, acls, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jobject vib = NULL;
+    if (gss && na->sdkVersion >= 31) {
+        jstring name = (*env)->NewStringUTF(env, "vibrator_manager");
+        jobject mgr = (*env)->CallObjectMethod(env, na->clazz, gss, name);
+        if (jni_check(env)) mgr = NULL;
+        if (mgr) {
+            jclass mc = (*env)->GetObjectClass(env, mgr);
+            jmethodID gdv = (*env)->GetMethodID(env, mc, "getDefaultVibrator", "()Landroid/os/Vibrator;");
+            if (!jni_check(env) && gdv) vib = (*env)->CallObjectMethod(env, mgr, gdv);
+            if (jni_check(env)) vib = NULL;
+            (*env)->DeleteLocalRef(env, mc);
+            (*env)->DeleteLocalRef(env, mgr);
+        }
+        (*env)->DeleteLocalRef(env, name);
+    }
+    if (gss && !vib) {
+        jstring name = (*env)->NewStringUTF(env, "vibrator");
+        vib = (*env)->CallObjectMethod(env, na->clazz, gss, name);
+        if (jni_check(env)) vib = NULL;
+        (*env)->DeleteLocalRef(env, name);
+    }
+    jni_check(env);
+    (*env)->DeleteLocalRef(env, acls);
+    return vib;
 }
 
 /* UI thread: create the vibrator reference (once) */
@@ -374,25 +531,31 @@ static void init_vibrator(ANativeActivity *na)
 {
     if (g_vibrator) return;
     JNIEnv *env = na->env;
-    jclass acls = (*env)->GetObjectClass(env, na->clazz);
-    jmethodID gss = (*env)->GetMethodID(env, acls, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-    jstring name = (*env)->NewStringUTF(env, "vibrator");
-    jobject vib = gss ? (*env)->CallObjectMethod(env, na->clazz, gss, name) : NULL;
-    if (jni_check(env)) vib = NULL;
-    if (vib) {
-        jclass vcls = (*env)->GetObjectClass(env, vib);
+    g_sdk = na->sdkVersion;
+    snprintf(g_vib_info, sizeof g_vib_info, "none");
+    jobject vib = phone_vibrator(na);
+    jclass vcls = (*env)->FindClass(env, "android/os/Vibrator");
+    if (jni_check(env)) vcls = NULL;
+    if (vib && vcls) {
         g_vib_vibrate = (*env)->GetMethodID(env, vcls, "vibrate", "(J)V");
-        g_vib_cancel = (*env)->GetMethodID(env, vcls, "cancel", "()V");
-        if (jni_check(env) || !g_vib_vibrate) g_vib_vibrate = NULL;
-        else {
+        if (jni_check(env)) g_vib_vibrate = NULL;
+        g_vib_has = (*env)->GetMethodID(env, vcls, "hasVibrator", "()Z");
+        if (jni_check(env)) g_vib_has = NULL;
+        jmethodID amp = (*env)->GetMethodID(env, vcls, "hasAmplitudeControl", "()Z");
+        if (jni_check(env)) amp = NULL;
+        bool has = g_vib_has ? (*env)->CallBooleanMethod(env, vib, g_vib_has) : true;
+        if (jni_check(env)) has = true;
+        bool ac = amp && (*env)->CallBooleanMethod(env, vib, amp);
+        if (jni_check(env)) ac = false;
+        if (g_vib_vibrate) {
             g_vibrator = (*env)->NewGlobalRef(env, vib);
             init_effects(na, vcls);
+            snprintf(g_vib_info, sizeof g_vib_info, "%s%s%s", has ? "yes" : "none", ac ? ", amplitude" : "",
+                     g_vib_vibrate_attr && g_attr_media ? ", media" : "");
         }
-        (*env)->DeleteLocalRef(env, vcls);
-        (*env)->DeleteLocalRef(env, vib);
     }
-    (*env)->DeleteLocalRef(env, name);
-    (*env)->DeleteLocalRef(env, acls);
+    if (vcls) (*env)->DeleteLocalRef(env, vcls);
+    if (vib) (*env)->DeleteLocalRef(env, vib);
 }
 
 /* UI thread (before the window is laid out): the window also covers the camera cut-out
@@ -612,15 +775,17 @@ static void import_from_intent(JNIEnv *env, jobject act)
 /* ROM copied by USB into the app's folder (Android/data/<package>/files) */
 static void import_from_external_dir(const char *dir)
 {
-    if (!dir || app_has_game(&g_app)) return;
+    if (!dir) return;
     DIR *d = opendir(dir);
     if (!d) return;
     struct dirent *e;
-    while ((e = readdir(d)) != NULL && !app_has_game(&g_app)) {
+    /* every ROM (or patch of Generations) put there whose game is not installed yet (2.8: only when no game
+     * was; the other game could not be added that way) */
+    while ((e = readdir(d)) != NULL) {
         size_t n = strlen(e->d_name);
         if (n < 4) continue;
         const char *ext = e->d_name + n - 4;
-        if (strcasecmp(ext, ".gbc") != 0 && strcasecmp(ext + 1, ".gb") != 0) continue;
+        if (strcasecmp(ext, ".gbc") != 0 && strcasecmp(ext + 1, ".gb") != 0 && strcasecmp(ext, ".ips") != 0) continue;
         char path[1024];
         snprintf(path, sizeof path, "%s/%s", dir, e->d_name);
         FILE *f = fopen(path, "rb");
@@ -628,7 +793,7 @@ static void import_from_external_dir(const char *dir)
         uint8_t *buf = (uint8_t *)malloc(ROM_MAX);
         size_t r = buf ? fread(buf, 1, ROM_MAX, f) : 0;
         fclose(f);
-        if (r > 0) app_import_rom(&g_app, buf, r);
+        if (r > 0 && !app_has_rom(&g_app, buf, r)) app_import_rom(&g_app, buf, r);
         free(buf);
     }
     closedir(d);
@@ -870,8 +1035,15 @@ static uint8_t key_button(int32_t code)
     case AKEYCODE_BUTTON_B: case AKEYCODE_BUTTON_X: case AKEYCODE_C: return GBC_B;
     case AKEYCODE_BUTTON_L1: case AKEYCODE_BUTTON_L2: case AKEYCODE_Z: case AKEYCODE_W: case AKEYCODE_SHIFT_LEFT:
         return GBC_LEFT;
-    case AKEYCODE_BUTTON_START: case AKEYCODE_ENTER: return GBC_START;
+    case AKEYCODE_BUTTON_START: case AKEYCODE_ENTER: case AKEYCODE_NUMPAD_ENTER: return GBC_START;
     case AKEYCODE_BUTTON_SELECT: case AKEYCODE_BUTTON_Y: case AKEYCODE_V: case AKEYCODE_TAB: return GBC_SELECT;
+    /* (2.9) gamepads Android does not know: their buttons by number, in the order of the usual layout (that of
+     * the Windows version's generic gamepads): 1 X, 2 A, 3 B, 4 Y, 5 LB, 6 RB, 7 LT, 8 RT, 9 back, 10 start */
+    case AKEYCODE_BUTTON_2: case AKEYCODE_BUTTON_6: case AKEYCODE_BUTTON_8: return GBC_A;
+    case AKEYCODE_BUTTON_1: case AKEYCODE_BUTTON_3: return GBC_B;
+    case AKEYCODE_BUTTON_5: case AKEYCODE_BUTTON_7: return GBC_LEFT;
+    case AKEYCODE_BUTTON_4: case AKEYCODE_BUTTON_9: return GBC_SELECT;
+    case AKEYCODE_BUTTON_10: return GBC_START;
     default: return 0;
     }
 }
@@ -887,9 +1059,11 @@ static int handle_input(Activity *a, AInputEvent *ev)
 {
     int32_t type = AInputEvent_getType(ev);
     int32_t source = AInputEvent_getSource(ev);
+    if ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD || (source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK)
+        atomic_store(&g_pad_id, AInputEvent_getDeviceId(ev));          /* the gamepad played with: its rumble */
     if (type == AINPUT_EVENT_TYPE_KEY) {
         int32_t code = AKeyEvent_getKeyCode(ev), action = AKeyEvent_getAction(ev);
-        if (code == AKEYCODE_BACK || code == AKEYCODE_ESCAPE || code == AKEYCODE_BUTTON_MODE) {
+        if (code == AKEYCODE_BACK || code == AKEYCODE_ESCAPE || code == AKEYCODE_BUTTON_MODE || code == AKEYCODE_MENU) {
             if (action == AKEY_EVENT_ACTION_UP) {
                 pthread_mutex_lock(&g_game);
                 app_back(&g_app);
@@ -935,6 +1109,7 @@ static int handle_input(Activity *a, AInputEvent *ev)
     switch (masked) {
     case AMOTION_EVENT_ACTION_DOWN:
     case AMOTION_EVENT_ACTION_POINTER_DOWN:
+        a->last_touch = now_s();
         app_touch(&g_app, UI_DOWN, AMotionEvent_getPointerId(ev, index), AMotionEvent_getX(ev, index), AMotionEvent_getY(ev, index));
         break;
     case AMOTION_EVENT_ACTION_UP:
@@ -997,6 +1172,7 @@ static void process_sensors(Activity *a)
             int tilt = motion_sample(&a->motion, (double)ev[i].timestamp * 1e-9, ev[i].acceleration.x,
                                      ev[i].acceleration.y, ev[i].acceleration.z, shaking);
             if (!tilt) continue;
+            if (now_s() - a->last_touch < 0.2) continue;   /* (2.9) the jolt of a finger on the screen: the touch says it */
             a->tilt_buttons = tilt == MOTION_LEFT ? GBC_DOWN : tilt == MOTION_RIGHT ? GBC_B : GBC_SELECT;
             a->tilt_until = now_s() + MOTION_HOLD;
             pthread_mutex_lock(&g_game);
@@ -1135,9 +1311,11 @@ static void meter(Activity *a, double t, bool running)
     int32_t xr = g_stream ? AAudioStream_getXRunCount(g_stream) : 0, bsz = g_stream ? AAudioStream_getBufferSizeInFrames(g_stream) : 0;
     bool ll = g_stream && AAudioStream_getPerformanceMode(g_stream) == AAUDIO_PERFORMANCE_MODE_LOW_LATENCY;
     pthread_mutex_unlock(&g_audio_mutex);
-    snprintf(g_app.ui.info, sizeof g_app.ui.info, "Screen %.1f Hz, %s\nGame speed %.2f %%\nSound %.2f %%, %ld gaps\nCard %.2f kHz, %d/%d%s, %d xruns",
+    snprintf(g_app.ui.info, sizeof g_app.ui.info, "Screen %.1f Hz, %s\nGame speed %.2f %%\nSound %.2f %%, %ld gaps\nCard %.2f kHz, %d/%d%s, %d xruns\n"
+             "Vibrator %s; gamepad %s",
              a->pacer.period > 0 ? 1.0 / a->pacer.period : 0.0, ratio, speed, sound, atomic_load(&g_underruns) + g_pads,
-             card / 1000, (int)g_burst, (int)bsz, ll ? " LL" : "", (int)xr);
+             card / 1000, (int)g_burst, (int)bsz, ll ? " LL" : "", (int)xr, g_vib_info,
+             atomic_load(&g_pad_id) < 0 ? "none" : atomic_load(&g_pad_rumbles) ? "rumbles" : "no rumble");
     g_meter.t0 = t;
     g_meter.pulled0 = (double)atomic_load(&g_pulled);
     g_meter.frames = 0;
@@ -1317,7 +1495,8 @@ static void frame_step(Activity *a, double vsync)
 #endif
 
     if (quit) ANativeActivity_finish(a->na);
-    if (rumble && t - a->last_vibration > 0.045) { haptic_post(0, true); a->last_vibration = t; }
+    if (g_app.vibration_test) { g_app.vibration_test = false; haptic_post(0, true); a->last_vibration = t; }   /* VIBRATION on */
+    else if (rumble && t - a->last_vibration > 0.045) { haptic_post(0, true); a->last_vibration = t; }
     else if (fb && t - a->last_vibration > 0.03) { haptic_post(fb, false); a->last_vibration = t; }
 
     gr_draw(&a->gr, &a->list, a->w, a->h, fw, fh);

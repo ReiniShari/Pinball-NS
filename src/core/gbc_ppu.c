@@ -21,9 +21,10 @@
 static bool have_ssse3;
 #endif
 
-#define LINE_CYCLES 456
-#define MODE2_END   80
-#define MODE3_END   252
+/* in cycles of the CPU: twice as many in double speed */
+#define LINE_CYCLES (456u << s->ds)
+#define MODE2_END   (80u << s->ds)
+#define MODE3_END   (252u << s->ds)
 #define NEVER       UINT64_MAX
 
 static uint8_t c5to8[32];

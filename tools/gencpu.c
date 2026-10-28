@@ -411,7 +411,7 @@ static void call_op(int op)
     } else {
         E("mov x0, x19");
         E("mov w1, #%d", op);
-        E("bl gbc_asm_op");
+        E("bl SYM(gbc_asm_op)");
     }
     reload();
 }
@@ -733,7 +733,7 @@ static void gen_op(int op)
         tick(4);
         break;
     }
-    case 0x10: fetch8(RT); break;                         /* STOP: no speed switch in this game */
+    case 0x10: fetch8(RT); call_op(0x10); break;          /* STOP: the speed switch (gbc_asm_op) */
     case 0x18: case 0x20: case 0x28: case 0x30: case 0x38:
         fetch8(RT);
         n = lab();
@@ -1450,7 +1450,7 @@ static void routines(void)
     flush();
     E("mov x0, x19");
     E("mov w1, w9");
-    E("bl gbc_read");
+    E("bl SYM(gbc_read)");
     E("strb w0, [x20, #%ld]", OX(tmp));
     reload();
     E("ldp x12, x9, [sp, #16]");
@@ -1552,7 +1552,7 @@ static void routines(void)
     E("mov x0, x19");
     E("mov w1, w9");
     E("ldrb w2, [sp, #32]");
-    E("bl gbc_asm_write");
+    E("bl SYM(gbc_asm_write)");
     reload();
     E("ldp x12, x9, [sp, #16]");
     E("ldp x30, x11, [sp], #48");
@@ -1566,7 +1566,7 @@ static void routines(void)
         flush();
         E("mov x0, x19");
         E("mov w1, #%d", t);
-        E("bl gbc_asm_tick");
+        E("bl SYM(gbc_asm_tick)");
         reload();
         E("ldp x12, x9, [sp, #16]");
         E("ldp x30, x11, [sp], #48");
@@ -1793,12 +1793,16 @@ static void write_asm(const char *path)
         reload();
         E("jmp Lnext");
     } else {
-        fprintf(out, "// cpu_a64.S - the fast interpreter of the SM83 for ARM64 (Android), written by\n"
+        fprintf(out, "// cpu_a64.S - the fast interpreter of the SM83 for ARM64 (Android, iPhone, Mac), written by\n"
                      "// tools/gencpu.c from its description of the instructions: do not edit, see that file.\n"
-                     "// int gbc_cpu_run(GBC *g, int64_t *budget): see gbc_exec_asm (src/core/gbc_exec.c).\n\n");
-        fprintf(out, "    .text\n    .p2align 4\n    .globl gbc_cpu_run\n    .hidden gbc_cpu_run\n"
-                     "    .type gbc_cpu_run, %%function\n");
-        LB("gbc_cpu_run");
+                     "// int gbc_cpu_run(GBC *g, int64_t *budget): see gbc_exec_asm (src/core/gbc_exec.c).\n"
+                     "// ELF (Android, Linux) or Mach-O (Apple: the C names with an underscore; x18 is never used,\n"
+                     "// the platform's register there).\n\n");
+        fprintf(out, "#ifdef __APPLE__\n#define SYM(x) _##x\n#else\n#define SYM(x) x\n#endif\n"
+                     "    .text\n    .p2align 4\n    .globl SYM(gbc_cpu_run)\n"
+                     "#ifdef __APPLE__\n    .private_extern SYM(gbc_cpu_run)\n#else\n"
+                     "    .hidden gbc_cpu_run\n    .type gbc_cpu_run, %%function\n#endif\n");
+        LB("SYM(gbc_cpu_run)");
         E("stp x29, x30, [sp, #-112]!");  /* [sp+96] budget pointer, [sp+104] call target */
         E("mov x29, sp");
         E("stp x19, x20, [sp, #16]");
@@ -1824,7 +1828,7 @@ static void write_asm(const char *path)
     tables();
     if (x64) fprintf(out, "\ngbc_cpu_run ENDP\n\nEND\n");
     /* ELF: the code needs no executable stack */
-    else fprintf(out, "\n    .section .note.GNU-stack,\"\",%%progbits\n");
+    else fprintf(out, "\n#ifndef __APPLE__\n    .section .note.GNU-stack,\"\",%%progbits\n#endif\n");
     fclose(out);
 }
 

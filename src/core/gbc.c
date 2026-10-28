@@ -46,6 +46,29 @@ static inline void tick(GBC *g, int t)
 
 void gbc_tick(GBC *g, int t) { tick(g, t); }
 
+/* STOP after KEY1 bit 0: the other speed. The video's next event and the start of its line stay
+ * as far in time (in cycles of the new speed); the sound is run up to now at the old speed. (The
+ * switch itself takes some 2000 cycles on the hardware: not counted.) */
+void gbc_speed_switch(GBC *g)
+{
+    GBCState *s = &g->s;
+    gbc_apu_run(g);
+    uint64_t now = s->cycles, m = gbc_sound_time(s);
+    int old = s->ds, nw = !old;
+    GBCPpu *p = &s->ppu;
+    if (p->next != UINT64_MAX) {
+        uint64_t ahead = p->next > now ? p->next - now : 0, since = now > p->line_start ? now - p->line_start : 0;
+        p->next = now + ((ahead >> old) << nw);
+        since = (since >> old) << nw;
+        p->line_start = now > since ? now - since : 0;
+    }
+    if (s->serial_active && s->serial_done > now) s->serial_done = now + (((s->serial_done - now) >> old) << nw);
+    s->ds_c0 = now;
+    s->ds_m0 = m;
+    s->ds = (uint8_t)nw;
+    s->io[0x4D] = 0;
+}
+
 /* ------------------------------------------------------------------ memory */
 
 /* the bank of the ROM mapped at 4000-7FFF (bank numbers wrap around the size of the ROM) */
@@ -177,7 +200,7 @@ uint8_t gbc_io_read(GBC *g, uint16_t a)
     case 0x44:
         if (g->frozen) { g->fake_ly = (uint8_t)((g->fake_ly + 1) % 154); return g->fake_ly; }
         return ((s->io[0x40] & 0x80) && !g->fake_lcd_off) ? s->ppu.ly : 0;
-    case 0x4D: return 0x7E | (s->io[0x4D] & 1);
+    case 0x4D: return (uint8_t)(0x7E | (s->ds << 7) | (s->io[0x4D] & 1));
     case 0x4F: return 0xFE | s->vbk;
     case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: return 0xFF;
     case 0x56: return (uint8_t)((s->io[0x56] & 0xC1) | 0x3E);   /* infrared: no light received */
@@ -460,7 +483,7 @@ int gbc_exec(GBC *g, int mode, uint16_t stop_pc, uint16_t stop_sp, int64_t *budg
             return GBC_EXEC_DONE;
         }
         gbc_step(g);
-        if (mode == GBC_EXEC_FRAME && !(s->io[0x40] & 0x80) && s->cycles - start >= GBC_FRAME_CYCLES) return GBC_EXEC_DONE;
+        if (mode == GBC_EXEC_FRAME && !(s->io[0x40] & 0x80) && s->cycles - start >= ((uint64_t)GBC_FRAME_CYCLES << s->ds)) return GBC_EXEC_DONE;
     }
 }
 
@@ -471,7 +494,7 @@ static int64_t frame_room(const GBC *g)
 {
     const GBCState *s = &g->s;
     if (!(s->io[0x40] & 0x80) || s->ppu.ly >= 144 || s->ppu.mode < 0) return -1;
-    uint64_t end = s->ppu.line_start + (uint64_t)(144 - s->ppu.ly) * 456;
+    uint64_t end = s->ppu.line_start + ((uint64_t)(144 - s->ppu.ly) * 456 << s->ds);
     return end > s->cycles ? (int64_t)((end - s->cycles - 1) / 44) : 0;
 }
 
@@ -540,13 +563,13 @@ bool gbc_call_frozen(GBC *g, uint16_t addr, bool orig, long budget)
 }
 
 /* Call a routine in another ROM bank through the game's own BankSwitch (callba). */
-bool gbc_farcall(GBC *g, uint8_t bank, uint16_t addr)
+bool gbc_farcall(GBC *g, uint16_t bankswitch, uint8_t bank, uint16_t addr)
 {
     GBCState *s = &g->s;
     s->hram[0x8A - 0x80] = s->a;      /* hFarCallTempA */
     s->a = bank;
     s->h = (uint8_t)(addr >> 8); s->l = (uint8_t)addr;
-    return gbc_call(g, 0x054F);       /* BankSwitch */
+    return gbc_call(g, bankswitch);
 }
 
 /* ------------------------------------------------------------------ CPU step */
@@ -629,7 +652,7 @@ void gbc_step(GBC *g)
     case 0x19: add_hl(g, DE()); break;
     case 0x29: add_hl(g, HL()); break;
     case 0x39: add_hl(g, s->sp); break;
-    case 0x10: fetch8(g); break;                                   /* STOP: no speed switch in this game */
+    case 0x10: fetch8(g); if (s->io[0x4D] & 1) gbc_speed_switch(g); break;   /* STOP: the speed switch only */
     case 0x18: { int8_t e = (int8_t)fetch8(g); s->pc = (uint16_t)(s->pc + e); tick(g, 4); } break;
     case 0x20: case 0x28: case 0x30: case 0x38: {
         int8_t e = (int8_t)fetch8(g);

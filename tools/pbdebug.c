@@ -1,7 +1,7 @@
 /*
  * pbdebug.c - long automatic games with consistency checks of the unified field.
  *
- *   pbdebug ROM [-frames N] [-seed S] [-shots DIR] [-pause K] [-maxshots M] [-oracle K]
+ *   pbdebug ROM [-frames N] [-seed S] [-shots DIR] [-pause K] [-maxshots M] [-oracle K] [-table T]
  *   pbdebug ROM -selftest
  *   investigation: -dump F (maps and sprites at frame F), -probe X Y (colour of a pixel),
  *   -tracetile T F0 F1 (writes to tile T), -every N F0 (screenshots), -endshot FILE,
@@ -20,7 +20,6 @@
  */
 #include "../src/game/pinball.h"
 #include "engine.h"
-#include "../src/game/pinball_us.h"
 #include "png_write.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +28,13 @@
 #include <time.h>
 
 static Pinball pb;
+#define PBR (pb.rom)
+#define PB_ (&pb)
+/* the stages of the ROM played (pinball_rom.h) */
+#define IS_FIELD(s)   (pb_stage_table(PB_, (s)) >= 0)
+#define IS_TOP(s)     (IS_FIELD(s) && !((s) & 1))
+#define IS_BOTTOM(s)  (IS_FIELD(s) && ((s) & 1))
+#define IS_RED_TOP(s) (IS_TOP(s) && PB_TABLE_RED_LIKE(pb_stage_table(PB_, (s))))
 static uint8_t rom[4 << 20];
 static long frames;
 static int trace_tile = -1, trace_map = -1;     /* -tracetile / -tracemap */
@@ -242,7 +248,7 @@ static void check_window(void)
 
 /* tiles used by the window, and by the background / sprites of each page (field only) */
 static long used_win[2][384], used_bg[GBC_PAGES][2][384], used_obj[GBC_PAGES][2][384];
-static long stage_frames[16], screen_frames[16];
+static long stage_frames[32], screen_frames[16];
 static long dump_at = -1;
 static int probe_x = -1, probe_y;
 static long every, every_from;
@@ -290,7 +296,7 @@ static bool narrow;                             /* -narrow: the original width *
 static void tile_stats(void)
 {
     GBCState *s = &pb.g.s;
-    stage_frames[rd(W_CurrentStage) & 15]++;
+    stage_frames[rd(W_CurrentStage) & 31]++;
     if (pb.st.unified) {
         /* the bonus slot halo (SlotGlow sprites) of the bottom half: where it starts */
         int top = 999, nglow = 0;
@@ -398,7 +404,7 @@ static void churn_stats(void)
     uint16_t map = (lcdc & 0x08) ? 0x1C00 : 0x1800;
     for (int p = 0; p < GBC_PAGES; p++) {
         const GBCPage *pg = &s->page[p];
-        int other = (p == PB_PAGE_TOP) != (R == 0 || R == 4);
+        int other = (p == PB_PAGE_TOP) != IS_TOP(R);
         long n = 0;
         for (int r = 0; r < (p == PB_PAGE_TOP ? 17 : 18); r++)
             for (int c = 0; c < 24; c++) {
@@ -505,7 +511,7 @@ static bool fresh_half(uint8_t stage, int page, GBCPage *out)
     g->s.wram[W_CurrentStage - 0xC000] = stage;
     /* as the field draws the Red top half without the ball: with the structures a mode asked for */
     uint8_t backup = g->s.wram[W_RedStageStructureBackup - 0xC000];
-    if (stage == 0 && ball != stage && !(backup & 0x80))
+    if (IS_RED_TOP(stage) && ball != stage && !(backup & 0x80))
         g->s.wram[W_StageCollisionState - 0xC000] = (uint8_t)((g->s.wram[W_StageCollisionState - 0xC000] & 1) | backup);
     g->s.halted = false;                                  /* between frames the CPU waits in HALT */
     pb.st.nforced = 0;
@@ -520,7 +526,7 @@ static bool fresh_half(uint8_t stage, int page, GBCPage *out)
         step = 1;
         pb.st.nforced = 0;
         g->s.cpu_page = page;
-        ok = gbc_call_frozen(g, 0x113A, false, 8000000L);    /* Func_113a: the graphics queue */
+        ok = gbc_call_frozen(g, R_Func_113a, false, 8000000L);    /* the graphics queue */
     }
     static int shown;
     if (!ok && shown++ < 4)
@@ -542,7 +548,7 @@ static void oracle(void)
     static GBCPage fresh[2];
     GBC *g = &pb.g;
     uint8_t R = rd(W_CurrentStage), scr = rd(W_CurrentScreen);
-    if (!pb.st.unified || scr != SCREEN_PINBALL_GAME || !(R == 0 || R == 1 || R == 4 || R == 5)) {
+    if (!pb.st.unified || scr != SCREEN_PINBALL_GAME || !IS_FIELD(R)) {
         memset(oracle_streak, 0, sizeof oracle_streak);  /* off the field: the game reloads everything */
         return;
     }
@@ -570,7 +576,7 @@ static void oracle(void)
     /* A page changes role when the ball changes half: what it showed as the ball's half (a
      * billboard picture...) is legitimate until the field redraws it as the other half. */
     static int last_top = -1;
-    int ball_top = R == 0 || R == 4;
+    int ball_top = IS_TOP(R);
     if (ball_top != last_top) memset(oracle_streak, 0, sizeof oracle_streak);
     last_top = ball_top;
 
@@ -600,7 +606,7 @@ static void oracle(void)
                     /* The half without the ball is drawn by the field: a lasting difference is stale
                      * graphics. The ball's half is drawn by the game as in the original, which can
                      * show something else than on entering for a long time (billboard messages...). */
-                    bool other = (p == PB_PAGE_TOP) != (R == 0 || R == 4);
+                    bool other = (p == PB_PAGE_TOP) != IS_TOP(R);
                     long *count = other ? &oracle_events : &oracle_info;
                     (*count)++;
                     if (*count <= 40)
@@ -666,6 +672,8 @@ static uint16_t watchb[16];
 static int nwatchb;
 static long watchb_from, watchb_to;
 static bool antilag;                            /* -antilag: late frames finished out of time */
+static bool dspeed;                             /* -ds: the double speed of Generations (original ROM) */
+static int table_wanted = -1;                   /* -table T: the bot plays this table (PB_TABLE_*) */
 static int force_kind, force_half;              /* kind 1 catch, 2 evo; half 0 top, 1 bottom */
 static long force_at, forced_frame = -1, forced_count;
 static bool force_repeat;                       /* -forcerepeat: again each time the mode is over */
@@ -678,12 +686,12 @@ static bool hk_bonus(GBC *g)
 {
     if (!bonus_n || g->frozen || frames < bonus_at || frames < bonus_last + 1500) return false;
     uint8_t st = gbc_read(g, W_CurrentStage);
-    if (!FIELD_ON || gbc_read(g, W_CurrentScreen) != SCREEN_PINBALL_GAME || !(st == 1 || st == 5)) return false;
-    if (gbc_read(g, W_InSpecialMode) || !gbc_read(g, W_PinballIsVisible) || gbc_read(g, 0xD495)) return false;
+    if (!FIELD_ON || gbc_read(g, W_CurrentScreen) != SCREEN_PINBALL_GAME || !IS_BOTTOM(st)) return false;
+    if (gbc_read(g, W_InSpecialMode) || !gbc_read(g, W_PinballIsVisible) || gbc_read(g, W_GoingToBonusStage)) return false;
     int stage = bonus_list[bonus_next++ % bonus_n];
-    gbc_write(g, 0xD495, 1);                              /* wGoingToBonusStage */
+    gbc_write(g, W_GoingToBonusStage, 1);                              /* wGoingToBonusStage */
     gbc_write(g, W_MoveToNextScreenState, 1);
-    gbc_write(g, 0xD497, (uint8_t)stage);                 /* wNextStage */
+    gbc_write(g, W_NextStage, (uint8_t)stage);                 /* wNextStage */
     bonus_last = frames;
     if (bonus_count++ < 10) fprintf(stderr, "frame %ld: to the bonus stage %d (from stage %d)\n", frames, stage, st);
     return false;
@@ -699,9 +707,10 @@ static bool hk_force(GBC *g, void *u)
     if (!FIELD_ON || gbc_read(g, W_CurrentScreen) != SCREEN_PINBALL_GAME || ((st & 1) != 0) != (force_half == 1))
         return false;
     if (gbc_read(g, W_InSpecialMode) || !gbc_read(g, W_PinballIsVisible)) return false;
-    if (force_kind == 2 && gbc_read(g, 0xD460) == 0) {   /* wNumPartyMons, wPartyMons */
-        gbc_write(g, 0xD300, 0x12);
-        gbc_write(g, 0xD460, 1);
+    if (force_kind == 2 && gbc_read(g, W_NumPartyMons) == 0) {   /* wNumPartyMons, wPartyMons */
+        gbc_write(g, W_PartyMons, 0x12);
+        if (PBR->id == PB_ROM_GENERATIONS) gbc_write(g, (uint16_t)(W_PartyMons + 1), 0);   /* (two bytes a Pokemon) */
+        gbc_write(g, W_NumPartyMons, 1);
     }
     /* as the game's "callba": the routine runs in real time (it can play a sequence lasting
      * several seconds) and returns to the object logic, which then runs as usual */
@@ -709,10 +718,10 @@ static bool hk_force(GBC *g, void *u)
     gbc_push(g, s->pc);
     s->hram[0x8A - 0x80] = s->a;                          /* hFarCallTempA */
     s->a = 4;
-    uint16_t addr = force_kind == 1 ? 0x403F : 0x4AB3;    /* StartCatchEmMode / StartEvolutionMode */
+    uint16_t addr = force_kind == 1 ? PBR->R_StartCatchEmMode : PBR->R_StartEvolutionMode;
     s->h = (uint8_t)(addr >> 8);
     s->l = (uint8_t)addr;
-    s->pc = 0x054F;                                       /* BankSwitch */
+    s->pc = R_BankSwitch;
     forced_frame = frames;
     if (forced_count++ >= 3 && force_repeat) return true;   /* quietly after the first ones */
     fprintf(stderr, "frame %ld: starting the %s mode with the ball in the %s half (stage %d)\n", frames,
@@ -727,8 +736,8 @@ static void force_report(void)
     if (gbc_read(&pb.g, W_InSpecialMode) || frames > forced_frame + 1200) {
         reported = 1;
         fprintf(stderr, "frame %ld: special mode %d (kind %d), catch mon %d, evolution mon %d, party %d\n", frames,
-                gbc_read(&pb.g, W_InSpecialMode), gbc_read(&pb.g, W_SpecialMode), gbc_read(&pb.g, 0xD579),
-                gbc_read(&pb.g, 0xD552), gbc_read(&pb.g, 0xD460));
+                gbc_read(&pb.g, W_InSpecialMode), gbc_read(&pb.g, W_SpecialMode), gbc_read(&pb.g, W_CurrentCatchEmMon),
+                gbc_read(&pb.g, W_CurrentEvolutionMon), gbc_read(&pb.g, W_NumPartyMons));
     }
 }
 
@@ -778,15 +787,15 @@ static void on_wram(GBC *g, uint16_t a, uint8_t v, void *u)
 static void hud_check(void)
 {
     uint8_t st = rd(W_CurrentStage);
-    if (!FIELD_ON || rd(W_CurrentScreen) != SCREEN_PINBALL_GAME || !(st == 0 || st == 1 || st == 4 || st == 5)) return;
-    if (rd(0xD5CA) || rd(0xD5CB) || !rd(0xD4AA)) return;   /* text shown, scoreboard off, or no bar */
+    if (!FIELD_ON || rd(W_CurrentScreen) != SCREEN_PINBALL_GAME || !IS_FIELD(st)) return;
+    if (rd(W_BottomTextEnabled) || rd(W_DisableDrawScoreboardInfo) || !rd(W_DrawBottomMessageBox)) return;   /* text shown, scoreboard off, or no bar */
     uint8_t want[2][20];
     bool known[2][20];
     memset(known, 0, sizeof known);
     known[0][3] = true; want[0][3] = 0x81;
     bool lead = true;
     for (int b = 12, k = 0; b >= 1; b--, k++) {
-        uint8_t byte = rd((uint16_t)(0xD46A + 5 - k / 2)), d = (k & 1) ? (byte & 15) : (byte >> 4);
+        uint8_t byte = rd((uint16_t)(W_Score + 5 - k / 2)), d = (k & 1) ? (byte & 15) : (byte >> 4);
         int col = 7 + k;
         bool write = !(d == 0 && b != 1 && lead);
         known[0][col] = known[1][col] = true;
@@ -958,6 +967,8 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "-othertiles")) other_tiles = true;
         else if (!strcmp(argv[i], "-narrow")) narrow = true;
         else if (!strcmp(argv[i], "-antilag")) antilag = true;
+        else if (!strcmp(argv[i], "-ds")) dspeed = true;
+        else if (!strcmp(argv[i], "-table") && i + 1 < argc) table_wanted = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-hudcheck")) hudcheck = true;
         else if (!strcmp(argv[i], "-forcerepeat")) force_repeat = true;
         else if (!strcmp(argv[i], "-bonus") && i + 1 < argc) {     /* LIST:FRAME, e.g. 7,9,11,13,15:3000 */
@@ -993,6 +1004,7 @@ int main(int argc, char **argv)
     if (log_merges) pb.merge_fn = on_merge;
     if (narrow) pb_set_narrow(&pb, true);
     if (antilag) pb_set_antilag(&pb, true);
+    if (dspeed) pb_set_double_speed(&pb, true);
     if (hudcheck) pb.g.wram_fn = on_wram;
     if (do_selftest) { int r = selftest(); pb_free(&pb); return r; }
     srand((unsigned)seed);
@@ -1006,8 +1018,8 @@ int main(int argc, char **argv)
         if (pause_step >= 0) {
             /* START (3 frames), wait, A on "CANCEL" (the default choice), wait */
             held = pause_step < 3 ? GBC_START : (pause_step >= 60 && pause_step < 63) ? GBC_A : 0;
-            if (pause_step == 50) shot(st == 0 || st == 4 ? "pause_top" : "pause_bottom");
-            if (pause_step == 120) { shot(st == 0 || st == 4 ? "after_pause_top" : "after_pause_bottom"); pause_step = -1; }
+            if (pause_step == 50) shot(IS_TOP(st) ? "pause_top" : "pause_bottom");
+            if (pause_step == 120) { shot(IS_TOP(st) ? "after_pause_top" : "after_pause_bottom"); pause_step = -1; }
             else pause_step++;
         } else if (frames % 5 == 0) {
             held = 0;
@@ -1032,11 +1044,16 @@ int main(int argc, char **argv)
         if (pause_step < 0 && pause_every > 0 && frames >= next_pause && scr == SCREEN_PINBALL_GAME && pb.st.unified &&
             rd(W_PinballIsVisible)) {
             /* alternate: pause with the ball in the top half, then in the bottom half */
-            bool top = st == 0 || st == 4;
+            bool top = IS_TOP(st);
             if (top == ((pauses & 1) == 0)) {
                 pause_step = 0; held = 0; pauses++; if (top) pauses_top++;
                 next_pause = frames + pause_every;
             }
+        }
+        if (table_wanted >= 0 && rd(W_CurrentScreen) == SCREEN_FIELD_SELECT) {
+            /* the region (Generations: Kanto, Johto) and the table in it */
+            if (W_FieldSelectRegion) gbc_write(&pb.g, W_FieldSelectRegion, (uint8_t)(table_wanted / 2));
+            gbc_write(&pb.g, W_SelectedFieldIndex, (uint8_t)(table_wanted & 1));
         }
         pb_run_frame(&pb, held);
         int16_t tmp[4096];
@@ -1047,7 +1064,7 @@ int main(int argc, char **argv)
         force_report();
         if (hudcheck) hud_check();
         if (evocheck) evo_check();
-        if (bbcheck && pb.st.unified && rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(0xD5C0) >= 3) {
+        if (bbcheck && pb.st.unified && rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(W_NumMonHits) >= 3) {
             /* catch mode, 3 hits: the billboard must not be a grey picture (Bug 1.2_1) */
             int w, h, stride, colored = 0, white = 0, black = 0;
             const uint32_t *px = pb_frame(&pb, &w, &h, &stride);
@@ -1063,12 +1080,12 @@ int main(int argc, char **argv)
                 bb_bad++;
                 if (bb_bad <= 3) {
                     fprintf(stderr, "frame %ld: grey billboard after 3 hits (ball in the %s half, state %d, d5c6 %d, capturing %d)\n",
-                            frames, (rd(W_CurrentStage) & 1) ? "bottom" : "top", rd(W_SpecialModeState), rd(0xD5C6), rd(0xD5F3));
+                            frames, (rd(W_CurrentStage) & 1) ? "bottom" : "top", rd(W_SpecialModeState), rd(W_CatchModeMonTimer), rd(W_CapturingMon));
                     shot("greybillboard");
                 }
             }
         }
-        if (rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(0xD5C0) >= 3 && rd(W_SpecialModeState) == 4) {
+        if (rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(W_NumMonHits) >= 3 && rd(W_SpecialModeState) == 4) {
             /* catch mode, 3 hits: is the Pokemon sprite (tiles $20-$2F, palette 3) drawn with empty tiles? */
             const GBCPage *pg = &pb.g.s.page[PB_PAGE_MAIN];
             int sprites = 0, pixels = 0;
@@ -1081,11 +1098,11 @@ int main(int argc, char **argv)
             if (sprites && !pixels && mon_invisible++ < 3)
                 fprintf(stderr, "frame %ld: catch mode Pokemon sprite with empty tiles (%d sprites)\n", frames, sprites);
         }
-        if (autohit > 0 && frames % autohit == 0 && (autohit_half < 0 || (rd(W_CurrentStage) & 1) == autohit_half) && rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(0xD5BB)) {
+        if (autohit > 0 && frames % autohit == 0 && (autohit_half < 0 || (rd(W_CurrentStage) & 1) == autohit_half) && rd(W_InSpecialMode) && rd(W_SpecialMode) == 0 && rd(W_WildMonIsHittable)) {
             /* catch mode, the Pokemon can be hit: what the collision code does when the ball hits it */
-            gbc_write(&pb.g, 0xD5BF, 1);                 /* wBallHitWildMon */
+            gbc_write(&pb.g, W_BallHitWildMon, 1);                 /* wBallHitWildMon */
             fprintf(stderr, "frame %ld: Pokemon hit (ball in the %s half), hits so far %d\n", frames,
-                    (rd(W_CurrentStage) & 1) ? "bottom" : "top", rd(0xD5C0));
+                    (rd(W_CurrentStage) & 1) ? "bottom" : "top", rd(W_NumMonHits));
         }
         {
             static long last_buffers;
@@ -1168,7 +1185,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "slot halo, stage %d: %ld frames starting at the top of the half, %ld elsewhere, %ld mirrored\n",
                     i, glow_top[i][1], glow_top[i][2], glow_top[i][3]);
     fprintf(stderr, "stages:");
-    for (int i = 0; i < 16; i++) if (stage_frames[i]) fprintf(stderr, " %d:%ld", i, stage_frames[i]);
+    for (int i = 0; i < 32; i++) if (stage_frames[i]) fprintf(stderr, " %d:%ld", i, stage_frames[i]);
     fprintf(stderr, "  screens:");
     for (int i = 0; i < 16; i++) if (screen_frames[i]) fprintf(stderr, " %d:%ld", i, screen_frames[i]);
     fprintf(stderr, "\n");

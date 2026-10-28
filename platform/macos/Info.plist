@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>PinballNS</string>
+    <key>CFBundleIdentifier</key>
+    <string>fr.pinballtc.mac</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Pinball NS</string>
+    <key>CFBundleDisplayName</key>
+    <string>Pinball NS</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@BUILD@</string>
+    <key>CFBundleIconFile</key>
+    <string>PinballNS</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.arcade-games</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Made by Reinhard Sharapov 2026. Pokémon Pinball: Copyright 1995-1999 Nintendo, Creatures Inc., GAME FREAK inc. Copyright 1999 HAL Laboratory, Inc., Jupiter Corp.</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Game Boy Color ROM</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>gbc</string>
+                <string>gb</string>
+                <string>cgb</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>
