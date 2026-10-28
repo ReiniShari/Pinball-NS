@@ -6,7 +6,8 @@
  * can only be reached through Java (DisplayManager, Presentation): this class opens a Presentation
  * holding one SurfaceView on the first display that is not the activity's, and hands its Surface
  * to the C code (nativeSurface, registered by main_android.c), which draws it with the same
- * OpenGL ES context as the main screen. Called from the activity callbacks (UI thread).
+ * OpenGL ES context as the main screen. Called from the activity callbacks (UI thread), and
+ * setEnabled from the game thread (the menu's DUAL SCREEN).
  */
 package fr.pinballtc.app;
 
@@ -26,6 +27,9 @@ public final class DualScreen {
     private static Presentation pres;
     private static DisplayManager dm;
     private static Activity owner;
+    private static volatile boolean enabled = true;  /* DUAL SCREEN: ON */
+    /* a second display is there (the C code shows DUAL SCREEN in the menu only then) */
+    static volatile boolean present;
 
     /* the window of the second screen: created (a Surface), destroyed (null) */
     static native void nativeSurface(Object surface);
@@ -33,9 +37,12 @@ public final class DualScreen {
     private DualScreen() {}
 
     private static final DisplayManager.DisplayListener LISTENER = new DisplayManager.DisplayListener() {
-        @Override public void onDisplayAdded(int id) { if (owner != null && pres == null) open(owner); }
+        @Override public void onDisplayAdded(int id) {
+            if (owner != null) { present = other(owner) != null; if (enabled && pres == null) open(owner); }
+        }
         @Override public void onDisplayRemoved(int id) {
             if (pres != null && pres.getDisplay().getDisplayId() == id) close(true);
+            if (owner != null) present = other(owner) != null;
         }
         @Override public void onDisplayChanged(int id) {}
     };
@@ -49,17 +56,19 @@ public final class DualScreen {
         return null;
     }
 
-    /* the activity comes to the front: the second screen opened (true: there is one) */
-    public static boolean start(Activity act) {
+    /* the activity comes to the front: the second screen opened if `on` (true: there is one) */
+    public static boolean start(Activity act, boolean on) {
         try {
             owner = act;
+            enabled = on;
             if (dm == null) {
                 dm = (DisplayManager) act.getSystemService(Context.DISPLAY_SERVICE);
                 if (dm == null) return false;
                 dm.registerDisplayListener(LISTENER, null);
             }
-            open(act);
-            return pres != null;
+            present = other(act) != null;
+            if (on) open(act);
+            return present;
         } catch (Throwable t) {
             return false;
         }
@@ -69,6 +78,20 @@ public final class DualScreen {
     public static void stop() {
         close(false);
         owner = null;
+    }
+
+    /* DUAL SCREEN turned on or off (any thread): the second screen opened, or closed and the main
+     * screen back in portrait, as on a phone */
+    public static void setEnabled(final boolean on) {
+        enabled = on;
+        final Activity act = owner;
+        if (act == null) return;
+        act.runOnUiThread(new Runnable() {
+            @Override public void run() {
+                if (owner == null) return;
+                if (enabled) open(owner); else close(true);
+            }
+        });
     }
 
     private static void open(Activity act) {

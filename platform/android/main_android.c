@@ -975,7 +975,9 @@ enum { DUAL_NONE = 0, DUAL_UI, DUAL_GAME, DUAL_TABLE };
 
 #ifndef PB_MOCK
 static jclass g_dual_cls;                  /* fr.pinballtc.app.DualScreen (global ref), NULL: none */
-static jmethodID g_dual_start, g_dual_stop;
+static jmethodID g_dual_start, g_dual_stop, g_dual_enable;
+static jfieldID g_dual_present;            /* DualScreen.present: a second display is there */
+static int g_dual_on = -1;                 /* the DUAL SCREEN setting DualScreen was last given, -1: none */
 static struct Activity *g_dual_act;        /* the activity the second screen is opened for */
 #endif
 
@@ -1033,9 +1035,11 @@ static void dual_init(ANativeActivity *na)
     if (jni_check(env) || !c) { LOGI("second screen: no DualScreen class"); return; }
     static const JNINativeMethod nm[] = { { "nativeSurface", "(Ljava/lang/Object;)V", (void *)dual_native_surface } };
     if ((*env)->RegisterNatives(env, c, nm, 1) != 0 || jni_check(env)) { LOGE("second screen: RegisterNatives failed"); return; }
-    g_dual_start = (*env)->GetStaticMethodID(env, c, "start", "(Landroid/app/Activity;)Z");
+    g_dual_start = (*env)->GetStaticMethodID(env, c, "start", "(Landroid/app/Activity;Z)Z");
     g_dual_stop = !jni_check(env) ? (*env)->GetStaticMethodID(env, c, "stop", "()V") : NULL;
-    if (jni_check(env) || !g_dual_start || !g_dual_stop) return;
+    g_dual_enable = !jni_check(env) ? (*env)->GetStaticMethodID(env, c, "setEnabled", "(Z)V") : NULL;
+    g_dual_present = !jni_check(env) ? (*env)->GetStaticFieldID(env, c, "present", "Z") : NULL;
+    if (jni_check(env) || !g_dual_start || !g_dual_stop || !g_dual_enable || !g_dual_present) return;
     g_dual_cls = (jclass)(*env)->NewGlobalRef(env, c);
 #else
     (void)na;
@@ -1049,9 +1053,12 @@ static void dual_start(ANativeActivity *na)
     if (!g_dual_cls) return;
     JNIEnv *env = na->env;
     g_dual_act = (Activity *)na->instance;
-    jboolean on = (*env)->CallStaticBooleanMethod(env, g_dual_cls, g_dual_start, na->clazz);
-    if (jni_check(env)) on = JNI_FALSE;
-    LOGI("second screen: %s", on ? "opened" : "none");
+    pthread_mutex_lock(&g_game);
+    g_dual_on = !g_app.ui.single_screen;
+    pthread_mutex_unlock(&g_game);
+    jboolean there = (*env)->CallStaticBooleanMethod(env, g_dual_cls, g_dual_start, na->clazz, (jboolean)g_dual_on);
+    if (jni_check(env)) there = JNI_FALSE;
+    LOGI("second screen: %s", !there ? "none" : g_dual_on ? "opened" : "there, DUAL SCREEN off");
 #else
     (void)na;
 #endif
@@ -1084,10 +1091,32 @@ static void dual_surface_init(Activity *a)
     eglMakeCurrent(a->dpy, a->surf, a->surf, a->ctx);
 }
 
+/* the menu's DUAL SCREEN: shown while there is a second display; the setting given to DualScreen when
+ * it changes (it opens or closes the second screen on the UI thread). Game thread, game lock held. */
+static void dual_setting(Activity *a)
+{
+#ifndef PB_MOCK
+    if (!g_dual_cls || g_dual_act != a) { g_app.ui.menu_hide |= 1u << UI_ENTRY_DUAL; return; }
+    JNIEnv *env = a->env;
+    bool there = (*env)->GetStaticBooleanField(env, g_dual_cls, g_dual_present);
+    if (jni_check(env)) there = false;
+    if (there) g_app.ui.menu_hide &= ~(1u << UI_ENTRY_DUAL);
+    else g_app.ui.menu_hide |= 1u << UI_ENTRY_DUAL;
+    int on = !g_app.ui.single_screen;
+    if (on != g_dual_on) {
+        g_dual_on = on;
+        (*env)->CallStaticVoidMethod(env, g_dual_cls, g_dual_enable, (jboolean)on);
+        jni_check(env);
+    }
+#else
+    (void)a;
+#endif
+}
+
 /* what the screens show now (DUAL_*); game lock held */
 static int dual_mode_now(const Activity *a, int fh)
 {
-    if (a->dual_surf == EGL_NO_SURFACE) return DUAL_NONE;
+    if (a->dual_surf == EGL_NO_SURFACE || g_app.ui.single_screen) return DUAL_NONE;
     if (!g_app.pb || g_app.ui.no_rom || g_app.ui.menu_open || fh <= 0) return DUAL_UI;
     return fh == PB_FIELD_H ? DUAL_TABLE : DUAL_GAME;
 }
@@ -1659,8 +1688,9 @@ static void frame_step(Activity *a, double vsync)
 
     /* draw: upload the game image (under the lock: the emulator writes it). With a second screen,
      * the table at its whole width (both screens are wide enough), the game's picture alone */
+    dual_setting(a);
     dual_surface_init(a);
-    bool dual = a->dual_surf != EGL_NO_SURFACE;
+    bool dual = a->dual_surf != EGL_NO_SURFACE && !g_app.ui.single_screen;
     if (g_app.pb && pb_narrow(g_app.pb) == dual) pb_set_narrow(g_app.pb, !dual);
     int fw = 0, fh = 0, stride = 0;
     const uint32_t *px = NULL;

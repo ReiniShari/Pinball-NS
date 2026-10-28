@@ -99,6 +99,7 @@ void ui_init(Ui *ui)
     ui->sound = true;
     ui->touch_mode = UI_TOUCH_TILT;
     ui->menu_hot = -1;
+    ui->menu_hide = 1u << UI_ENTRY_DUAL;           /* until the platform finds a second screen */
     for (int i = 0; i < UI_MAX_POINTERS; i++) { ui->ptr[i].id = -1; ui->ptr[i].key = -1; }
 }
 
@@ -147,11 +148,12 @@ static const char *menu_label(const Ui *ui, int i)
     case 5: return ui->motion ? "MOTION TILT : ON" : "MOTION TILT : OFF";
     case 6: return ui->touch_mode == UI_TOUCH_FLIPPERS ? "GAME TOUCH : FLIPPERS" : ui->touch_mode == UI_TOUCH_OFF ? "GAME TOUCH : OFF" : "GAME TOUCH : TILT";
     case 7: return ui->hide_controls ? "CONTROLS : HIDDEN" : "CONTROLS : SHOWN";
-    case 8: return ui->filter == UI_FILTER_DOT ? "SCREEN FILTER : DOT" : ui->filter == UI_FILTER_LCD ? "SCREEN FILTER : LCD" : "SCREEN FILTER : NONE";
-    case 9: return ui->colors == UI_COLORS_BW ? "COLORS : BLACK & WHITE" : ui->colors == UI_COLORS_GREEN ? "COLORS : GAME BOY GREEN" : "COLORS : ORIGINAL";
-    case 10: return ui->game_gen ? "GAME : GENERATIONS" : "GAME : POKéMON PINBALL";
-    case 11: return "RESTART THE GAME";
-    case 12: return "ABOUT";
+    case 8: return ui->single_screen ? "DUAL SCREEN : OFF" : "DUAL SCREEN : ON";
+    case 9: return ui->filter == UI_FILTER_DOT ? "SCREEN FILTER : DOT" : ui->filter == UI_FILTER_LCD ? "SCREEN FILTER : LCD" : "SCREEN FILTER : NONE";
+    case 10: return ui->colors == UI_COLORS_BW ? "COLORS : BLACK & WHITE" : ui->colors == UI_COLORS_GREEN ? "COLORS : GAME BOY GREEN" : "COLORS : ORIGINAL";
+    case 11: return ui->game_gen ? "GAME : GENERATIONS" : "GAME : POKéMON PINBALL";
+    case 12: return "RESTART THE GAME";
+    case 13: return "ABOUT";
     default: return "QUIT";
     }
 }
@@ -168,7 +170,7 @@ static int row_action(const Ui *ui, int row);
 
 static const int menu_action[NMENU] = {
     UI_ACT_RESUME, UI_ACT_QUICKSAVE, UI_ACT_QUICKLOAD, UI_ACT_TOGGLE_VIBRATION, UI_ACT_TOGGLE_SOUND, UI_ACT_TOGGLE_MOTION,
-    UI_ACT_NEXT_TOUCH, UI_ACT_TOGGLE_CONTROLS, UI_ACT_NEXT_FILTER, UI_ACT_NEXT_COLORS, UI_ACT_NEXT_GAME, UI_ACT_RESET,
+    UI_ACT_NEXT_TOUCH, UI_ACT_TOGGLE_CONTROLS, UI_ACT_TOGGLE_DUAL, UI_ACT_NEXT_FILTER, UI_ACT_NEXT_COLORS, UI_ACT_NEXT_GAME, UI_ACT_RESET,
     UI_ACT_ABOUT, UI_ACT_QUIT
 };
 
