@@ -1,5 +1,6 @@
 #!/bin/sh
-# build_apk.sh - builds PinballNS.apk (arm64) from the C sources, without Gradle or Java code.
+# build_apk.sh - builds PinballNS.apk (arm64) from the C sources, without Gradle; the one Java class
+# (platform/android/java: the second screen of the dual-screen devices) with javac and d8.
 #
 #   ABIS="arm64-v8a x86_64" OUT_APK=build/PinballNS-test.apk sh platform/android/build_apk.sh
 #                     also the x86_64 library: for the Android emulator of the PC (tools/emu.sh)
@@ -17,6 +18,9 @@
 #   OUT_APK           the APK made (default: build/PinballNS.apk)
 #   EXTRA_CFLAGS      more compiler options (tools/emu.sh: -DPNS_TEST, its test commands)
 #   APK_DEBUGGABLE    1: android:debuggable (tools/emu.sh: files put into the app's own folder)
+#   APK_PACKAGE       another package name (test builds installed beside the app, with their own key)
+#   APK_LABEL         another name under the icon
+#   JAVAC, D8         tools (default: javac from the PATH, d8 from the SDK's build tools)
 #
 # Works on Linux and on Windows (Git Bash / MSYS) with the Windows NDK and SDK.
 #
@@ -79,12 +83,14 @@ LLVM_STRIP=${LLVM_STRIP:-$(tool llvm-strip "$NDK_BIN" "$EXE")}
 AAPT=${AAPT:-$(tool aapt "$BUILD_TOOLS" "$EXE")}
 ZIPALIGN=${ZIPALIGN:-$(tool zipalign "$BUILD_TOOLS" "$EXE")}
 APKSIGNER=${APKSIGNER:-$(tool apksigner "$BUILD_TOOLS" "$BAT")}
+JAVAC=${JAVAC:-javac}
+D8=${D8:-$(tool d8 "$BUILD_TOOLS" "$BAT")}
 echo "clang:     $CC"
 echo "sysroot:   $ANDROID_SYSROOT"
 echo "android:   $ANDROID_JAR"
 echo "apksigner: $APKSIGNER"
 
-rm -rf "$OUT/obj" "$OUT/stubs" "$OUT/apk"
+rm -rf "$OUT/obj" "$OUT/stubs" "$OUT/apk" "$OUT/classes" "$OUT/dex"
 mkdir -p "$OUT/res"
 
 SRCS="platform/android/main_android.c platform/android/gles_render.c platform/mobile/app.c platform/mobile/ui.c platform/mobile/design.c platform/mobile/screen.c src/game/pinball.c \
@@ -172,11 +178,25 @@ cat > "$OUT/res/mipmap-anydpi-v26/ic_launcher.xml" <<'XML'
 </adaptive-icon>
 XML
 
+# the Java class (Java 8 bytecode, made into classes.dex)
+mkdir -p "$OUT/classes" "$OUT/dex"
+"$JAVAC" -source 8 -target 8 -nowarn -bootclasspath "$ANDROID_JAR" -d "$OUT/classes" \
+    platform/android/java/fr/pinballtc/app/DualScreen.java
+"$D8" --release --min-api $API --lib "$ANDROID_JAR" --output "$OUT/dex" $(find "$OUT/classes" -name '*.class')
+
 # package, align, sign
 rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk"
 DEBUG_MODE=
 if [ "$APK_DEBUGGABLE" = 1 ]; then DEBUG_MODE=--debug-mode; fi
-"$AAPT" package -f $DEBUG_MODE -M platform/android/AndroidManifest.xml -S "$OUT/res" -I "$ANDROID_JAR" -F "$OUT/unsigned.apk"
+RENAME=
+if [ -n "$APK_PACKAGE" ]; then RENAME="--rename-manifest-package $APK_PACKAGE"; fi
+MANIFEST=platform/android/AndroidManifest.xml
+if [ -n "$APK_LABEL" ]; then
+    sed "s/android:label=\"Pinball NS\"/android:label=\"$APK_LABEL\"/" "$MANIFEST" > "$OUT/AndroidManifest.xml"
+    MANIFEST=$OUT/AndroidManifest.xml
+fi
+"$AAPT" package -f $DEBUG_MODE $RENAME -M "$MANIFEST" -S "$OUT/res" -I "$ANDROID_JAR" -F "$OUT/unsigned.apk"
+(cd "$OUT/dex" && "$AAPT" add "$OUT/unsigned.apk" classes.dex > /dev/null)
 for abi in $ABIS; do (cd "$OUT/apk" && "$AAPT" add "$OUT/unsigned.apk" lib/$abi/libpinballtc.so > /dev/null); done
 "$ZIPALIGN" -f -p 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
 KEY=$ROOT/platform/android/pinballtc.keystore

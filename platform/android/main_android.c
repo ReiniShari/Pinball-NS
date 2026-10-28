@@ -7,6 +7,10 @@
  * the accelerometer (the option MOTION TILT) and uses JNI for the few Java services it
  * needs (reading the ROM the player opens with the app, vibration, full screen).
  *
+ * Dual-screen devices (AYN Thor...): the small Java class DualScreen (platform/android/java) opens
+ * the second display and hands its surface here; on a table, the top half is drawn on the
+ * activity's screen and the bottom half with the status bar on the second one (see dual_mode).
+ *
  * The game logic of the mobile version (ROM, saves, menu, touch interface) is in
  * platform/mobile/; this file is only the Android glue.
  */
@@ -15,6 +19,9 @@
 #include <android/looper.h>
 #include <android/sensor.h>
 #include <android/window.h>
+#ifndef PB_MOCK
+#include <android/native_window_jni.h>
+#endif
 #include <aaudio/AAudio.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -52,7 +59,7 @@
 enum { LOOPER_ID_MAIN = 1, LOOPER_ID_INPUT = 2, LOOPER_ID_SENSOR = 3 };
 enum {
     CMD_INPUT_CHANGED, CMD_INIT_WINDOW, CMD_TERM_WINDOW, CMD_GAINED_FOCUS, CMD_LOST_FOCUS,
-    CMD_START, CMD_RESUME, CMD_PAUSE, CMD_STOP, CMD_DESTROY, CMD_CONFIG
+    CMD_START, CMD_RESUME, CMD_PAUSE, CMD_STOP, CMD_DESTROY, CMD_CONFIG, CMD_DUAL
 };
 
 /* ------------------------------------------------------------------ process-wide state */
@@ -192,8 +199,16 @@ typedef struct Activity {
     EGLDisplay dpy;
     EGLSurface surf;
     EGLContext ctx;
+    EGLConfig cfg;
     int w, h;
     GlRenderer gr;
+    /* the second screen (DualScreen.java): its window (dual_pending: set by the UI thread, taken by
+     * the game thread), its surface in the same context, what it shows (DUAL_*) and its list */
+    ANativeWindow *dual_window, *dual_pending;
+    EGLSurface dual_surf;
+    int dual_mode;
+    bool dual_eat;                      /* the finger that opened the menu: its moves and its lift ignored */
+    UiList dual_list;
     /* timing (the screen sets the pace: src/front/pacing.h), input */
     Pacer pacer;
     /* the vertical blanks of the display (vsync_request): time of the last one (CLOCK_MONOTONIC) */
@@ -950,10 +965,163 @@ static void audio_tune(double t)
     pthread_mutex_unlock(&g_audio_mutex);
 }
 
+/* ------------------------------------------------------------------ the second screen */
+
+/* What the two screens show: DUAL_NONE, a single screen (the usual picture with its controls); DUAL_UI,
+ * the usual picture on the main screen, the second one black (the menu, no ROM yet); DUAL_GAME, the
+ * game's picture alone on the main screen (title, menus of the game, bonus stages); DUAL_TABLE, the top
+ * half of the table on the main screen, its bottom half and the status bar on the second one. */
+enum { DUAL_NONE = 0, DUAL_UI, DUAL_GAME, DUAL_TABLE };
+
+#ifndef PB_MOCK
+static jclass g_dual_cls;                  /* fr.pinballtc.app.DualScreen (global ref), NULL: none */
+static jmethodID g_dual_start, g_dual_stop;
+static struct Activity *g_dual_act;        /* the activity the second screen is opened for */
+#endif
+
+static void dual_release(ANativeWindow *w)
+{
+#ifndef PB_MOCK
+    if (w) ANativeWindow_release(w);
+#else
+    (void)w;
+#endif
+}
+
+/* the EGL surface of the second screen gone (its window kept) */
+static void dual_surface_term(Activity *a)
+{
+    if (a->dual_surf == EGL_NO_SURFACE) return;
+    if (a->dpy != EGL_NO_DISPLAY) {
+        eglMakeCurrent(a->dpy, a->surf, a->surf, a->ctx);
+        eglDestroySurface(a->dpy, a->dual_surf);
+    }
+    a->dual_surf = EGL_NO_SURFACE;
+}
+
+#ifndef PB_MOCK
+/* DualScreen.nativeSurface (UI thread): the surface of the second screen created, or destroyed (NULL);
+ * returns once the game thread has taken it (destroyed: no longer drawn) */
+static void JNICALL dual_native_surface(JNIEnv *env, jclass c, jobject surface)
+{
+    (void)c;
+    Activity *a = g_dual_act;
+    if (!a) return;
+    ANativeWindow *w = surface ? ANativeWindow_fromSurface(env, surface) : NULL;
+    pthread_mutex_lock(&a->mutex);
+    if (w && w == a->dual_pending) { pthread_mutex_unlock(&a->mutex); ANativeWindow_release(w); return; }
+    if (!w && !a->dual_pending && !a->dual_window) { pthread_mutex_unlock(&a->mutex); return; }
+    a->dual_pending = w;
+    write_cmd(a, CMD_DUAL);
+    while (a->dual_window != a->dual_pending && !a->destroyed) pthread_cond_wait(&a->cond, &a->mutex);
+    pthread_mutex_unlock(&a->mutex);
+}
+#endif
+
+/* the class DualScreen, from the app's own class loader (FindClass only sees the system's here) */
+static void dual_init(ANativeActivity *na)
+{
+#ifndef PB_MOCK
+    JNIEnv *env = na->env;
+    jclass acls = (*env)->GetObjectClass(env, na->clazz);
+    jmethodID gcl = (*env)->GetMethodID(env, acls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    jobject cl = !jni_check(env) && gcl ? (*env)->CallObjectMethod(env, na->clazz, gcl) : NULL;
+    jclass clcls = !jni_check(env) && cl ? (*env)->GetObjectClass(env, cl) : NULL;
+    jmethodID load = clcls ? (*env)->GetMethodID(env, clcls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;") : NULL;
+    jstring name = load && !jni_check(env) ? (*env)->NewStringUTF(env, "fr.pinballtc.app.DualScreen") : NULL;
+    jclass c = name ? (jclass)(*env)->CallObjectMethod(env, cl, load, name) : NULL;
+    if (jni_check(env) || !c) { LOGI("second screen: no DualScreen class"); return; }
+    static const JNINativeMethod nm[] = { { "nativeSurface", "(Ljava/lang/Object;)V", (void *)dual_native_surface } };
+    if ((*env)->RegisterNatives(env, c, nm, 1) != 0 || jni_check(env)) { LOGE("second screen: RegisterNatives failed"); return; }
+    g_dual_start = (*env)->GetStaticMethodID(env, c, "start", "(Landroid/app/Activity;)Z");
+    g_dual_stop = !jni_check(env) ? (*env)->GetStaticMethodID(env, c, "stop", "()V") : NULL;
+    if (jni_check(env) || !g_dual_start || !g_dual_stop) return;
+    g_dual_cls = (jclass)(*env)->NewGlobalRef(env, c);
+#else
+    (void)na;
+#endif
+}
+
+/* the activity comes to the front / leaves it (UI thread) */
+static void dual_start(ANativeActivity *na)
+{
+#ifndef PB_MOCK
+    if (!g_dual_cls) return;
+    JNIEnv *env = na->env;
+    g_dual_act = (Activity *)na->instance;
+    jboolean on = (*env)->CallStaticBooleanMethod(env, g_dual_cls, g_dual_start, na->clazz);
+    if (jni_check(env)) on = JNI_FALSE;
+    LOGI("second screen: %s", on ? "opened" : "none");
+#else
+    (void)na;
+#endif
+}
+
+static void dual_stop(ANativeActivity *na)
+{
+#ifndef PB_MOCK
+    if (!g_dual_cls || g_dual_act != (Activity *)na->instance) return;
+    JNIEnv *env = na->env;
+    (*env)->CallStaticVoidMethod(env, g_dual_cls, g_dual_stop);
+    jni_check(env);
+    g_dual_act = NULL;
+#else
+    (void)na;
+#endif
+}
+
+/* the EGL surface of the second screen, once both its window and the context are there; it does not
+ * wait for its vertical blanks (the main screen sets the pace) */
+static void dual_surface_init(Activity *a)
+{
+    if (a->dual_surf != EGL_NO_SURFACE || !a->dual_window || a->dpy == EGL_NO_DISPLAY || a->ctx == EGL_NO_CONTEXT) return;
+    EGLint fmt = 0;
+    eglGetConfigAttrib(a->dpy, a->cfg, EGL_NATIVE_VISUAL_ID, &fmt);
+    ANativeWindow_setBuffersGeometry(a->dual_window, 0, 0, fmt);
+    a->dual_surf = eglCreateWindowSurface(a->dpy, a->cfg, a->dual_window, NULL);
+    if (a->dual_surf == EGL_NO_SURFACE) { LOGE("second screen: no surface (0x%x)", eglGetError()); return; }
+    if (eglMakeCurrent(a->dpy, a->dual_surf, a->dual_surf, a->ctx)) eglSwapInterval(a->dpy, 0);
+    eglMakeCurrent(a->dpy, a->surf, a->surf, a->ctx);
+}
+
+/* what the screens show now (DUAL_*); game lock held */
+static int dual_mode_now(const Activity *a, int fh)
+{
+    if (a->dual_surf == EGL_NO_SURFACE) return DUAL_NONE;
+    if (!g_app.pb || g_app.ui.no_rom || g_app.ui.menu_open || fh <= 0) return DUAL_UI;
+    return fh == PB_FIELD_H ? DUAL_TABLE : DUAL_GAME;
+}
+
+/* the lines y0..y1 of the game's picture (fw x fh), as large as they fit in a screen of sw x sh, centred */
+static void dual_game_item(UiList *l, int sw, int sh, int fw, int fh, int y0, int y1)
+{
+    l->n = 0;
+    l->text_n = 0;
+    if (sw <= 0 || sh <= 0 || fw <= 0 || y1 <= y0) return;
+    float s = fminf((float)sw / fw, (float)sh / (y1 - y0));
+    UiItem *it = &l->item[l->n++];
+    memset(it, 0, sizeof *it);
+    it->kind = UI_GAME;
+    it->w = fw * s;
+    it->h = (y1 - y0) * s;
+    it->x = (sw - it->w) / 2;
+    it->y = (sh - it->h) / 2;
+    it->filter = g_app.ui.filter;
+    it->colors = g_app.ui.colors;
+    it->fx0 = 0;
+    it->fy0 = (float)y0;                 /* the filter takes no neighbour from the other half */
+    it->fx1 = (float)fw;
+    it->fy1 = (float)y1;
+    it->sy0 = (float)y0;
+    it->sy1 = (float)y1;
+    (void)fh;
+}
+
 /* ------------------------------------------------------------------ EGL */
 
 static void egl_term(Activity *a)
 {
+    dual_surface_term(a);
     if (a->dpy != EGL_NO_DISPLAY) {
         eglMakeCurrent(a->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (a->ctx != EGL_NO_CONTEXT) eglDestroyContext(a->dpy, a->ctx);
@@ -1002,6 +1170,7 @@ static bool egl_init(Activity *a)
     EGLint n = 0;
     if (!eglChooseConfig(a->dpy, want888, &cfg, 1, &n) || n < 1)
         if (!eglChooseConfig(a->dpy, want565, &cfg, 1, &n) || n < 1) { LOGE("no EGL config"); egl_term(a); return false; }
+    a->cfg = cfg;
     EGLint fmt = 0;
     eglGetConfigAttrib(a->dpy, cfg, EGL_NATIVE_VISUAL_ID, &fmt);
     ANativeWindow_setBuffersGeometry(a->window, 0, 0, fmt);
@@ -1105,11 +1274,20 @@ static int handle_input(Activity *a, AInputEvent *ev)
     int32_t action = AMotionEvent_getAction(ev);
     int32_t masked = action & AMOTION_EVENT_ACTION_MASK;
     size_t index = (size_t)((action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT);
+    if (a->dual_eat) {
+        if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_CANCEL) a->dual_eat = false;
+        return 1;
+    }
     pthread_mutex_lock(&g_game);
     switch (masked) {
     case AMOTION_EVENT_ACTION_DOWN:
     case AMOTION_EVENT_ACTION_POINTER_DOWN:
         a->last_touch = now_s();
+        if (a->dual_mode == DUAL_TABLE || a->dual_mode == DUAL_GAME) {
+            /* two screens: no touch controls on the game; a finger on it opens the menu */
+            if (masked == AMOTION_EVENT_ACTION_DOWN) { app_back(&g_app); a->dual_eat = true; }
+            break;
+        }
         app_touch(&g_app, UI_DOWN, AMotionEvent_getPointerId(ev, index), AMotionEvent_getX(ev, index), AMotionEvent_getY(ev, index));
         break;
     case AMOTION_EVENT_ACTION_UP:
@@ -1265,6 +1443,15 @@ static void process_cmd(Activity *a)
         pthread_cond_broadcast(&a->cond);
         pthread_mutex_unlock(&a->mutex);
         if (cmd == CMD_RESUME) become_front(a);
+        break;
+    case CMD_DUAL:
+        /* the second screen's window changed: the old one's surface and window let go */
+        dual_surface_term(a);
+        pthread_mutex_lock(&a->mutex);
+        if (a->dual_window != a->dual_pending) dual_release(a->dual_window);
+        a->dual_window = a->dual_pending;
+        pthread_cond_broadcast(&a->cond);
+        pthread_mutex_unlock(&a->mutex);
         break;
     case CMD_DESTROY:
         a->destroy_requested = true;
@@ -1467,9 +1654,16 @@ static void frame_step(Activity *a, double vsync)
     int fb = front ? app_take_haptic(&g_app) : UI_HAPTIC_NONE;
     bool rumble = front && g_app.rumble;
 
-    /* draw: upload the game image (under the lock: the emulator writes it) */
+    /* draw: upload the game image (under the lock: the emulator writes it). With a second screen,
+     * the table at its whole width (both screens are wide enough), the game's picture alone */
+    dual_surface_init(a);
+    bool dual = a->dual_surf != EGL_NO_SURFACE;
+    if (g_app.pb && pb_narrow(g_app.pb) == dual) pb_set_narrow(g_app.pb, !dual);
     int fw = 0, fh = 0, stride = 0;
-    const uint32_t *px = app_frame(&g_app, &fw, &fh, &stride);
+    const uint32_t *px = NULL;
+    if (dual) px = app_game(&g_app, &fw, &fh, &stride);
+    a->dual_mode = dual_mode_now(a, px ? fh : 0);
+    if (a->dual_mode == DUAL_NONE || a->dual_mode == DUAL_UI) px = app_frame(&g_app, &fw, &fh, &stride);
     if (px && a->dpy != EGL_NO_DISPLAY) gr_upload(&a->gr, px, stride, fh);
     EGLint w = 0, h = 0;
     eglQuerySurface(a->dpy, a->surf, EGL_WIDTH, &w);
@@ -1488,6 +1682,18 @@ static void frame_step(Activity *a, double vsync)
         if (a->insets_known) app_set_insets(&g_app, it, ib, il, ir, rc);
     }
     app_build(&g_app, &a->list);
+    EGLint dw = 0, dh = 0;
+    if (dual) {
+        eglQuerySurface(a->dpy, a->dual_surf, EGL_WIDTH, &dw);
+        eglQuerySurface(a->dpy, a->dual_surf, EGL_HEIGHT, &dh);
+    }
+    a->dual_list.n = 0;
+    if (a->dual_mode == DUAL_TABLE) {
+        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, PB_TOP_ROWS);
+        dual_game_item(&a->dual_list, dw, dh, fw, fh, PB_TOP_ROWS, fh);
+    } else if (a->dual_mode == DUAL_GAME) {
+        dual_game_item(&a->list, a->w, a->h, fw, fh, 0, fh);
+    }
     pthread_mutex_unlock(&g_game);
     (void)ran;
 #ifdef PNS_TEST
@@ -1499,6 +1705,14 @@ static void frame_step(Activity *a, double vsync)
     else if (rumble && t - a->last_vibration > 0.045) { haptic_post(0, true); a->last_vibration = t; }
     else if (fb && t - a->last_vibration > 0.03) { haptic_post(fb, false); a->last_vibration = t; }
 
+    if (dual) {
+        /* the second screen first: the main screen's swap waits for its vertical blank */
+        if (eglMakeCurrent(a->dpy, a->dual_surf, a->dual_surf, a->ctx)) {
+            gr_draw(&a->gr, &a->dual_list, dw, dh, fw, fh);
+            if (!eglSwapBuffers(a->dpy, a->dual_surf)) LOGE("second screen: swap failed (0x%x)", eglGetError());
+        }
+        eglMakeCurrent(a->dpy, a->surf, a->surf, a->ctx);
+    }
     gr_draw(&a->gr, &a->list, a->w, a->h, fw, fh);
     double work = now_s() - t;                  /* the swap may wait for a buffer: not work */
 #ifdef PNS_TEST
@@ -1586,6 +1800,11 @@ static void *game_thread(void *arg)
 
     leave_front(a);
     egl_term(a);
+    pthread_mutex_lock(&a->mutex);
+    dual_release(a->dual_window);
+    a->dual_window = a->dual_pending = NULL;
+    pthread_cond_broadcast(&a->cond);
+    pthread_mutex_unlock(&a->mutex);
     sensors_enable(a, false);
     if (a->sensors) ASensorManager_destroyEventQueue(a->sensor_mgr, a->sensors);
     a->sensors = NULL;
@@ -1610,8 +1829,8 @@ static void wait_state(Activity *a, int8_t cmd)
 }
 
 static void on_start(ANativeActivity *na) { wait_state((Activity *)na->instance, CMD_START); }
-static void on_resume(ANativeActivity *na) { set_immersive(na); wait_state((Activity *)na->instance, CMD_RESUME); }
-static void on_pause(ANativeActivity *na) { wait_state((Activity *)na->instance, CMD_PAUSE); }
+static void on_resume(ANativeActivity *na) { set_immersive(na); wait_state((Activity *)na->instance, CMD_RESUME); dual_start(na); }
+static void on_pause(ANativeActivity *na) { dual_stop(na); wait_state((Activity *)na->instance, CMD_PAUSE); }
 static void on_stop(ANativeActivity *na) { wait_state((Activity *)na->instance, CMD_STOP); }
 
 static void *on_save_state(ANativeActivity *na, size_t *len) { (void)na; *len = 0; return NULL; }
@@ -1690,6 +1909,7 @@ void ANativeActivity_onCreate(ANativeActivity *na, void *saved, size_t saved_siz
     a->dpy = EGL_NO_DISPLAY;
     a->surf = EGL_NO_SURFACE;
     a->ctx = EGL_NO_CONTEXT;
+    a->dual_surf = EGL_NO_SURFACE;
     a->state = CMD_STOP;
     na->instance = a;
     pthread_mutex_init(&a->mutex, NULL);
@@ -1701,6 +1921,7 @@ void ANativeActivity_onCreate(ANativeActivity *na, void *saved, size_t saved_siz
 
     ANativeActivity_setWindowFlags(na, AWINDOW_FLAG_KEEP_SCREEN_ON | AWINDOW_FLAG_FULLSCREEN, 0);
     init_vibrator(na);
+    dual_init(na);
     set_cutout_mode(na);
     set_immersive(na);
 

@@ -27,6 +27,8 @@ typedef struct {
     int filter;            /* the game image: UI_FILTER_* over the part fx0,fy0..fx1,fy1 (its pixels) */
     float fx0, fy0, fx1, fy1;
     int colors;            /* the game image: UI_COLORS_* (all of it) */
+    float sy0, sy1;        /* the game image: only its lines sy0..sy1 (its pixels) in the rectangle; 0, 0: all
+                            * (the dual-screen devices: one half of the table on each screen) */
 } UiItem;
 
 #define UI_MAX_ITEMS 320

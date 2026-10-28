@@ -675,3 +675,5 @@ void app_suspend(MobileApp *a)
 void app_build(MobileApp *a, UiList *l) { screen_build(&a->scr, a->pb, &a->ui, l); }
 
 const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride) { return screen_frame(&a->scr, a->pb, &a->ui, w, h, stride); }
+
+const uint32_t *app_game(MobileApp *a, int *w, int *h, int *stride) { return screen_game(&a->scr, a->pb, &a->ui, w, h, stride); }
