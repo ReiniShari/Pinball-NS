@@ -28,11 +28,6 @@ jobs:
           echo "SDK: $ANDROID_HOME  NDK: $ANDROID_NDK_HOME"
           ls "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms"
           sh platform/android/build_apk.sh
-      # the APK in the log too, for fetching it where the artifact storage cannot be reached
-      - name: APK as base64
-        run: |
-          sha256sum build/PinballNS-dual.apk
-          base64 -w 4000 build/PinballNS-dual.apk | sed 's/^/APKB64 /'
       - uses: actions/upload-artifact@v4
         with:
           name: PinballNS-dual-apk
