@@ -127,6 +127,7 @@ static void settings_load(MobileApp *a)
     else if (strstr(buf, "touch=0")) a->ui.touch_mode = UI_TOUCH_OFF;
     if (strstr(buf, "game=1")) a->gen = true;
     if (strstr(buf, "controls=1")) a->ui.hide_controls = true;
+    if (strstr(buf, "dual=0")) a->ui.single_screen = true;
     const char *f = strstr(buf, "filter=");
     if (f && f[7] >= '0' && f[7] < '0' + UI_FILTERS) a->ui.filter = f[7] - '0';
     f = strstr(buf, "colors=");
@@ -139,9 +140,10 @@ static void settings_save(MobileApp *a)
 {
     char p[600], buf[192];
     path_of(a, "settings.txt", p, sizeof p);
-    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\nmotion=%d\nscreen=%d\nfilter=%d\ncolors=%d\ngame=%d\ntable=%d\ncontrols=%d\n",
+    int n = snprintf(buf, sizeof buf, "vibration=%d\nsound=%d\nmotion=%d\nscreen=%d\nfilter=%d\ncolors=%d\ngame=%d\ntable=%d\ncontrols=%d\ndual=%d\n",
                      a->ui.vibration ? 1 : 0, a->ui.sound ? 1 : 0, a->ui.motion ? 1 : 0, a->ui.touch_mode,
-                     a->ui.filter, a->ui.colors, a->gen ? 1 : 0, a->ui.table, a->ui.hide_controls ? 1 : 0);
+                     a->ui.filter, a->ui.colors, a->gen ? 1 : 0, a->ui.table, a->ui.hide_controls ? 1 : 0,
+                     a->ui.single_screen ? 0 : 1);
     if (!write_later(a, 1, p, buf, (size_t)n)) {         /* the previous one still waits: after it */
         app_io_wait(a);
         write_later(a, 1, p, buf, (size_t)n);
@@ -624,6 +626,10 @@ void app_update(MobileApp *a, double now)
         a->ui.hide_controls = !a->ui.hide_controls;
         settings_save(a);
         break;
+    case UI_ACT_TOGGLE_DUAL:                    /* the platform follows ui.single_screen */
+        a->ui.single_screen = !a->ui.single_screen;
+        settings_save(a);
+        break;
     case UI_ACT_NEXT_GAME:
         switch_game(a);
         break;
@@ -675,3 +681,5 @@ void app_suspend(MobileApp *a)
 void app_build(MobileApp *a, UiList *l) { screen_build(&a->scr, a->pb, &a->ui, l); }
 
 const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride) { return screen_frame(&a->scr, a->pb, &a->ui, w, h, stride); }
+
+const uint32_t *app_game(MobileApp *a, int *w, int *h, int *stride) { return screen_game(&a->scr, a->pb, &a->ui, w, h, stride); }

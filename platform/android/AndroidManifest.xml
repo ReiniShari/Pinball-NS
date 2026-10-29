@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pinball TC: a NativeActivity in C (no Java code: android:hasCode="false"). -->
+<!-- Pinball TC: a NativeActivity in C. The only Java code is the class DualScreen (the second
+     screen of the dual-screen devices), loaded by the C code. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="fr.pinballtc.app"
     android:versionCode="23"
@@ -14,7 +15,7 @@
     <application
         android:label="Pinball NS"
         android:icon="@mipmap/ic_launcher"
-        android:hasCode="false"
+        android:hasCode="true"
         android:allowBackup="false"
         android:extractNativeLibs="true"
         android:isGame="true">

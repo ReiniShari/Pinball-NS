@@ -86,6 +86,8 @@ int  app_audio_pull(MobileApp *a, int16_t *out, int frames);   /* audio thread *
 void app_build(MobileApp *a, UiList *list);
 /* the picture to show: the whole screen, in the pixels of the game (design.h) */
 const uint32_t *app_frame(MobileApp *a, int *w, int *h, int *stride);
+/* the game's picture alone (screen_game): the dual-screen devices */
+const uint32_t *app_game(MobileApp *a, int *w, int *h, int *stride);
 #ifdef PNS_TEST
 /* test builds only (the APK for the Android emulator of the PC, tools/emu.sh): "bonus N" sends
  * the ball to the bonus stage N the next time it is on a table, as the slot's reward */

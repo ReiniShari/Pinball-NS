@@ -1,0 +1,35 @@
+# Test build of the Android app (PinballNS-dual.apk), installed beside the released app: its own
+# package name and its own signing key (made afresh on each run). Download it from the run's
+# artifacts.
+name: Android test build
+
+on:
+  push:
+    branches: [ 'claude/**' ]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Icon tool
+        run: make build/ndicon CFLAGS="-O2 -std=gnu11 -Wall -Wno-unused-function"
+      - name: APK
+        env:
+          APK_PACKAGE: fr.pinballtc.app.dual
+          APK_LABEL: Pinball NS Dual
+          OUT_APK: ${{ github.workspace }}/build/PinballNS-dual.apk
+        run: |
+          echo "SDK: $ANDROID_HOME  NDK: $ANDROID_NDK_HOME"
+          ls "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms"
+          sh platform/android/build_apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PinballNS-dual-apk
+          path: build/PinballNS-dual.apk
+          if-no-files-found: error

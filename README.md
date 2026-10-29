@@ -1,3 +1,16 @@
+# Pinball NS Thor
+
+**This is a fork of [Pinball NS](https://github.com/ReiniShari/Pinball-NS) by Reinhard Sharapov that adds dual-screen support for Android handhelds with two displays, such as the AYN Thor.**
+
+Pinball NS already shows each Pokémon Pinball table as one tall field instead of two halves with a blank screen between them. This fork splits that field across the two screens: the top half of the table is on the upper screen and the bottom half, with the flippers and the score bar, is on the lower one, both drawn at the same scale so the table lines up across the gap. The ball moves from one screen to the other without any loading or blanking.
+
+- Android only: a second display is detected on its own, and the table is split across both screens. Menus and the bonus stages are shown whole.
+- Played with the device's buttons; a touch on the upper screen opens the menu.
+- **DUAL SCREEN** ON/OFF in the menu (shown only when a second display is present) goes back to the usual single portrait screen.
+- Everything else, and the other platforms, is as in the original project below.
+
+---
+
 # Pinball NS
 
 A project for **Pokémon Pinball** (Game Boy Color, US version) for **Android**, **iPhone**, **Windows**, **macOS** and **Linux**, written in C with an emulation core in assembly. It also plays **Pokémon Pinball Generations** 1.6, the fan-made extension of the game by RainbowDevs, with its Gold and Silver tables.

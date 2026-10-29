@@ -121,3 +121,10 @@ const uint32_t *screen_frame(NdScreen *s, Pinball *pb, Ui *ui, int *w, int *h, i
     *stride = ui->nd.cw;
     return s->canvas;
 }
+
+const uint32_t *screen_game(NdScreen *s, Pinball *pb, Ui *ui, int *w, int *h, int *stride)
+{
+    if (!pb) { *w = *h = 0; *stride = 0; return NULL; }
+    if (!s->shown) screen_new_picture(s, pb, ui);
+    return game_picture(s, pb, w, h, stride);
+}
