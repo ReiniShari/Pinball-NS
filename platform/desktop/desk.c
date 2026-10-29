@@ -327,7 +327,7 @@ void desk_init(Desk *d, const char *cfg_path)
     d->sound = d->vibration = true;
     ui_init(&d->ui);
     screen_init(&d->scr);
-    d->ui.menu_hide = 1u << UI_ENTRY_MOTION;                 /* no accelerometer */
+    d->ui.menu_hide |= 1u << UI_ENTRY_MOTION;                 /* no accelerometer */
     d->ui.about_hint = HANDHELD_HINT;
     d->ui.no_rom_how = "Drop it onto this window, or choose it in the window shown at the start.\n\n";
     cfg_load(d);

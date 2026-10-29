@@ -43,5 +43,8 @@ void screen_build(NdScreen *s, Pinball *pb, Ui *ui, UiList *l);
 /* the picture to show: the whole screen, in the pixels of the game (the game's own picture before
  * the interface knows its screen) */
 const uint32_t *screen_frame(NdScreen *s, Pinball *pb, Ui *ui, int *w, int *h, int *stride);
+/* the game's picture alone, as shown (its 30 Hz flicker mixed), without what continues it nor the
+ * controls: the dual-screen devices, which show its parts on two screens (NULL: no game) */
+const uint32_t *screen_game(NdScreen *s, Pinball *pb, Ui *ui, int *w, int *h, int *stride);
 
 #endif

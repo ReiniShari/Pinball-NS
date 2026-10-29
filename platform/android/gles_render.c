@@ -303,13 +303,15 @@ void gr_draw(GlRenderer *r, const UiList *l, int w, int h, int fw, int fh)
             glBindTexture(GL_TEXTURE_2D, r->tex_game);
             glUniform1i(r->u_game_tex, 0);
             glUniform2f(r->u_game_texsize, (float)GAME_TEX_W, (float)GAME_TEX_H);
-            glUniform2f(r->u_game_scale, it->w / fw, it->h / fh);
+            float ty0 = 0, ty1 = (float)fh;            /* the lines of the picture shown (sy0, sy1) */
+            if (it->sy1 > it->sy0) { ty0 = it->sy0; ty1 = it->sy1; }
+            glUniform2f(r->u_game_scale, it->w / fw, it->h / (ty1 - ty0));
             glUniform1f(r->u_game_filter, (float)it->filter);
             glUniform4f(r->u_game_frect, it->fx0, it->fy0, it->fx1, it->fy1);
             glUniform1f(r->u_game_colors, (float)it->colors);
             glUniform2f(r->u_game_fsize, (float)fw, (float)fh);
             float x0 = it->x, y0 = it->y, x1 = it->x + it->w, y1 = it->y + it->h;
-            float q[16] = { x0, y0, 0, 0,  x1, y0, (float)fw, 0,  x0, y1, 0, (float)fh,  x1, y1, (float)fw, (float)fh };
+            float q[16] = { x0, y0, 0, ty0,  x1, y0, (float)fw, ty0,  x0, y1, 0, ty1,  x1, y1, (float)fw, ty1 };
             glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 16, q);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 16, q + 2);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

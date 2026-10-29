@@ -27,6 +27,8 @@ typedef struct {
     int filter;            /* the game image: UI_FILTER_* over the part fx0,fy0..fx1,fy1 (its pixels) */
     float fx0, fy0, fx1, fy1;
     int colors;            /* the game image: UI_COLORS_* (all of it) */
+    float sy0, sy1;        /* the game image: only its lines sy0..sy1 (its pixels) in the rectangle; 0, 0: all
+                            * (the dual-screen devices: one half of the table on each screen) */
 } UiItem;
 
 #define UI_MAX_ITEMS 320
@@ -42,10 +44,10 @@ typedef struct {
 enum {
     UI_ACT_NONE = 0, UI_ACT_RESUME, UI_ACT_QUICKSAVE, UI_ACT_QUICKLOAD, UI_ACT_TOGGLE_VIBRATION,
     UI_ACT_TOGGLE_SOUND, UI_ACT_RESET, UI_ACT_QUIT, UI_ACT_OPEN_MENU, UI_ACT_TOGGLE_MOTION, UI_ACT_NEXT_FILTER,
-    UI_ACT_NEXT_TOUCH, UI_ACT_NEXT_COLORS, UI_ACT_ABOUT, UI_ACT_NEXT_GAME, UI_ACT_TOGGLE_CONTROLS
+    UI_ACT_NEXT_TOUCH, UI_ACT_NEXT_COLORS, UI_ACT_ABOUT, UI_ACT_NEXT_GAME, UI_ACT_TOGGLE_CONTROLS, UI_ACT_TOGGLE_DUAL
 };
 
-#define UI_MENU_ITEMS 14
+#define UI_MENU_ITEMS 15
 #define UI_ABOUT_PAGES 3
 
 /* what a finger on the game does during a game (2.8): the tilts (2.9, the user's design: its left
@@ -105,6 +107,8 @@ typedef struct {
     bool motion;                    /* tilt by moving the phone (the platform's accelerometer) */
     int touch_mode;                 /* UI_TOUCH_*: what a finger on the game does */
     bool hide_controls;             /* CONTROLS: HIDDEN (2.9): during a game, MENU and START only (design.h) */
+    bool single_screen;             /* DUAL SCREEN: OFF: a device with two screens uses one, as a phone (the
+                                     * entry is only shown while the platform finds a second screen) */
     /* set by the platform: the entries of the menu it has not (bit i: entry i; the desktop versions:
      * no MOTION TILT), the first page ABOUT in its words (NULL: the phone's) */
     uint32_t menu_hide;
@@ -133,7 +137,7 @@ uint8_t ui_hit_test(Ui *ui, float x, float y, int *key);
 int  ui_take_action(Ui *ui);
 /* the entries of the menu, by their UI_ACT_* (the platform's menus) */
 enum { UI_ENTRY_RESUME = 0, UI_ENTRY_QUICKSAVE, UI_ENTRY_QUICKLOAD, UI_ENTRY_VIBRATION, UI_ENTRY_SOUND, UI_ENTRY_MOTION,
-       UI_ENTRY_TOUCH, UI_ENTRY_CONTROLS, UI_ENTRY_FILTER, UI_ENTRY_COLORS, UI_ENTRY_GAME, UI_ENTRY_RESTART, UI_ENTRY_ABOUT,
+       UI_ENTRY_TOUCH, UI_ENTRY_CONTROLS, UI_ENTRY_DUAL, UI_ENTRY_FILTER, UI_ENTRY_COLORS, UI_ENTRY_GAME, UI_ENTRY_RESTART, UI_ENTRY_ABOUT,
        UI_ENTRY_QUIT };
 void ui_open_menu(Ui *ui, bool open);
 void ui_toast(Ui *ui, const char *msg, double seconds);
